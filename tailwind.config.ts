@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -61,6 +62,16 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
+				},
+				// Pharmacy specific colors
+				pharma: {
+					primary: '#2563eb',    // Blue for primary actions
+					secondary: '#059669',  // Green for confirmed/success states
+					accent: '#8b5cf6',     // Purple for highlights
+					warning: '#f59e0b',    // Amber for warnings
+					error: '#dc2626',      // Red for errors/alerts
+					light: '#f3f4f6',      // Light gray background
+					dark: '#1e293b',       // Dark text color
 				}
 			},
 			borderRadius: {
