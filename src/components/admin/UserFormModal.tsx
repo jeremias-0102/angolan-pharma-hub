@@ -21,6 +21,9 @@ interface UserFormModalProps {
 const formSchema = z.object({
   name: z.string().min(3, { message: "O nome deve ter pelo menos 3 caracteres" }),
   email: z.string().email({ message: "Email inválido" }),
+  password: z.string().min(6, { message: "A senha deve ter pelo menos 6 caracteres" })
+    .optional()
+    .or(z.literal('')),
   role: z.enum(["admin", "pharmacist", "delivery", "client"], {
     message: "Selecione um cargo válido"
   }),
@@ -36,6 +39,7 @@ const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, onSave, 
     defaultValues: {
       name: user?.name || '',
       email: user?.email || '',
+      password: '', // Campo vazio por padrão
       role: user?.role || 'client',
       phone: user?.phone || '',
       avatar: user?.avatar || '',
@@ -45,13 +49,14 @@ const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, onSave, 
   const handleSubmit = (values: FormValues) => {
     const userData: User = {
       id: user?.id || '',
-      name: values.name, // Garantir que name não seja opcional
-      email: values.email, // Garantir que email não seja opcional
-      role: values.role, // Garantir que role não seja opcional
-      phone: values.phone || '', // Valores opcionais recebem um fallback
+      name: values.name,
+      email: values.email,
+      role: values.role,
+      phone: values.phone || '',
       avatar: values.avatar || '',
       created_at: user?.created_at || new Date().toISOString(),
       updated_at: new Date().toISOString(),
+      password: values.password || undefined, // Adicionar senha ao objeto de usuário
     };
     
     onSave(userData);
@@ -90,6 +95,25 @@ const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, onSave, 
                   <FormLabel>Email</FormLabel>
                   <FormControl>
                     <Input placeholder="email@exemplo.com" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="password"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{user ? 'Nova Senha (deixe vazio para manter a atual)' : 'Senha'}</FormLabel>
+                  <FormControl>
+                    <Input 
+                      type="password" 
+                      placeholder={user ? "••••••" : "Senha"} 
+                      {...field} 
+                      required={!user}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

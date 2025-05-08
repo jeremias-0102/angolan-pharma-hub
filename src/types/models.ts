@@ -14,6 +14,7 @@ export interface User {
   avatar?: string;
   created_at: string;
   updated_at: string;
+  password?: string; // Campo opcional para senha
 }
 
 // Product interface

@@ -43,7 +43,8 @@ const mockUsers: User[] = [
     phone: "+244 923 456 789", 
     avatar: "", 
     created_at: "2023-01-15T10:30:00Z", 
-    updated_at: "2023-01-15T10:30:00Z" 
+    updated_at: "2023-01-15T10:30:00Z",
+    password: "senha123" // Adicionar senha aos usuários mock
   },
   { 
     id: "2", 
@@ -53,7 +54,8 @@ const mockUsers: User[] = [
     phone: "+244 912 345 678", 
     avatar: "", 
     created_at: "2023-02-10T14:20:00Z", 
-    updated_at: "2023-02-10T14:20:00Z" 
+    updated_at: "2023-02-10T14:20:00Z",
+    password: "senha123"
   },
   { 
     id: "3", 
@@ -63,7 +65,8 @@ const mockUsers: User[] = [
     phone: "+244 934 567 890", 
     avatar: "", 
     created_at: "2023-03-05T09:15:00Z", 
-    updated_at: "2023-03-05T09:15:00Z" 
+    updated_at: "2023-03-05T09:15:00Z",
+    password: "senha123"
   },
   { 
     id: "4", 
@@ -73,7 +76,8 @@ const mockUsers: User[] = [
     phone: "+244 956 789 123", 
     avatar: "", 
     created_at: "2023-04-20T16:45:00Z", 
-    updated_at: "2023-04-20T16:45:00Z" 
+    updated_at: "2023-04-20T16:45:00Z",
+    password: "senha123"
   },
   { 
     id: "5", 
@@ -83,7 +87,8 @@ const mockUsers: User[] = [
     phone: "+244 945 678 912", 
     avatar: "", 
     created_at: "2023-05-11T11:10:00Z", 
-    updated_at: "2023-05-11T11:10:00Z" 
+    updated_at: "2023-05-11T11:10:00Z",
+    password: "senha123"
   }
 ];
 
@@ -169,7 +174,16 @@ const UsersManagement: React.FC = () => {
   const handleSaveUser = (user: User) => {
     if (currentUser) {
       // Update existing user
-      const updatedUsers = users.map(u => u.id === user.id ? user : u);
+      const updatedUsers = users.map(u => {
+        if (u.id === user.id) {
+          // Se a senha estiver em branco, mantenha a senha atual
+          return {
+            ...user,
+            password: user.password || u.password
+          };
+        }
+        return u;
+      });
       setUsers(updatedUsers);
       toast({
         title: "Utilizador atualizado",
@@ -181,7 +195,8 @@ const UsersManagement: React.FC = () => {
         ...user,
         id: Date.now().toString(),
         created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
+        password: user.password || 'senha123' // Senha padrão se não for fornecida
       };
       setUsers([...users, newUser]);
       toast({
