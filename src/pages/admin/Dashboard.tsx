@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { LucideIcon, LayoutDashboard, Package, ShoppingCart, Users, Truck, DollarSign, Box } from 'lucide-react';
 import UsersManagement from './UsersManagement';
+import ProductsManagement from './ProductsManagement';
+import OrdersManagement from './OrdersManagement';
 
 // Admin Dashboard Layout
 const AdminDashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -128,8 +130,8 @@ const AdminDashboard = () => {
     <AdminDashboardLayout>
       <Routes>
         <Route path="/" element={<AdminOverview />} />
-        <Route path="/produtos" element={<div>Lista de Produtos</div>} />
-        <Route path="/pedidos" element={<div>Lista de Pedidos</div>} />
+        <Route path="/produtos" element={<ProductsManagement />} />
+        <Route path="/pedidos" element={<OrdersManagement />} />
         <Route path="/aquisicoes" element={<div>Lista de Aquisições</div>} />
         <Route path="/usuarios" element={<UsersManagement />} />
         <Route path="/fornecedores" element={<div>Lista de Fornecedores</div>} />
