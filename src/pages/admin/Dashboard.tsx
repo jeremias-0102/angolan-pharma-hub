@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { LucideIcon, LayoutDashboard, Package, ShoppingCart, Users, Truck, DollarSign, Box } from 'lucide-react';
+import UsersManagement from './UsersManagement';
 
 // Admin Dashboard Layout
 const AdminDashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -130,7 +131,7 @@ const AdminDashboard = () => {
         <Route path="/produtos" element={<div>Lista de Produtos</div>} />
         <Route path="/pedidos" element={<div>Lista de Pedidos</div>} />
         <Route path="/aquisicoes" element={<div>Lista de Aquisições</div>} />
-        <Route path="/usuarios" element={<div>Lista de Usuários</div>} />
+        <Route path="/usuarios" element={<UsersManagement />} />
         <Route path="/fornecedores" element={<div>Lista de Fornecedores</div>} />
         <Route path="/relatorios" element={<div>Relatórios</div>} />
       </Routes>
