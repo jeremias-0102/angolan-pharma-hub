@@ -8,7 +8,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { User } from '@/types/models';
+import { User, UserRole } from '@/types/models';
 
 interface UserFormModalProps {
   isOpen: boolean;
@@ -44,8 +44,12 @@ const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, onSave, 
 
   const handleSubmit = (values: FormValues) => {
     const userData: User = {
-      ...values,
       id: user?.id || '',
+      name: values.name, // Garantir que name não seja opcional
+      email: values.email, // Garantir que email não seja opcional
+      role: values.role, // Garantir que role não seja opcional
+      phone: values.phone || '', // Valores opcionais recebem um fallback
+      avatar: values.avatar || '',
       created_at: user?.created_at || new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
