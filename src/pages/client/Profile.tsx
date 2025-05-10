@@ -1,5 +1,4 @@
-
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MainLayout from '@/components/layout/MainLayout';
 import { useAuth } from '@/contexts/AuthContext';
@@ -8,7 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { mockOrders } from '@/data/mockData';
+import { getOrdersByUserId } from '@/services/orderService';
+import { Order } from '@/types/models';
 import { useToast } from '@/components/ui/use-toast';
 import { User, Package, ShoppingBag, MapPin, Phone, Mail, Edit2 } from 'lucide-react';
 
@@ -16,20 +16,40 @@ const Profile = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Redirect if not logged in
-  React.useEffect(() => {
+  useEffect(() => {
     if (!user) {
       navigate('/login');
     }
   }, [user, navigate]);
+
+  // Load user orders
+  useEffect(() => {
+    const loadOrders = async () => {
+      if (user) {
+        try {
+          const userOrders = await getOrdersByUserId(user.id);
+          setOrders(userOrders);
+        } catch (error) {
+          console.error('Error loading orders:', error);
+        } finally {
+          setIsLoading(false);
+        }
+      }
+    };
+    
+    loadOrders();
+  }, [user]);
 
   if (!user) {
     return <div>Redirecionando...</div>;
   }
 
   // Get user orders (for client role)
-  const userOrders = user.role === 'client' ? mockOrders.filter(order => order.userId === user.id) : [];
+  const userOrders = user.role === 'client' ? orders : [];
 
   const handleProfileUpdate = (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,10 +83,14 @@ const Profile = () => {
     switch(status) {
       case 'pending':
         return <span className="px-2 py-1 rounded-full bg-yellow-100 text-yellow-800 text-xs">Pendente</span>;
+      case 'paid':
+        return <span className="px-2 py-1 rounded-full bg-blue-100 text-blue-800 text-xs">Pago</span>;
       case 'processing':
         return <span className="px-2 py-1 rounded-full bg-blue-100 text-blue-800 text-xs">Processando</span>;
-      case 'shipped':
-        return <span className="px-2 py-1 rounded-full bg-indigo-100 text-indigo-800 text-xs">Enviado</span>;
+      case 'ready':
+        return <span className="px-2 py-1 rounded-full bg-indigo-100 text-indigo-800 text-xs">Pronto</span>;
+      case 'shipping':
+        return <span className="px-2 py-1 rounded-full bg-indigo-100 text-indigo-800 text-xs">Em entrega</span>;
       case 'delivered':
         return <span className="px-2 py-1 rounded-full bg-green-100 text-green-800 text-xs">Entregue</span>;
       case 'cancelled':

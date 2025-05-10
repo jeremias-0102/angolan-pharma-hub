@@ -26,6 +26,12 @@ import PharmacistDashboard from "./pages/pharmacist/Dashboard";
 import DeliveryDashboard from "./pages/delivery/Dashboard";
 import ClientProfile from "./pages/client/Profile";
 
+// Admin pages
+import SuppliersManagement from "./pages/admin/SuppliersManagement";
+import AcquisitionsManagement from "./pages/admin/AcquisitionsManagement";
+import ReportsPage from "./pages/admin/ReportsPage";
+import CompanySettings from "./pages/admin/CompanySettings";
+
 const queryClient = new QueryClient();
 
 const App = () => {
@@ -57,6 +63,10 @@ const App = () => {
                 
                 {/* Role-specific Dashboards */}
                 <Route path="/admin/*" element={<AdminDashboard />} />
+                <Route path="/admin/fornecedores" element={<SuppliersManagement />} />
+                <Route path="/admin/aquisicoes" element={<AcquisitionsManagement />} />
+                <Route path="/admin/relatorios" element={<ReportsPage />} />
+                <Route path="/admin/configuracao" element={<CompanySettings />} />
                 <Route path="/pharmacist/*" element={<PharmacistDashboard />} />
                 <Route path="/delivery/*" element={<DeliveryDashboard />} />
                 <Route path="/profile" element={<ClientProfile />} />

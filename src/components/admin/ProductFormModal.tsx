@@ -73,7 +73,14 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
       
       const productData: Product = {
         id: product?.id || '',
-        ...values,
+        code: values.code,
+        name: values.name,
+        description: values.description,
+        price_cost: values.price_cost,
+        price_sale: values.price_sale,
+        category: values.category,
+        manufacturer: values.manufacturer,
+        requiresPrescription: values.requiresPrescription,
         image: imageUrl,
         created_at: product?.created_at || new Date().toISOString(),
         updated_at: new Date().toISOString(),

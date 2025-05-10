@@ -1,9 +1,9 @@
 
-import { User, Product, Order, Batch, Supplier } from '@/types/models';
+import { User, Product, Order, Batch, Supplier, PurchaseOrder } from '@/types/models';
 
 // Database configuration
 const DB_NAME = 'pharmagestDB';
-const DB_VERSION = 1;
+const DB_VERSION = 2; // Increased version for schema update
 
 // Store names
 export const STORES = {
@@ -12,6 +12,8 @@ export const STORES = {
   ORDERS: 'orders',
   BATCHES: 'batches',
   SUPPLIERS: 'suppliers',
+  PURCHASE_ORDERS: 'purchase_orders',
+  SETTINGS: 'settings',
 };
 
 // Initialize database
@@ -31,34 +33,54 @@ export const initDB = (): Promise<IDBDatabase> => {
 
     request.onupgradeneeded = (event) => {
       const db = (event.target as IDBOpenDBRequest).result;
+      const oldVersion = event.oldVersion;
       
-      // Create stores if they don't exist
-      if (!db.objectStoreNames.contains(STORES.USERS)) {
-        const usersStore = db.createObjectStore(STORES.USERS, { keyPath: 'id' });
-        usersStore.createIndex('email', 'email', { unique: true });
-        usersStore.createIndex('role', 'role', { unique: false });
-      }
+      // Create or update stores
+      if (oldVersion < 1) {
+        // Create stores if they don't exist (initial version)
+        if (!db.objectStoreNames.contains(STORES.USERS)) {
+          const usersStore = db.createObjectStore(STORES.USERS, { keyPath: 'id' });
+          usersStore.createIndex('email', 'email', { unique: true });
+          usersStore.createIndex('role', 'role', { unique: false });
+        }
 
-      if (!db.objectStoreNames.contains(STORES.PRODUCTS)) {
-        const productsStore = db.createObjectStore(STORES.PRODUCTS, { keyPath: 'id' });
-        productsStore.createIndex('code', 'code', { unique: true });
-        productsStore.createIndex('category', 'category', { unique: false });
-      }
+        if (!db.objectStoreNames.contains(STORES.PRODUCTS)) {
+          const productsStore = db.createObjectStore(STORES.PRODUCTS, { keyPath: 'id' });
+          productsStore.createIndex('code', 'code', { unique: true });
+          productsStore.createIndex('category', 'category', { unique: false });
+        }
 
-      if (!db.objectStoreNames.contains(STORES.ORDERS)) {
-        const ordersStore = db.createObjectStore(STORES.ORDERS, { keyPath: 'id' });
-        ordersStore.createIndex('user_id', 'user_id', { unique: false });
-        ordersStore.createIndex('status', 'status', { unique: false });
-      }
+        if (!db.objectStoreNames.contains(STORES.ORDERS)) {
+          const ordersStore = db.createObjectStore(STORES.ORDERS, { keyPath: 'id' });
+          ordersStore.createIndex('user_id', 'user_id', { unique: false });
+          ordersStore.createIndex('status', 'status', { unique: false });
+        }
 
-      if (!db.objectStoreNames.contains(STORES.BATCHES)) {
-        const batchesStore = db.createObjectStore(STORES.BATCHES, { keyPath: 'id' });
-        batchesStore.createIndex('product_id', 'product_id', { unique: false });
-      }
+        if (!db.objectStoreNames.contains(STORES.BATCHES)) {
+          const batchesStore = db.createObjectStore(STORES.BATCHES, { keyPath: 'id' });
+          batchesStore.createIndex('product_id', 'product_id', { unique: false });
+        }
 
-      if (!db.objectStoreNames.contains(STORES.SUPPLIERS)) {
-        const suppliersStore = db.createObjectStore(STORES.SUPPLIERS, { keyPath: 'id' });
-        suppliersStore.createIndex('name', 'name', { unique: false });
+        if (!db.objectStoreNames.contains(STORES.SUPPLIERS)) {
+          const suppliersStore = db.createObjectStore(STORES.SUPPLIERS, { keyPath: 'id' });
+          suppliersStore.createIndex('name', 'name', { unique: false });
+        }
+      }
+      
+      // Version 2 upgrades
+      if (oldVersion < 2) {
+        // Add purchase orders store
+        if (!db.objectStoreNames.contains(STORES.PURCHASE_ORDERS)) {
+          const purchaseOrdersStore = db.createObjectStore(STORES.PURCHASE_ORDERS, { keyPath: 'id' });
+          purchaseOrdersStore.createIndex('supplier_id', 'supplier_id', { unique: false });
+          purchaseOrdersStore.createIndex('status', 'status', { unique: false });
+          purchaseOrdersStore.createIndex('created_by', 'created_by', { unique: false });
+        }
+        
+        // Add settings store
+        if (!db.objectStoreNames.contains(STORES.SETTINGS)) {
+          db.createObjectStore(STORES.SETTINGS, { keyPath: 'id' });
+        }
       }
     };
   });

@@ -86,7 +86,15 @@ const Login = () => {
     const { confirmPassword, ...userData } = values;
     
     try {
-      await register(userData);
+      // Ensure all required fields are present and non-optional
+      await register({
+        email: userData.email,
+        name: userData.name,
+        password: userData.password,
+        phone: userData.phone || '',
+        role: userData.role,
+      });
+      
       toast({
         title: "Registro realizado com sucesso",
         description: "Sua conta foi criada e você foi automaticamente logado.",

@@ -6,18 +6,16 @@ import { useCart } from '@/contexts/CartContext';
 import { ShoppingCart, AlertCircle } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 
-interface Product {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  image?: string;
-  stock: number;
-  needsPrescription: boolean;
-}
-
 interface ProductCardProps {
-  product: Product;
+  product: {
+    id: string;
+    name: string;
+    description: string;
+    price: number;
+    image?: string;
+    stock: number;
+    needsPrescription: boolean;
+  };
 }
 
 const ProductCard: React.FC<ProductCardProps> = ({ product }) => {

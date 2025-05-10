@@ -4,10 +4,25 @@ import { Routes, Route, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
-import { LucideIcon, LayoutDashboard, Package, ShoppingCart, Users, Truck, DollarSign, Box } from 'lucide-react';
+import { 
+  LucideIcon, 
+  LayoutDashboard, 
+  Package, 
+  ShoppingCart, 
+  Users, 
+  Truck, 
+  BarChart2, 
+  Box,
+  Settings
+} from 'lucide-react';
 import UsersManagement from './UsersManagement';
 import ProductsManagement from './ProductsManagement';
 import OrdersManagement from './OrdersManagement';
+import SuppliersManagement from './SuppliersManagement';
+import AcquisitionsManagement from './AcquisitionsManagement';
+import ReportsPage from './ReportsPage';
+import CompanySettings from './CompanySettings';
+import AdminOverview from './AdminOverview';
 
 // Admin Dashboard Layout
 const AdminDashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -32,7 +47,8 @@ const AdminDashboardLayout: React.FC<{ children: React.ReactNode }> = ({ childre
     { name: 'Aquisições', icon: Box, path: '/admin/aquisicoes' },
     { name: 'Usuários', icon: Users, path: '/admin/usuarios' },
     { name: 'Fornecedores', icon: Truck, path: '/admin/fornecedores' },
-    { name: 'Relatórios', icon: DollarSign, path: '/admin/relatorios' },
+    { name: 'Relatórios', icon: BarChart2, path: '/admin/relatorios' },
+    { name: 'Configurações', icon: Settings, path: '/admin/configuracao' },
   ];
 
   return (
@@ -94,36 +110,6 @@ const NavItem: React.FC<NavItemProps> = ({ icon: Icon, path, name }) => {
   );
 };
 
-// Admin Dashboard Pages
-const AdminOverview = () => {
-  return (
-    <div>
-      <h2 className="text-2xl font-bold mb-6">Visão Geral</h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        <DashboardCard title="Total de Vendas" value="285.000 AOA" description="Últimos 30 dias" />
-        <DashboardCard title="Novos Pedidos" value="24" description="Pendentes" />
-        <DashboardCard title="Produtos" value="65" description="Em estoque" />
-      </div>
-    </div>
-  );
-};
-
-interface DashboardCardProps {
-  title: string;
-  value: string;
-  description: string;
-}
-
-const DashboardCard: React.FC<DashboardCardProps> = ({ title, value, description }) => {
-  return (
-    <div className="bg-white rounded-lg shadow-sm p-6 border border-gray-100">
-      <p className="text-sm font-medium text-gray-500">{title}</p>
-      <p className="text-3xl font-bold text-pharma-primary mt-2">{value}</p>
-      <p className="text-xs text-gray-500 mt-1">{description}</p>
-    </div>
-  );
-};
-
 // Main Dashboard Component
 const AdminDashboard = () => {
   return (
@@ -132,10 +118,11 @@ const AdminDashboard = () => {
         <Route path="/" element={<AdminOverview />} />
         <Route path="/produtos" element={<ProductsManagement />} />
         <Route path="/pedidos" element={<OrdersManagement />} />
-        <Route path="/aquisicoes" element={<div>Lista de Aquisições</div>} />
+        <Route path="/aquisicoes" element={<AcquisitionsManagement />} />
         <Route path="/usuarios" element={<UsersManagement />} />
-        <Route path="/fornecedores" element={<div>Lista de Fornecedores</div>} />
-        <Route path="/relatorios" element={<div>Relatórios</div>} />
+        <Route path="/fornecedores" element={<SuppliersManagement />} />
+        <Route path="/relatorios" element={<ReportsPage />} />
+        <Route path="/configuracao" element={<CompanySettings />} />
       </Routes>
     </AdminDashboardLayout>
   );
