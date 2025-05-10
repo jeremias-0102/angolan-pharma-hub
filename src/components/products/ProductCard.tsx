@@ -1,11 +1,20 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Product } from '@/contexts/CartContext';
 import { Button } from '@/components/ui/button';
 import { useCart } from '@/contexts/CartContext';
 import { ShoppingCart, AlertCircle } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
+
+interface Product {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  image?: string;
+  stock: number;
+  needsPrescription: boolean;
+}
 
 interface ProductCardProps {
   product: Product;
@@ -45,9 +54,14 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       <Link to={`/produtos/${product.id}`}>
         <div className="h-48 overflow-hidden">
           <img 
-            src={product.image} 
+            src={product.image || "/placeholder.svg"} 
             alt={product.name} 
             className="w-full h-full object-cover transition-transform hover:scale-105"
+            onError={(e) => {
+              const target = e.target as HTMLImageElement;
+              target.onerror = null;
+              target.src = '/placeholder.svg';
+            }}
           />
         </div>
       </Link>
@@ -61,11 +75,15 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           <span className="text-lg font-bold text-pharma-primary">
             {formatPrice(product.price)}
           </span>
-          {product.stock <= 5 && (
+          {product.stock <= 5 && product.stock > 0 ? (
             <span className="text-xs bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full">
               Estoque baixo
             </span>
-          )}
+          ) : product.stock === 0 ? (
+            <span className="text-xs bg-red-100 text-red-800 px-2 py-0.5 rounded-full">
+              Sem estoque
+            </span>
+          ) : null}
         </div>
         <div className="flex items-center justify-between">
           {product.needsPrescription && (
@@ -80,6 +98,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             variant="outline"
             size="sm"
             className="text-pharma-primary border-pharma-primary hover:bg-pharma-primary hover:text-white"
+            disabled={product.stock === 0}
           >
             <ShoppingCart size={16} className="mr-1" />
             <span>Adicionar</span>

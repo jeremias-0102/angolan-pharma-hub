@@ -17,6 +17,9 @@ interface DeleteConfirmationDialogProps {
   onConfirm: () => void;
   title: string;
   description: string;
+  cancelText?: string;
+  confirmText?: string;
+  variant?: 'default' | 'destructive';
 }
 
 const DeleteConfirmationDialog: React.FC<DeleteConfirmationDialogProps> = ({
@@ -25,6 +28,9 @@ const DeleteConfirmationDialog: React.FC<DeleteConfirmationDialogProps> = ({
   onConfirm,
   title,
   description,
+  cancelText = "Cancelar",
+  confirmText = "Excluir",
+  variant = "destructive"
 }) => {
   return (
     <AlertDialog open={isOpen} onOpenChange={onClose}>
@@ -36,12 +42,12 @@ const DeleteConfirmationDialog: React.FC<DeleteConfirmationDialogProps> = ({
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+          <AlertDialogCancel>{cancelText}</AlertDialogCancel>
           <AlertDialogAction 
             onClick={onConfirm}
-            className="bg-red-600 hover:bg-red-700"
+            className={variant === "destructive" ? "bg-red-600 hover:bg-red-700" : undefined}
           >
-            Excluir
+            {confirmText}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

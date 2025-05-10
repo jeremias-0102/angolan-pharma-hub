@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Table, 
   TableBody, 
@@ -24,95 +24,45 @@ import ProductFormModal from "@/components/admin/ProductFormModal";
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import DeleteConfirmationDialog from '@/components/admin/DeleteConfirmationDialog';
-
-// Mock data - would be replaced with API calls in production
-const initialProducts: Product[] = [
-  {
-    id: '1',
-    code: 'MED-001',
-    name: 'Paracetamol 500mg',
-    description: 'Analgésico e antipirético para alívio de dores leves e moderadas.',
-    price_cost: 200,
-    price_sale: 350,
-    category: 'analgésicos',
-    manufacturer: 'Pharma Inc.',
-    requiresPrescription: false,
-    image: '/images/paracetamol.jpg',
-    created_at: '2023-01-15T10:30:00Z',
-    updated_at: '2023-01-15T10:30:00Z',
-    batches: [
-      {
-        id: '101',
-        product_id: '1',
-        batch_number: 'B2023-001',
-        quantity: 150,
-        manufacture_date: '2022-12-01T00:00:00Z',
-        expiry_date: '2024-12-01T00:00:00Z',
-        created_at: '2023-01-15T10:30:00Z',
-      }
-    ]
-  },
-  {
-    id: '2',
-    code: 'MED-002',
-    name: 'Amoxicilina 500mg',
-    description: 'Antibiótico para tratamento de infecções bacterianas.',
-    price_cost: 400,
-    price_sale: 650,
-    category: 'antibióticos',
-    manufacturer: 'MedLab Angola',
-    requiresPrescription: true,
-    image: '/images/amoxicilina.jpg',
-    created_at: '2023-01-20T14:45:00Z',
-    updated_at: '2023-01-20T14:45:00Z',
-    batches: [
-      {
-        id: '102',
-        product_id: '2',
-        batch_number: 'B2023-002',
-        quantity: 80,
-        manufacture_date: '2022-11-15T00:00:00Z',
-        expiry_date: '2024-11-15T00:00:00Z',
-        created_at: '2023-01-20T14:45:00Z',
-      }
-    ]
-  },
-  {
-    id: '3',
-    code: 'MED-003',
-    name: 'Ibuprofeno 400mg',
-    description: 'Anti-inflamatório não esteroidal para dor e inflamação.',
-    price_cost: 250,
-    price_sale: 420,
-    category: 'anti-inflamatórios',
-    manufacturer: 'Pharma Angola',
-    requiresPrescription: false,
-    image: '/images/ibuprofeno.jpg',
-    created_at: '2023-02-05T09:15:00Z',
-    updated_at: '2023-02-05T09:15:00Z',
-    batches: [
-      {
-        id: '103',
-        product_id: '3',
-        batch_number: 'B2023-003',
-        quantity: 120,
-        manufacture_date: '2022-12-20T00:00:00Z',
-        expiry_date: '2024-12-20T00:00:00Z',
-        created_at: '2023-02-05T09:15:00Z',
-      }
-    ]
-  },
-];
+import { 
+  getAllProducts, 
+  getProductById, 
+  addProduct, 
+  updateProduct, 
+  deleteProduct
+} from '@/services/productService';
 
 const ProductsManagement: React.FC = () => {
-  const [products, setProducts] = useState<Product[]>(initialProducts);
+  const [products, setProducts] = useState<Product[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentProduct, setCurrentProduct] = useState<Product | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [productToDelete, setProductToDelete] = useState<Product | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   
   const { toast } = useToast();
+
+  // Load products from database
+  useEffect(() => {
+    const loadProducts = async () => {
+      try {
+        const data = await getAllProducts();
+        setProducts(data);
+        setIsLoading(false);
+      } catch (error) {
+        console.error('Error loading products:', error);
+        toast({
+          variant: "destructive",
+          title: "Erro ao carregar produtos",
+          description: "Não foi possível carregar a lista de produtos.",
+        });
+        setIsLoading(false);
+      }
+    };
+    
+    loadProducts();
+  }, [toast]);
 
   const filteredProducts = products.filter((product) => {
     const searchLower = searchQuery.toLowerCase();
@@ -143,42 +93,57 @@ const ProductsManagement: React.FC = () => {
     setIsDeleteDialogOpen(true);
   };
 
-  const handleSaveProduct = (product: Product) => {
-    if (product.id) {
-      // Update existing product
-      setProducts((prevProducts) =>
-        prevProducts.map((p) => (p.id === product.id ? product : p))
-      );
+  const handleSaveProduct = async (product: Product) => {
+    try {
+      if (product.id) {
+        // Update existing product
+        const updatedProduct = await updateProduct(product);
+        setProducts((prevProducts) =>
+          prevProducts.map((p) => (p.id === updatedProduct.id ? updatedProduct : p))
+        );
+        toast({
+          title: "Produto atualizado",
+          description: `${product.name} foi atualizado com sucesso.`,
+        });
+      } else {
+        // Add new product
+        const newProduct = await addProduct(product);
+        setProducts((prevProducts) => [...prevProducts, newProduct]);
+        toast({
+          title: "Produto adicionado",
+          description: `${product.name} foi adicionado com sucesso.`,
+        });
+      }
+      setIsModalOpen(false);
+    } catch (error) {
+      console.error('Error saving product:', error);
       toast({
-        title: "Produto atualizado",
-        description: `${product.name} foi atualizado com sucesso.`,
-      });
-    } else {
-      // Add new product with generated ID
-      const newProduct = {
-        ...product,
-        id: String(Date.now()),
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      };
-      setProducts((prevProducts) => [...prevProducts, newProduct]);
-      toast({
-        title: "Produto adicionado",
-        description: `${product.name} foi adicionado com sucesso.`,
+        variant: "destructive",
+        title: "Erro ao salvar produto",
+        description: "Ocorreu um erro ao salvar o produto.",
       });
     }
-    setIsModalOpen(false);
   };
 
-  const handleDeleteProduct = () => {
+  const handleDeleteProduct = async () => {
     if (productToDelete) {
-      setProducts((prevProducts) =>
-        prevProducts.filter((p) => p.id !== productToDelete.id)
-      );
-      toast({
-        title: "Produto excluído",
-        description: `${productToDelete.name} foi excluído com sucesso.`,
-      });
+      try {
+        await deleteProduct(productToDelete.id);
+        setProducts((prevProducts) =>
+          prevProducts.filter((p) => p.id !== productToDelete.id)
+        );
+        toast({
+          title: "Produto excluído",
+          description: `${productToDelete.name} foi excluído com sucesso.`,
+        });
+      } catch (error) {
+        console.error('Error deleting product:', error);
+        toast({
+          variant: "destructive",
+          title: "Erro ao excluir produto",
+          description: "Ocorreu um erro ao excluir o produto.",
+        });
+      }
       setIsDeleteDialogOpen(false);
       setProductToDelete(null);
     }
@@ -231,100 +196,107 @@ const ProductsManagement: React.FC = () => {
       </div>
 
       <div className="bg-white shadow-sm rounded-lg overflow-hidden">
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[100px]">Imagem</TableHead>
-                <TableHead>Código</TableHead>
-                <TableHead>Nome</TableHead>
-                <TableHead>Categoria</TableHead>
-                <TableHead>Fabricante</TableHead>
-                <TableHead>Preço de Venda</TableHead>
-                <TableHead>Estoque</TableHead>
-                <TableHead>Prescrição</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredProducts.length > 0 ? (
-                filteredProducts.map((product) => (
-                  <TableRow key={product.id}>
-                    <TableCell>
-                      <div className="w-12 h-12 rounded border overflow-hidden">
-                        <img
-                          src={product.image || '/placeholder.svg'}
-                          alt={product.name}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                    </TableCell>
-                    <TableCell className="font-medium">{product.code}</TableCell>
-                    <TableCell>{product.name}</TableCell>
-                    <TableCell className="capitalize">{product.category}</TableCell>
-                    <TableCell>{product.manufacturer}</TableCell>
-                    <TableCell>{formatPrice(product.price_sale)}</TableCell>
-                    <TableCell>
-                      {getTotalStock(product) > 10 ? (
-                        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                          {getTotalStock(product)} unidades
-                        </Badge>
-                      ) : getTotalStock(product) > 0 ? (
-                        <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
-                          {getTotalStock(product)} unidades
-                        </Badge>
-                      ) : (
-                        <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
-                          Sem estoque
-                        </Badge>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {product.requiresPrescription ? (
-                        <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                          Necessária
-                        </Badge>
-                      ) : (
-                        <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200">
-                          Dispensável
-                        </Badge>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm">
-                            <MoreHorizontal className="h-4 w-4" />
-                            <span className="sr-only">Abrir menu</span>
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => openEditModal(product)}>
-                            <Edit2 className="mr-2 h-4 w-4" />
-                            <span>Editar</span>
-                          </DropdownMenuItem>
-                          <DropdownMenuItem 
-                            className="text-red-600"
-                            onClick={() => openDeleteDialog(product)}
-                          >
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            <span>Excluir</span>
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+        {isLoading ? (
+          <div className="p-8 text-center">
+            <div className="animate-spin h-8 w-8 border-4 border-pharma-primary border-t-transparent rounded-full mx-auto mb-4"></div>
+            <p className="text-gray-500">Carregando produtos...</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[100px]">Imagem</TableHead>
+                  <TableHead>Código</TableHead>
+                  <TableHead>Nome</TableHead>
+                  <TableHead>Categoria</TableHead>
+                  <TableHead>Fabricante</TableHead>
+                  <TableHead>Preço de Venda</TableHead>
+                  <TableHead>Estoque</TableHead>
+                  <TableHead>Prescrição</TableHead>
+                  <TableHead className="text-right">Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredProducts.length > 0 ? (
+                  filteredProducts.map((product) => (
+                    <TableRow key={product.id}>
+                      <TableCell>
+                        <div className="w-12 h-12 rounded border overflow-hidden">
+                          <img
+                            src={product.image || '/placeholder.svg'}
+                            alt={product.name}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      </TableCell>
+                      <TableCell className="font-medium">{product.code}</TableCell>
+                      <TableCell>{product.name}</TableCell>
+                      <TableCell className="capitalize">{product.category}</TableCell>
+                      <TableCell>{product.manufacturer}</TableCell>
+                      <TableCell>{formatPrice(product.price_sale)}</TableCell>
+                      <TableCell>
+                        {getTotalStock(product) > 10 ? (
+                          <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                            {getTotalStock(product)} unidades
+                          </Badge>
+                        ) : getTotalStock(product) > 0 ? (
+                          <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
+                            {getTotalStock(product)} unidades
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
+                            Sem estoque
+                          </Badge>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {product.requiresPrescription ? (
+                          <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                            Necessária
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200">
+                            Dispensável
+                          </Badge>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm">
+                              <MoreHorizontal className="h-4 w-4" />
+                              <span className="sr-only">Abrir menu</span>
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => openEditModal(product)}>
+                              <Edit2 className="mr-2 h-4 w-4" />
+                              <span>Editar</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem 
+                              className="text-red-600"
+                              onClick={() => openDeleteDialog(product)}
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              <span>Excluir</span>
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={9} className="text-center py-8 text-gray-500">
+                      Nenhum produto encontrado. Tente outros termos de busca ou adicione um novo produto.
                     </TableCell>
                   </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={9} className="text-center py-8 text-gray-500">
-                    Nenhum produto encontrado. Tente outros termos de busca ou adicione um novo produto.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </div>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        )}
       </div>
 
       {/* Product Form Modal */}

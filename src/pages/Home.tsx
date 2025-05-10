@@ -1,13 +1,37 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import MainLayout from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
-import { Search, ShoppingCart, Pill, Truck, ChevronRight } from 'lucide-react';
+import { Search, ShoppingCart, Pill, Truck, ChevronRight, ArrowRight } from 'lucide-react';
+import { getAll, STORES } from '@/lib/database';
+import { Product as ProductType } from '@/types/models';
+import ProductCard from '@/components/products/ProductCard';
 
 const Home = () => {
   const { user } = useAuth();
+  const [featuredProducts, setFeaturedProducts] = useState<ProductType[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const allProducts = await getAll<ProductType>(STORES.PRODUCTS);
+        // Get most recent products
+        const sorted = [...allProducts].sort((a, b) => 
+          new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
+        );
+        setFeaturedProducts(sorted.slice(0, 4));
+      } catch (error) {
+        console.error('Error fetching products:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchProducts();
+  }, []);
 
   // Helper for role-based redirects
   const getDashboardLink = () => {
@@ -23,9 +47,16 @@ const Home = () => {
 
   return (
     <MainLayout fullWidth>
-      {/* Hero Section */}
-      <section className="bg-gradient-to-br from-pharma-primary/90 to-pharma-accent/80 text-white">
-        <div className="container mx-auto px-4 py-16 md:py-24 lg:py-32">
+      {/* Hero Section with Background Image */}
+      <section className="relative bg-gradient-to-br from-pharma-primary/90 to-pharma-accent/80 text-white">
+        <div className="absolute inset-0 overflow-hidden z-0">
+          <img 
+            src="https://images.unsplash.com/photo-1587854692152-cbe660dbde88?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NHx8cGhhcm1hY3l8ZW58MHx8MHx8fDA%3D&auto=format&fit=crop&w=1920&q=80" 
+            alt="Pharmacy background" 
+            className="object-cover w-full h-full opacity-20"
+          />
+        </div>
+        <div className="container mx-auto px-4 py-16 md:py-24 lg:py-32 relative z-10">
           <div className="max-w-3xl">
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 animate-fade-in">
               PharmaGest
@@ -57,14 +88,59 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Features Section */}
+      {/* Featured Products Section */}
       <section className="py-16 bg-white">
+        <div className="container mx-auto px-4">
+          <div className="flex justify-between items-center mb-8">
+            <h2 className="text-3xl font-bold">Produtos em Destaque</h2>
+            <Link to="/produtos" className="text-pharma-primary flex items-center font-medium hover:underline">
+              Ver todos <ArrowRight className="h-4 w-4 ml-1" />
+            </Link>
+          </div>
+
+          {isLoading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+              {[1, 2, 3, 4].map((item) => (
+                <div key={item} className="bg-gray-100 rounded-xl p-6 h-80 animate-pulse"></div>
+              ))}
+            </div>
+          ) : featuredProducts.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              {featuredProducts.map((product) => (
+                <ProductCard key={product.id} product={{
+                  id: product.id,
+                  name: product.name,
+                  price: product.price_sale,
+                  description: product.description,
+                  image: product.image || '/placeholder.svg',
+                  stock: product.batches?.reduce((total, batch) => total + batch.quantity, 0) || 0,
+                  needsPrescription: product.requiresPrescription
+                }} />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12 bg-gray-50 rounded-lg">
+              <Pill className="h-12 w-12 text-pharma-primary/50 mx-auto mb-4" />
+              <h3 className="text-xl font-medium mb-2">Nenhum produto encontrado</h3>
+              <p className="text-gray-500 mb-6">Adicione produtos para vê-los aqui.</p>
+              {user?.role === 'admin' && (
+                <Button asChild>
+                  <Link to="/admin/products">Adicionar Produtos</Link>
+                </Button>
+              )}
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* Features Section */}
+      <section className="py-16 bg-gray-50">
         <div className="container mx-auto px-4">
           <h2 className="text-3xl font-bold text-center mb-12">Funcionalidades Principais</h2>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {/* Feature Card 1 */}
-            <div className="bg-gray-50 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
+            <div className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow border border-gray-100">
               <div className="h-12 w-12 bg-pharma-primary/10 rounded-lg flex items-center justify-center mb-4">
                 <Search className="h-6 w-6 text-pharma-primary" />
               </div>
@@ -78,7 +154,7 @@ const Home = () => {
             </div>
             
             {/* Feature Card 2 */}
-            <div className="bg-gray-50 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
+            <div className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow border border-gray-100">
               <div className="h-12 w-12 bg-pharma-primary/10 rounded-lg flex items-center justify-center mb-4">
                 <ShoppingCart className="h-6 w-6 text-pharma-primary" />
               </div>
@@ -92,7 +168,7 @@ const Home = () => {
             </div>
             
             {/* Feature Card 3 */}
-            <div className="bg-gray-50 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
+            <div className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow border border-gray-100">
               <div className="h-12 w-12 bg-pharma-primary/10 rounded-lg flex items-center justify-center mb-4">
                 <Truck className="h-6 w-6 text-pharma-primary" />
               </div>
@@ -109,7 +185,7 @@ const Home = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="py-16 bg-gray-50">
+      <section className="py-16 bg-gradient-to-r from-pharma-light to-white bg-white">
         <div className="container mx-auto px-4 text-center">
           <div className="max-w-2xl mx-auto">
             <h2 className="text-3xl font-bold mb-6">Gerencie sua farmácia com eficiência</h2>

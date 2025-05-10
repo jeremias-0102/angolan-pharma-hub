@@ -1,8 +1,7 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import MainLayout from '@/components/layout/MainLayout';
 import ProductCard from '@/components/products/ProductCard';
-import { mockProducts } from '@/data/mockData';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { 
@@ -19,19 +18,39 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Search, FilterX } from 'lucide-react';
+import { getAllProducts } from '@/services/productService';
+import { Product as ProductType } from '@/types/models';
 
 const Products = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortOption, setSortOption] = useState('newest');
   const [activeTab, setActiveTab] = useState('all');
+  const [products, setProducts] = useState<ProductType[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  
+  // Fetch products from database
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const productsData = await getAllProducts();
+        setProducts(productsData);
+      } catch (error) {
+        console.error('Error fetching products:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchProducts();
+  }, []);
   
   // Get unique categories
   const categories = Array.from(
-    new Set(mockProducts.map(product => product.category))
+    new Set(products.map(product => product.category))
   );
   
   // Filter products based on search query and active tab
-  const filteredProducts = mockProducts.filter(product => {
+  const filteredProducts = products.filter(product => {
     const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
                          product.description.toLowerCase().includes(searchQuery.toLowerCase());
     
@@ -44,16 +63,16 @@ const Products = () => {
   const sortedProducts = [...filteredProducts].sort((a, b) => {
     switch (sortOption) {
       case 'price_low':
-        return a.price - b.price;
+        return a.price_sale - b.price_sale;
       case 'price_high':
-        return b.price - a.price;
+        return b.price_sale - a.price_sale;
       case 'name_asc':
         return a.name.localeCompare(b.name);
       case 'name_desc':
         return b.name.localeCompare(a.name);
       default:
-        // newest (by ID for mock data)
-        return b.id - a.id;
+        // newest (by creation date)
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
     }
   });
   
@@ -108,34 +127,50 @@ const Products = () => {
           </div>
         </div>
         
-        {/* Category Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-8">
-          <TabsList className="bg-muted mb-4 flex flex-wrap">
-            <TabsTrigger value="all" className="flex-grow sm:flex-grow-0">
-              Todos
-            </TabsTrigger>
-            {categories.map(category => (
-              <TabsTrigger key={category} value={category} className="flex-grow sm:flex-grow-0 capitalize">
-                {category}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-          
-          {/* Products grid */}
-          <TabsContent value={activeTab} className="mt-0">
-            {sortedProducts.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                {sortedProducts.map(product => (
-                  <ProductCard key={product.id} product={product} />
+        {isLoading ? (
+          <div className="flex justify-center items-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-pharma-primary"></div>
+          </div>
+        ) : (
+          <>
+            {/* Category Tabs */}
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-8">
+              <TabsList className="bg-muted mb-4 flex flex-wrap">
+                <TabsTrigger value="all" className="flex-grow sm:flex-grow-0">
+                  Todos
+                </TabsTrigger>
+                {categories.map(category => (
+                  <TabsTrigger key={category} value={category} className="flex-grow sm:flex-grow-0 capitalize">
+                    {category}
+                  </TabsTrigger>
                 ))}
-              </div>
-            ) : (
-              <div className="text-center py-12">
-                <p className="text-lg text-gray-500">Nenhum produto encontrado. Tente outros termos de busca.</p>
-              </div>
-            )}
-          </TabsContent>
-        </Tabs>
+              </TabsList>
+              
+              {/* Products grid */}
+              <TabsContent value={activeTab} className="mt-0">
+                {sortedProducts.length > 0 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                    {sortedProducts.map(product => (
+                      <ProductCard key={product.id} product={{
+                        id: product.id,
+                        name: product.name,
+                        price: product.price_sale,
+                        description: product.description,
+                        image: product.image,
+                        stock: product.batches?.reduce((total, batch) => total + batch.quantity, 0) || 0,
+                        needsPrescription: product.requiresPrescription
+                      }} />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <p className="text-lg text-gray-500">Nenhum produto encontrado. Tente outros termos de busca.</p>
+                  </div>
+                )}
+              </TabsContent>
+            </Tabs>
+          </>
+        )}
       </div>
     </MainLayout>
   );
