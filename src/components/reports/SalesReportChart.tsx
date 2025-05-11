@@ -10,6 +10,9 @@ import {
   Legend, 
   ResponsiveContainer 
 } from 'recharts';
+import { Button } from '@/components/ui/button';
+import { Download } from 'lucide-react';
+import { downloadPDF, downloadExcel } from '@/utils/reportExport';
 
 const data = [
   { name: 'Jan', vendas: 65000, lucro: 15000 },
@@ -21,30 +24,64 @@ const data = [
 ];
 
 const SalesReportChart: React.FC = () => {
+  const handleDownloadPDF = () => {
+    downloadPDF('sales-report', 'Relatório de Vendas');
+  };
+
+  const handleDownloadExcel = () => {
+    downloadExcel(data, 'relatorio-vendas');
+  };
+
   return (
-    <ResponsiveContainer width="100%" height={300}>
-      <BarChart
-        data={data}
-        margin={{
-          top: 20,
-          right: 30,
-          left: 20,
-          bottom: 5,
-        }}
-      >
-        <CartesianGrid strokeDasharray="3 3" />
-        <XAxis dataKey="name" />
-        <YAxis 
-          tickFormatter={(value) => `${value/1000}k`}
-        />
-        <Tooltip 
-          formatter={(value: number) => [`AOA ${value.toLocaleString()}`, '']}
-        />
-        <Legend />
-        <Bar dataKey="vendas" name="Vendas" fill="#8884d8" />
-        <Bar dataKey="lucro" name="Lucro" fill="#82ca9d" />
-      </BarChart>
-    </ResponsiveContainer>
+    <div className="space-y-4">
+      <div className="flex justify-end space-x-2">
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="flex items-center"
+          onClick={handleDownloadExcel}
+        >
+          <Download className="mr-2 h-4 w-4" />
+          Excel
+        </Button>
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="flex items-center"
+          onClick={handleDownloadPDF}
+        >
+          <Download className="mr-2 h-4 w-4" />
+          PDF
+        </Button>
+      </div>
+
+      <div id="sales-report" className="bg-white p-4 rounded-lg">
+        <h3 className="text-lg font-medium mb-4">Relatório de Vendas 2025</h3>
+        <ResponsiveContainer width="100%" height={300}>
+          <BarChart
+            data={data}
+            margin={{
+              top: 20,
+              right: 30,
+              left: 20,
+              bottom: 5,
+            }}
+          >
+            <CartesianGrid strokeDasharray="3 3" />
+            <XAxis dataKey="name" />
+            <YAxis 
+              tickFormatter={(value) => `${value/1000}k`}
+            />
+            <Tooltip 
+              formatter={(value: number) => [`AOA ${value.toLocaleString()}`, '']}
+            />
+            <Legend />
+            <Bar dataKey="vendas" name="Vendas" fill="#8884d8" />
+            <Bar dataKey="lucro" name="Lucro" fill="#82ca9d" />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
   );
 };
 

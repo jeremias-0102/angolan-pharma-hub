@@ -49,7 +49,12 @@ const SupplierFormModal: React.FC<SupplierFormModalProps> = ({
   const handleSubmit = async (values: SupplierFormValues) => {
     const supplierData: Supplier = {
       id: supplier?.id || '',
-      ...values,
+      name: values.name,
+      tax_id: values.tax_id,
+      contact_name: values.contact_name,
+      email: values.email,
+      phone: values.phone,
+      address: values.address,
       created_at: supplier?.created_at || new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };

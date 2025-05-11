@@ -11,6 +11,19 @@ import { Save, Building, Mail, Phone, MapPin, Globe, ImageIcon, User } from 'luc
 import FileUpload from '@/components/ui/file-upload';
 import { getCompanySettings, updateCompanySettings } from '@/services/settingsService';
 
+interface SocialMedia {
+  facebook?: string;
+  instagram?: string;
+  twitter?: string;
+  linkedin?: string;
+}
+
+interface NotificationSettings {
+  stock_alerts: boolean;
+  order_alerts: boolean;
+  expiry_alerts: boolean;
+}
+
 interface CompanySettings {
   name: string;
   slogan: string;
@@ -24,37 +37,28 @@ interface CompanySettings {
   website: string;
   logo?: string;
   tax_id: string;
-  social_media: {
-    facebook?: string;
-    instagram?: string;
-    twitter?: string;
-    linkedin?: string;
-  };
-  notification_settings: {
-    stock_alerts: boolean;
-    order_alerts: boolean;
-    expiry_alerts: boolean;
-  };
+  social_media: SocialMedia;
+  notification_settings: NotificationSettings;
 }
 
 const CompanySettings: React.FC = () => {
   const [settings, setSettings] = useState<CompanySettings>({
-    name: 'PharmaGest',
+    name: 'BEGJNP Pharma',
     slogan: 'Sua saúde em boas mãos',
     description: 'Rede de farmácias com atendimento personalizado e produtos de qualidade.',
-    email: 'contato@pharmagest.co.ao',
-    phone: '+244 923 456 789',
+    email: 'contato@begjnppharma.co.ao',
+    phone: '926962170',
     address: 'Avenida 4 de Fevereiro, 123',
     city: 'Luanda',
     province: 'Luanda',
     postal_code: '1000-001',
-    website: 'www.pharmagest.co.ao',
+    website: 'www.begjnppharma.co.ao',
     tax_id: '5001293847',
     social_media: {
-      facebook: 'facebook.com/pharmagest',
-      instagram: 'instagram.com/pharmagest',
+      facebook: 'facebook.com/begjnppharma',
+      instagram: 'instagram.com/begjnppharma',
       twitter: '',
-      linkedin: 'linkedin.com/company/pharmagest'
+      linkedin: 'linkedin.com/company/begjnppharma'
     },
     notification_settings: {
       stock_alerts: true,
@@ -93,13 +97,24 @@ const CompanySettings: React.FC = () => {
     // Handle nested properties
     if (name.includes('.')) {
       const [parent, child] = name.split('.');
-      setSettings(prev => ({
-        ...prev,
-        [parent]: {
-          ...prev[parent as keyof CompanySettings],
-          [child]: value
-        }
-      }));
+      
+      if (parent === 'social_media') {
+        setSettings(prev => ({
+          ...prev,
+          social_media: {
+            ...prev.social_media,
+            [child]: value
+          }
+        }));
+      } else if (parent === 'notification_settings') {
+        setSettings(prev => ({
+          ...prev,
+          notification_settings: {
+            ...prev.notification_settings,
+            [child]: value === 'true'
+          }
+        }));
+      }
     } else {
       setSettings(prev => ({
         ...prev,
@@ -114,13 +129,16 @@ const CompanySettings: React.FC = () => {
     // Handle nested properties for checkboxes
     if (name.includes('.')) {
       const [parent, child] = name.split('.');
-      setSettings(prev => ({
-        ...prev,
-        [parent]: {
-          ...prev[parent as keyof CompanySettings],
-          [child]: checked
-        }
-      }));
+      
+      if (parent === 'notification_settings') {
+        setSettings(prev => ({
+          ...prev,
+          notification_settings: {
+            ...prev.notification_settings,
+            [child]: checked
+          }
+        }));
+      }
     }
   };
 
