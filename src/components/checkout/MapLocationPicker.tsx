@@ -11,7 +11,7 @@ const MapLocationPicker: React.FC<MapLocationPickerProps> = ({ onLocationSelect 
   
   useEffect(() => {
     // Default coordinates for Luanda, Angola
-    const defaultLocation = [-8.839988, 13.289437];
+    const defaultLocation: [number, number] = [-8.839988, 13.289437];
     
     // Initialize a map (this would use Google Maps or a similar service)
     // For now, creating a placeholder with styling

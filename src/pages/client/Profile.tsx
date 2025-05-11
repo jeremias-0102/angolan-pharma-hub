@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MainLayout from '@/components/layout/MainLayout';
@@ -8,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { getOrdersByUserId } from '@/services/orderService';
-import { Order } from '@/types/models';
+import { Order } from '@/data/mockData';  // Changed to use the mockData Order interface
 import { useToast } from '@/components/ui/use-toast';
 import { User, Package, ShoppingBag, MapPin, Phone, Mail, Edit2 } from 'lucide-react';
 

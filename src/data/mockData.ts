@@ -1,7 +1,7 @@
-import { Product as CartProduct } from '@/types/models';
+import { Product } from '@/types/models';
 
 // Mock products with proper type
-export const mockProducts: CartProduct[] = [
+export const mockProducts: Product[] = [
   {
     id: '1',
     code: 'PARA500',
@@ -147,7 +147,7 @@ export const mockProducts: CartProduct[] = [
 // Mock orders
 export interface OrderItem {
   id: number;
-  product: CartProduct;
+  product: Product;
   quantity: number;
   price: number;
 }
@@ -169,13 +169,13 @@ export const mockOrders: Order[] = [
     id: 1,
     userId: 4, // client
     items: [
-      { id: 1, product: mockProducts[0], quantity: 2, price: mockProducts[0].price },
-      { id: 2, product: mockProducts[2], quantity: 1, price: mockProducts[2].price },
+      { id: 1, product: mockProducts[0], quantity: 2, price: mockProducts[0].price_sale },
+      { id: 2, product: mockProducts[2], quantity: 1, price: mockProducts[2].price_sale },
     ],
-    totalAmount: mockProducts[0].price * 2 + mockProducts[2].price,
+    totalAmount: mockProducts[0].price_sale * 2 + mockProducts[2].price_sale,
     status: 'delivered',
-    createdAt: '2023-04-15T10:30:00Z',
-    updatedAt: '2023-04-16T14:20:00Z',
+    createdAt: '2025-04-15T10:30:00Z',
+    updatedAt: '2025-04-16T14:20:00Z',
     address: 'Rua dos Coqueiros, 123, Luanda',
     paymentMethod: 'card',
   },
@@ -183,12 +183,12 @@ export const mockOrders: Order[] = [
     id: 2,
     userId: 4, // client
     items: [
-      { id: 3, product: mockProducts[5], quantity: 1, price: mockProducts[5].price },
+      { id: 3, product: mockProducts[5], quantity: 1, price: mockProducts[5].price_sale },
     ],
-    totalAmount: mockProducts[5].price,
+    totalAmount: mockProducts[5].price_sale,
     status: 'processing',
-    createdAt: '2023-05-02T15:45:00Z',
-    updatedAt: '2023-05-02T16:10:00Z',
+    createdAt: '2025-05-02T15:45:00Z',
+    updatedAt: '2025-05-02T16:10:00Z',
     address: 'Avenida 4 de Fevereiro, 78, Luanda',
     paymentMethod: 'cash',
   },
@@ -196,14 +196,14 @@ export const mockOrders: Order[] = [
     id: 3,
     userId: 4, // client
     items: [
-      { id: 4, product: mockProducts[3], quantity: 1, price: mockProducts[3].price },
-      { id: 5, product: mockProducts[4], quantity: 3, price: mockProducts[4].price },
-      { id: 6, product: mockProducts[8], quantity: 2, price: mockProducts[8].price },
+      { id: 4, product: mockProducts[3], quantity: 1, price: mockProducts[3].price_sale },
+      { id: 5, product: mockProducts[4], quantity: 3, price: mockProducts[4].price_sale },
+      { id: 6, product: mockProducts[8], quantity: 2, price: mockProducts[8].price_sale },
     ],
-    totalAmount: mockProducts[3].price + mockProducts[4].price * 3 + mockProducts[8].price * 2,
+    totalAmount: mockProducts[3].price_sale + mockProducts[4].price_sale * 3 + mockProducts[8].price_sale * 2,
     status: 'pending',
-    createdAt: '2023-05-10T09:20:00Z',
-    updatedAt: '2023-05-10T09:20:00Z',
+    createdAt: '2025-05-10T09:20:00Z',
+    updatedAt: '2025-05-10T09:20:00Z',
     address: 'Rua da Missão, 45, Luanda',
     paymentMethod: 'card',
   },
