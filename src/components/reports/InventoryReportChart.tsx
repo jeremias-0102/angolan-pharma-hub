@@ -13,6 +13,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Download } from 'lucide-react';
 import { exportToPDF, exportToExcel } from '@/utils/reportExport';
+import { DateRange } from 'react-day-picker';
 
 const data = [
   { name: 'Jan', estoque: 120, minimo: 25 },
@@ -23,7 +24,11 @@ const data = [
   { name: 'Jun', estoque: 110, minimo: 25 },
 ];
 
-const InventoryReportChart: React.FC = () => {
+interface InventoryReportChartProps {
+  date?: DateRange;
+}
+
+const InventoryReportChart: React.FC<InventoryReportChartProps> = ({ date }) => {
   const handleDownloadPDF = () => {
     const columns = [
       { header: 'Mês', accessor: 'name' },

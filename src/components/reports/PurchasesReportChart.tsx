@@ -13,6 +13,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Download } from 'lucide-react';
 import { exportToPDF, exportToExcel } from '@/utils/reportExport';
+import { DateRange } from 'react-day-picker';
 
 const data = [
   { name: 'Jan', compras: 42000 },
@@ -23,7 +24,11 @@ const data = [
   { name: 'Jun', compras: 52000 },
 ];
 
-const PurchasesReportChart: React.FC = () => {
+interface PurchasesReportChartProps {
+  date?: DateRange;
+}
+
+const PurchasesReportChart: React.FC<PurchasesReportChartProps> = ({ date }) => {
   const handleDownloadPDF = () => {
     const columns = [
       { header: 'Mês', accessor: 'name' },

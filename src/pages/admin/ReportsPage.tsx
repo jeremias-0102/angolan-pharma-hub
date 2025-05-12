@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -15,10 +16,10 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { DateRange } from 'react-day-picker';
 import { DateRangePicker } from '@/components/ui/date-range-picker';
-import { SalesReportChart } from '@/components/reports/SalesReportChart';
-import { InventoryReportChart } from '@/components/reports/InventoryReportChart';
-import { PurchasesReportChart } from '@/components/reports/PurchasesReportChart';
-import { ReportDownloadButtons } from '@/components/reports/ReportDownloadButtons';
+import SalesReportChart from '@/components/reports/SalesReportChart';
+import InventoryReportChart from '@/components/reports/InventoryReportChart';
+import PurchasesReportChart from '@/components/reports/PurchasesReportChart';
+import ReportDownloadButtons from '@/components/reports/ReportDownloadButtons';
 
 const ReportsPage = () => {
   const [date, setDate] = useState<DateRange | undefined>({
@@ -80,7 +81,15 @@ const ReportsPage = () => {
                 </span>
               </div>
               <SalesReportChart date={date} />
-              <ReportDownloadButtons reportType="sales" date={date} />
+              <ReportDownloadButtons 
+                title="Relatório de Vendas" 
+                data={[]} 
+                columns={[
+                  { header: 'Mês', accessor: 'name' },
+                  { header: 'Vendas (AOA)', accessor: 'vendas' },
+                  { header: 'Lucro (AOA)', accessor: 'lucro' }
+                ]} 
+              />
             </CardContent>
           </Card>
         </TabsContent>
@@ -103,7 +112,15 @@ const ReportsPage = () => {
                 </span>
               </div>
               <InventoryReportChart date={date} />
-              <ReportDownloadButtons reportType="inventory" date={date} />
+              <ReportDownloadButtons 
+                title="Relatório de Estoque" 
+                data={[]} 
+                columns={[
+                  { header: 'Mês', accessor: 'name' },
+                  { header: 'Nível de Estoque', accessor: 'estoque' },
+                  { header: 'Estoque Mínimo', accessor: 'minimo' }
+                ]} 
+              />
             </CardContent>
           </Card>
         </TabsContent>
@@ -126,7 +143,14 @@ const ReportsPage = () => {
                 </span>
               </div>
               <PurchasesReportChart date={date} />
-              <ReportDownloadButtons reportType="purchases" date={date} />
+              <ReportDownloadButtons 
+                title="Relatório de Aquisições" 
+                data={[]} 
+                columns={[
+                  { header: 'Mês', accessor: 'name' },
+                  { header: 'Compras (AOA)', accessor: 'compras' }
+                ]} 
+              />
             </CardContent>
           </Card>
         </TabsContent>
