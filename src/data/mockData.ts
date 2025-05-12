@@ -224,7 +224,7 @@ export const mockSuppliers: Supplier[] = [
     id: 1,
     name: 'Distribuidora Farmacêutica Angola',
     email: 'contato@disfarma.co.ao',
-    phone: '+244 923 456 789',
+    phone: '+244 926962170',
     address: 'Zona Industrial de Viana, Luanda',
     nif: '54545556'
   },
@@ -232,7 +232,7 @@ export const mockSuppliers: Supplier[] = [
     id: 2,
     name: 'Importadora Medicinal Lda',
     email: 'vendas@impmedicinal.co.ao',
-    phone: '+244 912 345 678',
+    phone: '+244 926962170',
     address: 'Avenida Comandante Kima Kienda, 76, Luanda',
     nif: '65478932'
   }
@@ -269,8 +269,8 @@ export const mockAcquisitions: Acquisition[] = [
     ],
     totalAmount: 800 * 100 + 1000 * 50,
     status: 'received',
-    createdAt: '2023-03-10T08:00:00Z',
-    updatedAt: '2023-03-15T10:30:00Z',
+    createdAt: '2025-03-10T08:00:00Z',
+    updatedAt: '2025-03-15T10:30:00Z',
   },
   {
     id: 2,
@@ -282,7 +282,16 @@ export const mockAcquisitions: Acquisition[] = [
     ],
     totalAmount: 1800 * 30 + 1600 * 25,
     status: 'ordered',
-    createdAt: '2023-04-22T14:15:00Z',
-    updatedAt: '2023-04-22T15:30:00Z',
+    createdAt: '2025-04-22T14:15:00Z',
+    updatedAt: '2025-04-22T15:30:00Z',
   }
 ];
+
+// Company information
+export const companyInfo = {
+  name: "BEGJNP Pharma",
+  phone: "+244 926962170",
+  email: "contato@begjnp-pharma.ao",
+  address: "Avenida Ho Chi Minh, 145, Luanda, Angola",
+  copyright: "© 2025 BEGJNP Pharma. Todos os direitos reservados."
+};

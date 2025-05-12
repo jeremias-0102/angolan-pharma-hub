@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   Table, 
@@ -111,11 +110,12 @@ const AcquisitionsManagement: React.FC = () => {
 
   const handleSavePurchaseOrder = async (order: PurchaseOrder) => {
     try {
-      if (order.id) {
+      let result;
+      if (order.id && purchaseOrders.some(p => p.id === order.id)) {
         // Update existing order
-        const updatedOrder = await updatePurchaseOrder(order);
+        result = await updatePurchaseOrder(order);
         setPurchaseOrders((prevOrders) =>
-          prevOrders.map((p) => (p.id === updatedOrder.id ? updatedOrder : p))
+          prevOrders.map((p) => (p.id === result.id ? result : p))
         );
         toast({
           title: "Ordem de compra atualizada",
@@ -123,8 +123,8 @@ const AcquisitionsManagement: React.FC = () => {
         });
       } else {
         // Add new order
-        const newOrder = await createPurchaseOrder(order);
-        setPurchaseOrders((prevOrders) => [...prevOrders, newOrder]);
+        result = await createPurchaseOrder(order);
+        setPurchaseOrders((prevOrders) => [...prevOrders, result]);
         toast({
           title: "Ordem de compra adicionada",
           description: `A ordem de compra foi adicionada com sucesso.`,
@@ -232,7 +232,7 @@ const AcquisitionsManagement: React.FC = () => {
     <div>
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Gestão de Aquisições</h1>
-        <Button onClick={openAddModal} className="bg-pharma-primary hover:bg-pharma-primary/90">
+        <Button onClick={openAddModal} className="bg-blue-500 hover:bg-blue-600 text-white">
           <Plus className="mr-2 h-4 w-4" /> Nova Ordem de Compra
         </Button>
       </div>
@@ -253,7 +253,7 @@ const AcquisitionsManagement: React.FC = () => {
       <div className="bg-white shadow-sm rounded-lg overflow-hidden">
         {isLoading ? (
           <div className="p-8 text-center">
-            <div className="animate-spin h-8 w-8 border-4 border-pharma-primary border-t-transparent rounded-full mx-auto mb-4"></div>
+            <div className="animate-spin h-8 w-8 border-4 border-blue-500 border-t-transparent rounded-full mx-auto mb-4"></div>
             <p className="text-gray-500">Carregando ordens de compra...</p>
           </div>
         ) : (
@@ -341,43 +341,21 @@ const AcquisitionsManagement: React.FC = () => {
         )}
       </div>
 
-      {/* Form Modal will be implemented separately */}
-      {isFormModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-xl max-w-2xl w-full">
-            <h2 className="text-xl font-bold mb-4">
-              {currentPurchaseOrder ? "Editar Ordem de Compra" : "Nova Ordem de Compra"}
-            </h2>
-            <p className="mb-4 text-gray-500">O componente de formulário completo será implementado em seguida.</p>
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setIsFormModalOpen(false)}>
-                Cancelar
-              </Button>
-              <Button className="bg-pharma-primary" onClick={() => setIsFormModalOpen(false)}>
-                Salvar
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Purchase Order Form Modal */}
+      <PurchaseOrderFormModal 
+        isOpen={isFormModalOpen}
+        onClose={() => setIsFormModalOpen(false)}
+        onSave={handleSavePurchaseOrder}
+        purchaseOrder={currentPurchaseOrder}
+      />
 
-      {/* Receive Items Modal will be implemented separately */}
-      {isReceiveModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-xl max-w-2xl w-full">
-            <h2 className="text-xl font-bold mb-4">Receber Itens</h2>
-            <p className="mb-4 text-gray-500">O componente de recebimento de itens será implementado em seguida.</p>
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setIsReceiveModalOpen(false)}>
-                Cancelar
-              </Button>
-              <Button className="bg-pharma-primary" onClick={() => setIsReceiveModalOpen(false)}>
-                Confirmar Recebimento
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Receive Items Modal */}
+      <ReceiveItemsModal 
+        isOpen={isReceiveModalOpen}
+        onClose={() => setIsReceiveModalOpen(false)}
+        onReceive={handleReceiveItems}
+        purchaseOrder={currentPurchaseOrder}
+      />
 
       {/* Delete Confirmation Dialog */}
       <DeleteConfirmationDialog

@@ -16,6 +16,7 @@ import { getAllProducts } from '@/services/productService';
 import { getAllSuppliers } from '@/services/supplierService';
 import { v4 as uuidv4 } from 'uuid';
 import { Plus, Trash2 } from 'lucide-react';
+import { useToast } from '@/components/ui/use-toast';
 
 interface PurchaseOrderFormModalProps {
   isOpen: boolean;
@@ -40,6 +41,7 @@ const PurchaseOrderFormModal: React.FC<PurchaseOrderFormModalProps> = ({
     items: []
   });
   const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
   useEffect(() => {
     const loadData = async () => {
@@ -53,6 +55,11 @@ const PurchaseOrderFormModal: React.FC<PurchaseOrderFormModalProps> = ({
         setLoading(false);
       } catch (error) {
         console.error('Error loading data:', error);
+        toast({
+          variant: "destructive",
+          title: "Erro ao carregar dados",
+          description: "Não foi possível carregar os fornecedores ou produtos."
+        });
         setLoading(false);
       }
     };
@@ -82,7 +89,7 @@ const PurchaseOrderFormModal: React.FC<PurchaseOrderFormModalProps> = ({
         items: []
       });
     }
-  }, [purchaseOrder, isOpen]);
+  }, [purchaseOrder, isOpen, toast]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -155,6 +162,11 @@ const PurchaseOrderFormModal: React.FC<PurchaseOrderFormModalProps> = ({
   const handleSubmit = () => {
     // Validate required fields
     if (!formData.supplier_id || !(formData.items && formData.items.length > 0)) {
+      toast({
+        variant: "destructive",
+        title: "Dados incompletos",
+        description: "Por favor, selecione um fornecedor e adicione pelo menos um item.",
+      });
       return;
     }
 
@@ -172,6 +184,10 @@ const PurchaseOrderFormModal: React.FC<PurchaseOrderFormModalProps> = ({
     };
 
     onSave(purchaseOrderData);
+    toast({
+      title: purchaseOrder ? "Ordem atualizada" : "Ordem criada",
+      description: purchaseOrder ? "A ordem foi atualizada com sucesso." : "A ordem foi criada com sucesso.",
+    });
   };
 
   const formatCurrency = (value: number) => {
@@ -270,7 +286,7 @@ const PurchaseOrderFormModal: React.FC<PurchaseOrderFormModalProps> = ({
                 type="button" 
                 size="sm" 
                 onClick={addItem}
-                className="flex items-center"
+                className="flex items-center bg-blue-500 hover:bg-blue-600"
               >
                 <Plus className="mr-1 h-4 w-4" /> Adicionar Item
               </Button>
@@ -365,7 +381,7 @@ const PurchaseOrderFormModal: React.FC<PurchaseOrderFormModalProps> = ({
         <div className="flex justify-end space-x-4">
           <Button variant="outline" onClick={onClose}>Cancelar</Button>
           <Button 
-            className="bg-pharma-primary hover:bg-pharma-primary/90" 
+            className="bg-blue-500 hover:bg-blue-600 text-white" 
             onClick={handleSubmit}
           >
             {purchaseOrder ? 'Salvar Alterações' : 'Criar Ordem'}

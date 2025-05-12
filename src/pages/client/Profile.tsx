@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MainLayout from '@/components/layout/MainLayout';
@@ -9,7 +8,8 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { getOrdersByUserId } from '@/services/orderService';
-import { Order } from '@/data/mockData';  // Changed to use the mockData Order interface
+import { Order as ModelOrder } from '@/types/models';
+import { Order } from '@/data/mockData';  // Using the mockData Order interface
 import { useToast } from '@/components/ui/use-toast';
 import { User, Package, ShoppingBag, MapPin, Phone, Mail, Edit2 } from 'lucide-react';
 
@@ -33,7 +33,38 @@ const Profile = () => {
       if (user) {
         try {
           const userOrders = await getOrdersByUserId(user.id);
-          setOrders(userOrders);
+          
+          // Convert from models.Order to mockData.Order format
+          const formattedOrders: Order[] = userOrders.map((order: ModelOrder) => ({
+            id: parseInt(order.id),
+            userId: parseInt(user.id),
+            items: order.items.map(item => ({
+              id: parseInt(item.id),
+              product: {
+                id: item.product_id,
+                name: item.product_name,
+                code: '',
+                description: '',
+                price_cost: 0,
+                price_sale: item.unit_price,
+                category: '',
+                manufacturer: '',
+                requiresPrescription: false,
+                created_at: '',
+                updated_at: '',
+              },
+              quantity: item.quantity,
+              price: item.unit_price
+            })),
+            totalAmount: order.total,
+            status: order.status,
+            createdAt: order.created_at,
+            updatedAt: order.updated_at,
+            address: order.delivery ? order.delivery.address : "Endereço não disponível",
+            paymentMethod: order.payment_method
+          }));
+          
+          setOrders(formattedOrders);
         } catch (error) {
           console.error('Error loading orders:', error);
         } finally {
@@ -127,7 +158,7 @@ const Profile = () => {
                   </div>
                   <div className="flex items-center text-sm">
                     <Phone className="h-4 w-4 mr-2 text-gray-500" />
-                    <span>+244 923 456 789</span>
+                    <span>+244 926962170</span>
                   </div>
                   <div className="flex items-center text-sm">
                     <MapPin className="h-4 w-4 mr-2 text-gray-500" />
@@ -136,7 +167,7 @@ const Profile = () => {
                 </div>
               </CardContent>
               <CardFooter>
-                <Button className="w-full bg-pharma-primary">
+                <Button className="w-full bg-blue-500 hover:bg-blue-600 text-white">
                   <Edit2 className="h-4 w-4 mr-2" />
                   Editar Perfil
                 </Button>
@@ -217,7 +248,7 @@ const Profile = () => {
                         <p className="text-gray-500">
                           Você ainda não fez nenhum pedido.
                         </p>
-                        <Button asChild className="mt-4 bg-pharma-primary">
+                        <Button asChild className="mt-4 bg-blue-500 hover:bg-blue-600 text-white">
                           <a href="/produtos">Fazer Compras</a>
                         </Button>
                       </div>
@@ -249,7 +280,7 @@ const Profile = () => {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
                           <Label htmlFor="phone">Telefone</Label>
-                          <Input id="phone" defaultValue="+244 923 456 789" />
+                          <Input id="phone" defaultValue="+244 926962170" />
                         </div>
                         <div className="space-y-2">
                           <Label htmlFor="birthday">Data de Nascimento</Label>
@@ -262,7 +293,7 @@ const Profile = () => {
                       </div>
                     </CardContent>
                     <CardFooter>
-                      <Button type="submit" className="bg-pharma-primary">
+                      <Button type="submit" className="bg-blue-500 hover:bg-blue-600 text-white">
                         Salvar Alterações
                       </Button>
                     </CardFooter>
@@ -290,7 +321,7 @@ const Profile = () => {
                               Luanda, Angola
                             </p>
                             <p className="text-sm text-gray-500 mt-1">
-                              Telefone: +244 923 456 789
+                              Telefone: +244 926962170
                             </p>
                           </div>
                           <div className="flex">
@@ -310,7 +341,7 @@ const Profile = () => {
                               Luanda, Angola
                             </p>
                             <p className="text-sm text-gray-500 mt-1">
-                              Telefone: +244 912 345 678
+                              Telefone: +244 926962170
                             </p>
                           </div>
                           <div className="flex">

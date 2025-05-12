@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Routes, Route, Link } from 'react-router-dom';
+import { Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
@@ -23,11 +23,13 @@ import AcquisitionsManagement from './AcquisitionsManagement';
 import ReportsPage from './ReportsPage';
 import CompanySettings from './CompanySettings';
 import AdminOverview from './AdminOverview';
+import { companyInfo } from '@/data/mockData';
 
 // Admin Dashboard Layout
 const AdminDashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   // Redirect if not admin
   React.useEffect(() => {
@@ -51,13 +53,18 @@ const AdminDashboardLayout: React.FC<{ children: React.ReactNode }> = ({ childre
     { name: 'Configurações', icon: Settings, path: '/admin/configuracao' },
   ];
 
+  // Get active nav item based on current path
+  const getActiveNavItem = () => {
+    return navItems.find(item => location.pathname === item.path);
+  };
+
   return (
     <div className="flex h-screen bg-gray-100">
       {/* Sidebar */}
-      <div className="bg-white w-64 h-full shadow-md">
+      <div className="bg-white w-64 h-full shadow-md fixed left-0 top-0 z-30">
         <div className="p-4 border-b">
           <Link to="/">
-            <span className="text-xl font-bold text-pharma-primary">Pharma<span className="text-pharma-secondary">Hub</span></span>
+            <span className="text-xl font-bold text-blue-600">BEGJNP<span className="text-green-600">Pharma</span></span>
           </Link>
         </div>
         <div className="p-4">
@@ -65,22 +72,45 @@ const AdminDashboardLayout: React.FC<{ children: React.ReactNode }> = ({ childre
           <p className="text-sm font-bold text-gray-900">{user?.name}</p>
         </div>
         <nav className="mt-2">
-          {navItems.map((item, index) => (
-            <NavItem key={index} icon={item.icon} path={item.path} name={item.name} />
+          {navItems.map((item) => (
+            <NavItem 
+              key={item.path} 
+              icon={item.icon} 
+              path={item.path} 
+              name={item.name} 
+              isActive={location.pathname === item.path}
+            />
           ))}
         </nav>
         <div className="absolute bottom-4 w-64 p-4">
-          <Button className="w-full" variant="outline" onClick={() => logout()}>
+          <Button className="w-full" variant="outline" onClick={() => {
+            logout();
+            navigate('/login');
+          }}>
             Sair
           </Button>
         </div>
       </div>
       
       {/* Main Content */}
-      <div className="flex flex-col flex-1 overflow-hidden">
+      <div className="flex flex-col flex-1 ml-64">
         {/* Header */}
-        <header className="bg-white shadow-sm h-16 flex items-center px-6">
-          <h1 className="text-xl font-semibold">Admin Dashboard</h1>
+        <header className="bg-white shadow-sm h-16 flex items-center px-6 sticky top-0 z-20">
+          <div className="flex-1">
+            <h1 className="text-xl font-semibold">
+              {getActiveNavItem()?.name || 'Admin Dashboard'}
+            </h1>
+          </div>
+          <div className="flex items-center space-x-4">
+            <span className="text-sm text-gray-500">{companyInfo.phone}</span>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => navigate('/')}
+            >
+              Ver Loja
+            </Button>
+          </div>
         </header>
         
         {/* Content */}
@@ -96,13 +126,16 @@ interface NavItemProps {
   icon: LucideIcon;
   path: string;
   name: string;
+  isActive: boolean;
 }
 
-const NavItem: React.FC<NavItemProps> = ({ icon: Icon, path, name }) => {
+const NavItem: React.FC<NavItemProps> = ({ icon: Icon, path, name, isActive }) => {
   return (
     <Link 
       to={path} 
-      className="flex items-center px-4 py-3 text-gray-600 hover:bg-gray-100 hover:text-pharma-primary"
+      className={`flex items-center px-4 py-3 text-gray-600 hover:bg-blue-50 hover:text-blue-600 ${
+        isActive ? 'bg-blue-50 text-blue-600 font-medium border-r-4 border-blue-600' : ''
+      }`}
     >
       <Icon className="h-5 w-5 mr-3" />
       <span>{name}</span>
@@ -123,6 +156,8 @@ const AdminDashboard = () => {
         <Route path="/fornecedores" element={<SuppliersManagement />} />
         <Route path="/relatorios" element={<ReportsPage />} />
         <Route path="/configuracao" element={<CompanySettings />} />
+        {/* Redirect other paths to the dashboard */}
+        <Route path="*" element={<Navigate to="/admin" replace />} />
       </Routes>
     </AdminDashboardLayout>
   );
