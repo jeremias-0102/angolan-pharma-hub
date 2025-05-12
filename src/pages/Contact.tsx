@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MainLayout from '@/components/layout/MainLayout';
@@ -48,22 +47,25 @@ const Contact = () => {
     };
 
     const initializeMap = () => {
-      if (!mapLoaded && document.getElementById('map')) {
+      if (!mapLoaded && document.getElementById('map') && window.google) {
         const mapOptions = {
           center: { lat: -8.8383333, lng: 13.2344444 }, // Coordenadas de Luanda
           zoom: 15,
         };
+        
         const map = new window.google.maps.Map(
           document.getElementById('map') as HTMLElement,
           mapOptions
         );
         
         // Adiciona um marcador para a localização da farmácia
-        new window.google.maps.Marker({
-          position: { lat: -8.8383333, lng: 13.2344444 },
-          map,
-          title: "BEGJNPPharma"
-        });
+        if (window.google) {
+          new window.google.maps.Marker({
+            position: { lat: -8.8383333, lng: 13.2344444 },
+            map,
+            title: "BEGJNPPharma"
+          });
+        }
 
         setMapLoaded(true);
       }
