@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   Table, 
   TableBody, 
@@ -7,6 +8,7 @@ import {
   TableHeader, 
   TableRow 
 } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { 
@@ -16,233 +18,263 @@ import {
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 import { 
-  Badge 
-} from "@/components/ui/badge";
-import { Search, Plus, MoreHorizontal, Edit2, Trash2, FileText, ClipboardCheck } from "lucide-react";
+  PlusCircle, 
+  Search, 
+  MoreHorizontal, 
+  Eye, 
+  Pencil, 
+  CheckCircle,
+  X,
+  Package,
+  ArrowLeft
+} from "lucide-react";
+import { format, parseISO } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { PurchaseOrder } from "@/types/models";
 import { useToast } from "@/components/ui/use-toast";
-import { PurchaseOrder, Supplier } from "@/types/models";
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import DeleteConfirmationDialog from '@/components/admin/DeleteConfirmationDialog';
-import { 
-  getAllPurchaseOrders, 
-  createPurchaseOrder, 
-  updatePurchaseOrder, 
-  deletePurchaseOrder,
-  receiveItems
-} from '@/services/acquisitionService';
-import { getAllSuppliers } from '@/services/supplierService';
-import PurchaseOrderFormModal from '@/components/admin/PurchaseOrderFormModal';
-import ReceiveItemsModal from '@/components/admin/ReceiveItemsModal';
+import PurchaseOrderFormModal from "@/components/admin/PurchaseOrderFormModal";
+import ReceiveItemsModal from "@/components/admin/ReceiveItemsModal";
+
+// Mock data - would be replaced with API calls in production
+const mockPurchaseOrders: PurchaseOrder[] = [
+  {
+    id: "PO-001",
+    supplier_id: "SUP-001",
+    status: "draft",
+    total: 15000,
+    notes: "Encomenda inicial de teste",
+    created_by: "admin",
+    created_at: "2023-01-20T10:00:00Z",
+    updated_at: "2023-01-20T10:00:00Z",
+    items: [
+      {
+        id: "POI-001",
+        purchase_order_id: "PO-001",
+        product_id: "PROD-001",
+        quantity_ordered: 50,
+        quantity_received: 0,
+        unit_price: 300,
+      }
+    ]
+  },
+  {
+    id: "PO-002",
+    supplier_id: "SUP-002",
+    status: "sent",
+    total: 22000,
+    notes: "Revisar prazos de entrega",
+    created_by: "admin",
+    created_at: "2023-02-15T14:30:00Z",
+    updated_at: "2023-02-15T14:30:00Z",
+    items: [
+      {
+        id: "POI-002",
+        purchase_order_id: "PO-002",
+        product_id: "PROD-002",
+        quantity_ordered: 100,
+        quantity_received: 0,
+        unit_price: 220,
+      }
+    ]
+  },
+  {
+    id: "PO-003",
+    supplier_id: "SUP-001",
+    status: "partial",
+    total: 8000,
+    notes: "Aguardando segunda parte da entrega",
+    created_by: "admin",
+    created_at: "2023-03-01T09:00:00Z",
+    updated_at: "2023-03-05T11:00:00Z",
+    items: [
+      {
+        id: "POI-003",
+        purchase_order_id: "PO-003",
+        product_id: "PROD-003",
+        quantity_ordered: 30,
+        quantity_received: 15,
+        unit_price: 270,
+      }
+    ]
+  },
+  {
+    id: "PO-004",
+    supplier_id: "SUP-003",
+    status: "complete",
+    total: 12000,
+    notes: "Pagamento confirmado",
+    created_by: "admin",
+    created_at: "2023-03-10T16:45:00Z",
+    updated_at: "2023-03-15T12:00:00Z",
+    items: [
+      {
+        id: "POI-004",
+        purchase_order_id: "PO-004",
+        product_id: "PROD-004",
+        quantity_ordered: 60,
+        quantity_received: 60,
+        unit_price: 200,
+      }
+    ]
+  },
+  {
+    id: "PO-005",
+    supplier_id: "SUP-002",
+    status: "cancelled",
+    total: 5000,
+    notes: "Pedido cancelado devido a atraso na entrega",
+    created_by: "admin",
+    created_at: "2023-04-01T11:20:00Z",
+    updated_at: "2023-04-02T08:00:00Z",
+    items: [
+      {
+        id: "POI-005",
+        purchase_order_id: "PO-005",
+        product_id: "PROD-005",
+        quantity_ordered: 20,
+        quantity_received: 0,
+        unit_price: 250,
+      }
+    ]
+  }
+];
 
 const AcquisitionsManagement: React.FC = () => {
-  const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>([]);
-  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>(mockPurchaseOrders);
   const [searchQuery, setSearchQuery] = useState('');
-  const [isFormModalOpen, setIsFormModalOpen] = useState(false);
+  const [isFormOpen, setIsFormOpen] = useState(false);
   const [isReceiveModalOpen, setIsReceiveModalOpen] = useState(false);
   const [currentPurchaseOrder, setCurrentPurchaseOrder] = useState<PurchaseOrder | null>(null);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [purchaseOrderToDelete, setPurchaseOrderToDelete] = useState<PurchaseOrder | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  
+  const [selectedPurchaseOrder, setSelectedPurchaseOrder] = useState<PurchaseOrder | null>(null);
   const { toast } = useToast();
+  
+  const navigate = useNavigate();
 
-  // Load purchase orders and suppliers from database
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        const [ordersData, suppliersData] = await Promise.all([
-          getAllPurchaseOrders(),
-          getAllSuppliers()
-        ]);
-        setPurchaseOrders(ordersData);
-        setSuppliers(suppliersData);
-        setIsLoading(false);
-      } catch (error) {
-        console.error('Error loading data:', error);
-        toast({
-          variant: "destructive",
-          title: "Erro ao carregar dados",
-          description: "Não foi possível carregar as ordens de compra.",
-        });
-        setIsLoading(false);
-      }
-    };
-    
-    loadData();
-  }, [toast]);
-
-  const filteredPurchaseOrders = purchaseOrders.filter((order) => {
-    const searchLower = searchQuery.toLowerCase();
-    const supplier = suppliers.find(s => s.id === order.supplier_id);
-    
-    return (
-      supplier?.name.toLowerCase().includes(searchLower) ||
-      order.id.toLowerCase().includes(searchLower) ||
-      order.status.toLowerCase().includes(searchLower)
-    );
-  });
+  const filteredPurchaseOrders = purchaseOrders.filter((order) =>
+    order.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    order.supplier_id.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
   };
 
-  const openAddModal = () => {
-    setCurrentPurchaseOrder(null);
-    setIsFormModalOpen(true);
+  const handleEdit = (order: PurchaseOrder) => {
+    setCurrentPurchaseOrder(order);
+    setIsFormOpen(true);
   };
 
-  const openEditModal = (order: PurchaseOrder) => {
-    setCurrentPurchaseOrder(order);
-    setIsFormModalOpen(true);
-  };
-
-  const openReceiveModal = (order: PurchaseOrder) => {
-    setCurrentPurchaseOrder(order);
+  const handleReceiveItems = (order: PurchaseOrder) => {
+    setSelectedPurchaseOrder(order);
     setIsReceiveModalOpen(true);
   };
 
-  const openDeleteDialog = (order: PurchaseOrder) => {
-    setPurchaseOrderToDelete(order);
-    setIsDeleteDialogOpen(true);
-  };
-
-  const handleSavePurchaseOrder = async (order: PurchaseOrder) => {
-    try {
-      let result;
-      if (order.id && purchaseOrders.some(p => p.id === order.id)) {
-        // Update existing order
-        result = await updatePurchaseOrder(order);
-        setPurchaseOrders((prevOrders) =>
-          prevOrders.map((p) => (p.id === result.id ? result : p))
-        );
-        toast({
-          title: "Ordem de compra atualizada",
-          description: `A ordem de compra foi atualizada com sucesso.`,
-        });
-      } else {
-        // Add new order
-        result = await createPurchaseOrder(order);
-        setPurchaseOrders((prevOrders) => [...prevOrders, result]);
-        toast({
-          title: "Ordem de compra adicionada",
-          description: `A ordem de compra foi adicionada com sucesso.`,
-        });
-      }
-      setIsFormModalOpen(false);
-    } catch (error) {
-      console.error('Error saving purchase order:', error);
-      toast({
-        variant: "destructive",
-        title: "Erro ao salvar ordem de compra",
-        description: "Ocorreu um erro ao salvar a ordem de compra.",
-      });
-    }
-  };
-
-  const handleDeletePurchaseOrder = async () => {
-    if (purchaseOrderToDelete) {
-      try {
-        await deletePurchaseOrder(purchaseOrderToDelete.id);
-        setPurchaseOrders((prevOrders) =>
-          prevOrders.filter((p) => p.id !== purchaseOrderToDelete.id)
-        );
-        toast({
-          title: "Ordem de compra excluída",
-          description: `A ordem de compra foi excluída com sucesso.`,
-        });
-      } catch (error) {
-        console.error('Error deleting purchase order:', error);
-        toast({
-          variant: "destructive",
-          title: "Erro ao excluir ordem de compra",
-          description: "Ocorreu um erro ao excluir a ordem de compra.",
-        });
-      }
-      setIsDeleteDialogOpen(false);
-      setPurchaseOrderToDelete(null);
-    }
-  };
-
-  const handleReceiveItems = async (orderId: string, receivedItems: any[]) => {
-    try {
-      const updatedOrder = await receiveItems(orderId, receivedItems);
+  const handleSavePurchaseOrder = (purchaseOrder: PurchaseOrder) => {
+    if (purchaseOrder.id) {
+      // Update existing purchase order
       setPurchaseOrders((prevOrders) =>
-        prevOrders.map((p) => (p.id === updatedOrder.id ? updatedOrder : p))
+        prevOrders.map((order) =>
+          order.id === purchaseOrder.id ? purchaseOrder : order
+        )
       );
       toast({
-        title: "Itens recebidos",
-        description: `Os itens foram recebidos e o estoque foi atualizado com sucesso.`,
+        title: "Aquisição atualizada",
+        description: `A aquisição ${purchaseOrder.id} foi atualizada com sucesso.`,
       });
-      setIsReceiveModalOpen(false);
-    } catch (error) {
-      console.error('Error receiving items:', error);
+    } else {
+      // Add new purchase order with generated ID
+      const newPurchaseOrder: PurchaseOrder = {
+        ...purchaseOrder,
+        id: `PO-${Date.now()}`,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+      setPurchaseOrders((prevOrders) => [...prevOrders, newPurchaseOrder]);
       toast({
-        variant: "destructive",
-        title: "Erro ao receber itens",
-        description: "Ocorreu um erro ao processar os itens recebidos.",
+        title: "Aquisição adicionada",
+        description: `A aquisição ${newPurchaseOrder.id} foi adicionada com sucesso.`,
       });
     }
+    setIsFormOpen(false);
+  };
+
+  const handleUpdateStatus = (orderId: string, newStatus: PurchaseOrder['status']) => {
+    setPurchaseOrders((prevOrders) =>
+      prevOrders.map((order) =>
+        order.id === orderId ? { ...order, status: newStatus, updated_at: new Date().toISOString() } : order
+      )
+    );
+
+    toast({
+      title: "Status atualizado",
+      description: `O status da aquisição ${orderId} foi atualizado para ${newStatus}.`,
+    });
+  };
+
+  const handleBack = () => {
+    navigate('/admin');
   };
 
   // Format date
   const formatDate = (dateString: string) => {
     try {
-      return format(new Date(dateString), "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
+      return format(parseISO(dateString), "dd/MM/yyyy", { locale: ptBR });
     } catch (error) {
       return "Data inválida";
     }
   };
 
-  // Format currency
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-AO', {
-      style: 'currency',
-      currency: 'AOA',
-      minimumFractionDigits: 0,
-    }).format(value);
+  // Translate status to Portuguese
+  const translateStatus = (status: PurchaseOrder['status']): string => {
+    const statusMap: Record<PurchaseOrder['status'], string> = {
+      draft: "Rascunho",
+      sent: "Enviado",
+      partial: "Parcialmente Recebido",
+      complete: "Completo",
+      cancelled: "Cancelado"
+    };
+    return statusMap[status] || status;
   };
 
-  // Get supplier name
-  const getSupplierName = (supplierId: string) => {
-    const supplier = suppliers.find(s => s.id === supplierId);
-    return supplier ? supplier.name : 'Fornecedor não encontrado';
-  };
-
-  // Get status badge
-  const getStatusBadge = (status: string) => {
-    switch(status) {
-      case 'draft':
-        return <Badge variant="outline" className="bg-gray-100 text-gray-800">Rascunho</Badge>;
-      case 'sent':
-        return <Badge variant="outline" className="bg-blue-100 text-blue-800">Enviado</Badge>;
-      case 'partial':
-        return <Badge variant="outline" className="bg-amber-100 text-amber-800">Parcial</Badge>;
-      case 'complete':
-        return <Badge variant="outline" className="bg-green-100 text-green-800">Completo</Badge>;
-      case 'cancelled':
-        return <Badge variant="outline" className="bg-red-100 text-red-800">Cancelado</Badge>;
+  // Get badge variant based on status
+  const getStatusBadgeVariant = (status: PurchaseOrder['status']) => {
+    switch (status) {
+      case "draft":
+        return "bg-gray-100 text-gray-800 border-gray-200";
+      case "sent":
+        return "bg-blue-100 text-blue-800 border-blue-200";
+      case "partial":
+        return "bg-yellow-100 text-yellow-800 border-yellow-200";
+      case "complete":
+        return "bg-green-100 text-green-800 border-green-200";
+      case "cancelled":
+        return "bg-red-100 text-red-800 border-red-200";
       default:
-        return <Badge variant="outline">{status}</Badge>;
+        return "bg-gray-100 text-gray-800 border-gray-200";
     }
   };
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Gestão de Aquisições</h1>
-        <Button onClick={openAddModal} className="bg-blue-500 hover:bg-blue-600 text-white">
-          <Plus className="mr-2 h-4 w-4" /> Nova Ordem de Compra
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div className="flex items-center">
+          <Button variant="ghost" onClick={handleBack} className="mr-2">
+            <ArrowLeft className="h-5 w-5 mr-1" />
+            Voltar
+          </Button>
+          <h1 className="text-2xl font-bold">Gestão de Aquisições</h1>
+        </div>
+        <Button onClick={() => setIsFormOpen(true)}>
+          <PlusCircle className="mr-2 h-4 w-4" /> Nova Aquisição
         </Button>
       </div>
 
-      <div className="bg-white shadow-sm rounded-lg p-4 mb-6">
+      <div className="bg-white shadow-sm rounded-lg p-4">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
           <Input
             type="text"
-            placeholder="Buscar por fornecedor, número ou status..."
+            placeholder="Buscar aquisições por ID ou fornecedor..."
             value={searchQuery}
             onChange={handleSearchChange}
             className="pl-10"
@@ -251,119 +283,98 @@ const AcquisitionsManagement: React.FC = () => {
       </div>
 
       <div className="bg-white shadow-sm rounded-lg overflow-hidden">
-        {isLoading ? (
-          <div className="p-8 text-center">
-            <div className="animate-spin h-8 w-8 border-4 border-blue-500 border-t-transparent rounded-full mx-auto mb-4"></div>
-            <p className="text-gray-500">Carregando ordens de compra...</p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nº</TableHead>
-                  <TableHead>Fornecedor</TableHead>
-                  <TableHead>Data</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Itens</TableHead>
-                  <TableHead>Valor Total</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredPurchaseOrders.length > 0 ? (
-                  filteredPurchaseOrders.map((order) => (
-                    <TableRow key={order.id}>
-                      <TableCell className="font-medium">{order.id.slice(0, 8)}</TableCell>
-                      <TableCell>{getSupplierName(order.supplier_id)}</TableCell>
-                      <TableCell>{formatDate(order.created_at)}</TableCell>
-                      <TableCell>{getStatusBadge(order.status)}</TableCell>
-                      <TableCell>{order.items.length}</TableCell>
-                      <TableCell>{formatCurrency(order.total)}</TableCell>
-                      <TableCell className="text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm">
-                              <MoreHorizontal className="h-4 w-4" />
-                              <span className="sr-only">Abrir menu</span>
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => openEditModal(order)}>
-                              <Edit2 className="mr-2 h-4 w-4" />
-                              <span>Editar</span>
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>ID da Aquisição</TableHead>
+                <TableHead>Data</TableHead>
+                <TableHead>Fornecedor</TableHead>
+                <TableHead>Total</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="text-right">Ações</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredPurchaseOrders.length > 0 ? (
+                filteredPurchaseOrders.map((order) => (
+                  <TableRow key={order.id}>
+                    <TableCell className="font-medium">{order.id}</TableCell>
+                    <TableCell>{formatDate(order.created_at)}</TableCell>
+                    <TableCell>{order.supplier_id}</TableCell>
+                    <TableCell>{order.total}</TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className={getStatusBadgeVariant(order.status)}>
+                        {translateStatus(order.status)}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm">
+                            <MoreHorizontal className="h-4 w-4" />
+                            <span className="sr-only">Abrir menu</span>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => handleEdit(order)}>
+                            <Pencil className="mr-2 h-4 w-4" />
+                            <span>Editar</span>
+                          </DropdownMenuItem>
+                          
+                          {order.status !== "complete" && (
+                            <DropdownMenuItem onClick={() => handleReceiveItems(order)}>
+                              <Package className="mr-2 h-4 w-4" />
+                              <span>Receber Items</span>
                             </DropdownMenuItem>
-                            {(order.status === 'sent' || order.status === 'partial') && (
-                              <DropdownMenuItem onClick={() => openReceiveModal(order)}>
-                                <ClipboardCheck className="mr-2 h-4 w-4" />
-                                <span>Receber Itens</span>
-                              </DropdownMenuItem>
-                            )}
-                            <DropdownMenuItem>
-                              <FileText className="mr-2 h-4 w-4" />
-                              <span>Detalhes</span>
+                          )}
+                          
+                          {order.status !== "complete" && order.status !== "cancelled" && (
+                            <DropdownMenuItem onClick={() => handleUpdateStatus(order.id, "complete")}>
+                              <CheckCircle className="mr-2 h-4 w-4 text-green-600" />
+                              <span>Marcar como Completo</span>
                             </DropdownMenuItem>
-                            {order.status !== 'complete' && (
-                              <DropdownMenuItem 
-                                className="text-red-600"
-                                onClick={() => openDeleteDialog(order)}
-                              >
-                                <Trash2 className="mr-2 h-4 w-4" />
-                                <span>Excluir</span>
-                              </DropdownMenuItem>
-                            )}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={7} className="text-center py-8 text-gray-500">
-                      {searchQuery ? (
-                        <div>
-                          <p>Nenhuma ordem de compra encontrada com os termos de busca.</p>
-                          <p className="text-sm">Tente outros termos ou adicione uma nova ordem.</p>
-                        </div>
-                      ) : (
-                        <div>
-                          <FileText className="h-12 w-12 mx-auto text-gray-300 mb-4" />
-                          <p>Nenhuma ordem de compra cadastrada.</p>
-                          <p className="text-sm">Clique no botão "Nova Ordem de Compra" para começar.</p>
-                        </div>
-                      )}
+                          )}
+                          
+                          {order.status !== "cancelled" && (
+                            <DropdownMenuItem onClick={() => handleUpdateStatus(order.id, "cancelled")}>
+                              <X className="mr-2 h-4 w-4 text-red-600" />
+                              <span>Cancelar Aquisição</span>
+                            </DropdownMenuItem>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </TableCell>
                   </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        )}
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                    Nenhuma aquisição encontrada.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
       </div>
 
-      {/* Purchase Order Form Modal */}
-      <PurchaseOrderFormModal 
-        isOpen={isFormModalOpen}
-        onClose={() => setIsFormModalOpen(false)}
+      <PurchaseOrderFormModal
+        isOpen={isFormOpen}
+        onClose={() => setIsFormOpen(false)}
         onSave={handleSavePurchaseOrder}
         purchaseOrder={currentPurchaseOrder}
       />
 
-      {/* Receive Items Modal */}
-      <ReceiveItemsModal 
+      <ReceiveItemsModal
         isOpen={isReceiveModalOpen}
         onClose={() => setIsReceiveModalOpen(false)}
-        onReceive={handleReceiveItems}
-        purchaseOrder={currentPurchaseOrder}
-      />
-
-      {/* Delete Confirmation Dialog */}
-      <DeleteConfirmationDialog
-        isOpen={isDeleteDialogOpen}
-        onClose={() => setIsDeleteDialogOpen(false)}
-        onConfirm={handleDeletePurchaseOrder}
-        title="Excluir Ordem de Compra"
-        description="Tem certeza que deseja excluir esta ordem de compra? Esta ação não pode ser desfeita."
+        purchaseOrder={selectedPurchaseOrder}
+        onItemsReceived={() => {
+          setIsReceiveModalOpen(false);
+          // Refresh purchase orders or update specific order
+          setPurchaseOrders([...purchaseOrders]);
+        }}
       />
     </div>
   );
