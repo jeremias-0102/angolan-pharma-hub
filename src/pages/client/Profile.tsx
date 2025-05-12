@@ -10,27 +10,27 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { getOrdersByUserId } from '@/services/orderService';
 import { Order as ModelOrder, OrderStatus } from '@/types/models';
-import { User, Package, ShoppingBag, MapPin, Phone, Mail, Edit2 } from 'lucide-react';
+import { User, Package, ShoppingBag, MapPin, Phone, Mail, Edit2, ArrowLeft } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 
-// Define a type that matches the mockData Order structure
+// Define a type that matches the client order structure
 interface ClientOrder {
-  id: number;
-  userId: number;
+  id: number | string;
+  userId: number | string;
   items: {
-    id: number;
+    id: number | string;
     product: {
       id: string;
       name: string;
-      code: string;
+      code?: string;
       description: string;
-      price_cost: number;
+      price_cost?: number;
       price_sale: number;
-      category: string;
-      manufacturer: string;
+      category?: string;
+      manufacturer?: string;
       requiresPrescription: boolean;
-      created_at: string;
-      updated_at: string;
+      created_at?: string;
+      updated_at?: string;
     };
     quantity: number;
     price: number;
@@ -42,6 +42,32 @@ interface ClientOrder {
   address: string;
   paymentMethod: string;
 }
+
+// Convert ModelOrder to ClientOrder
+const convertToClientOrder = (order: ModelOrder, userId: string): ClientOrder => {
+  return {
+    id: order.id,
+    userId: userId,
+    items: order.items.map(item => ({
+      id: item.id,
+      product: {
+        id: item.product_id,
+        name: item.product_name,
+        description: '',
+        price_sale: item.unit_price,
+        requiresPrescription: false,
+      },
+      quantity: item.quantity,
+      price: item.unit_price
+    })),
+    totalAmount: order.total,
+    status: order.status,
+    createdAt: order.created_at,
+    updatedAt: order.updated_at,
+    address: order.delivery ? order.delivery.address : "Endereço não disponível",
+    paymentMethod: order.payment_method
+  };
+};
 
 const Profile = () => {
   const { user } = useAuth();
@@ -63,37 +89,9 @@ const Profile = () => {
       if (user) {
         try {
           const userOrders = await getOrdersByUserId(user.id);
-          
-          // Convert from models.Order to ClientOrder format
-          const formattedOrders: ClientOrder[] = userOrders.map((order: ModelOrder) => ({
-            id: parseInt(order.id),
-            userId: parseInt(user.id),
-            items: order.items.map(item => ({
-              id: parseInt(item.id),
-              product: {
-                id: item.product_id,
-                name: item.product_name,
-                code: '',
-                description: '',
-                price_cost: 0,
-                price_sale: item.unit_price,
-                category: '',
-                manufacturer: '',
-                requiresPrescription: false,
-                created_at: '',
-                updated_at: '',
-              },
-              quantity: item.quantity,
-              price: item.unit_price
-            })),
-            totalAmount: order.total,
-            status: order.status,
-            createdAt: order.created_at,
-            updatedAt: order.updated_at,
-            address: order.delivery ? order.delivery.address : "Endereço não disponível",
-            paymentMethod: order.payment_method
-          }));
-          
+          const formattedOrders: ClientOrder[] = userOrders.map(order => 
+            convertToClientOrder(order, user.id)
+          );
           setOrders(formattedOrders);
         } catch (error) {
           console.error('Error loading orders:', error);
@@ -119,6 +117,10 @@ const Profile = () => {
       title: "Perfil atualizado",
       description: "As informações do seu perfil foram atualizadas com sucesso.",
     });
+  };
+
+  const handleBack = () => {
+    navigate('/');
   };
 
   // Format date
@@ -165,7 +167,17 @@ const Profile = () => {
   return (
     <MainLayout>
       <div className="container mx-auto px-4 py-8">
-        <h1 className="text-2xl font-bold mb-8">Meu Perfil</h1>
+        <div className="flex items-center mb-6">
+          <Button 
+            variant="ghost" 
+            onClick={handleBack} 
+            className="mr-4"
+          >
+            <ArrowLeft className="mr-2" />
+            Voltar
+          </Button>
+          <h1 className="text-2xl font-bold">Meu Perfil</h1>
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
           {/* Left Sidebar */}
@@ -232,10 +244,16 @@ const Profile = () => {
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    {userOrders.length > 0 ? (
+                    {isLoading ? (
+                      <div className="space-y-4">
+                        {[1, 2, 3].map(item => (
+                          <div key={item} className="border rounded-lg p-4 animate-pulse bg-gray-50 h-28"></div>
+                        ))}
+                      </div>
+                    ) : userOrders.length > 0 ? (
                       <div className="space-y-4">
                         {userOrders.map(order => (
-                          <div key={order.id} className="border rounded-lg p-4">
+                          <div key={order.id} className="border rounded-lg p-4 transition-all hover:shadow-md">
                             <div className="flex justify-between items-center mb-2">
                               <div>
                                 <span className="text-sm font-medium">Pedido #{order.id}</span>

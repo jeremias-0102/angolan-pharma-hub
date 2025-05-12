@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   Table, 
   TableBody, 
@@ -24,7 +25,8 @@ import {
   Truck,
   CheckCircle, 
   XCircle,
-  Calendar
+  Calendar,
+  ArrowLeft
 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { Order, OrderStatus } from "@/types/models";
@@ -197,6 +199,7 @@ const OrdersManagement: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<OrderStatus | 'all'>('all');
   
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const filteredOrders = orders.filter((order) => {
     const matchesSearch = 
@@ -231,6 +234,10 @@ const OrdersManagement: React.FC = () => {
       title: "Status atualizado",
       description: `O pedido ${orderId} foi atualizado para ${translateStatus(newStatus)}.`,
     });
+  };
+
+  const handleBack = () => {
+    navigate('/admin');
   };
 
   // Format currency
@@ -311,7 +318,13 @@ const OrdersManagement: React.FC = () => {
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Gestão de Pedidos</h1>
+        <div className="flex items-center">
+          <Button variant="ghost" onClick={handleBack} className="mr-2">
+            <ArrowLeft className="h-5 w-5 mr-1" />
+            Voltar
+          </Button>
+          <h1 className="text-2xl font-bold">Gestão de Pedidos</h1>
+        </div>
       </div>
 
       <div className="bg-white shadow-sm rounded-lg p-4 mb-6">

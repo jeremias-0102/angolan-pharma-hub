@@ -8,6 +8,7 @@ import { Search, ShoppingCart, Pill, Truck, ChevronRight, ArrowRight } from 'luc
 import { getAll, STORES } from '@/lib/database';
 import { Product as ProductType } from '@/types/models';
 import ProductCard from '@/components/products/ProductCard';
+import HeroCarousel from '@/components/home/HeroCarousel';
 
 const Home = () => {
   const { user } = useAuth();
@@ -47,43 +48,30 @@ const Home = () => {
 
   return (
     <MainLayout fullWidth>
-      {/* Hero Section with Background Image */}
-      <section className="relative bg-gradient-to-br from-pharma-primary/90 to-pharma-accent/80 text-white">
-        <div className="absolute inset-0 overflow-hidden z-0">
-          <img 
-            src="https://images.unsplash.com/photo-1587854692152-cbe660dbde88?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NHx8cGhhcm1hY3l8ZW58MHx8MHx8fDA%3D&auto=format&fit=crop&w=1920&q=80" 
-            alt="Pharmacy background" 
-            className="object-cover w-full h-full opacity-20"
-          />
-        </div>
-        <div className="container mx-auto px-4 py-16 md:py-24 lg:py-32 relative z-10">
-          <div className="max-w-3xl">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 animate-fade-in">
-              PharmaGest
-            </h1>
-            <p className="text-xl md:text-2xl mb-8 opacity-90 leading-relaxed animate-fade-in">
-              Sistema de gestão farmacêutica integrado para atendimento, vendas, entregas e controle de estoque.
-            </p>
-            <div className="flex flex-wrap gap-4 animate-fade-in">
-              <Button 
-                size="lg" 
-                className="bg-white text-pharma-primary hover:bg-white/90"
-                asChild
-              >
-                <Link to="/produtos">Ver Produtos</Link>
-              </Button>
-              
-              <Button 
-                variant="outline" 
-                size="lg" 
-                className="border-white text-white hover:bg-white/20"
-                asChild
-              >
-                <Link to={getDashboardLink()}>
-                  {user ? 'Acessar Painel' : 'Fazer Login'}
-                </Link>
-              </Button>
-            </div>
+      {/* Hero Carousel Section */}
+      <section className="relative">
+        <HeroCarousel />
+        
+        <div className="absolute bottom-10 left-0 right-0 z-20 container mx-auto px-4">
+          <div className="flex flex-wrap gap-4 max-w-3xl">
+            <Button 
+              size="lg" 
+              className="bg-white text-pharma-primary hover:bg-white/90"
+              asChild
+            >
+              <Link to="/produtos">Ver Produtos</Link>
+            </Button>
+            
+            <Button 
+              variant="outline" 
+              size="lg" 
+              className="border-white text-white hover:bg-white/20"
+              asChild
+            >
+              <Link to={getDashboardLink()}>
+                {user ? 'Acessar Painel' : 'Fazer Login'}
+              </Link>
+            </Button>
           </div>
         </div>
       </section>
@@ -136,7 +124,7 @@ const Home = () => {
       {/* Features Section */}
       <section className="py-16 bg-gray-50">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center mb-12">Funcionalidades Principais</h2>
+          <h2 className="text-3xl font-bold text-center mb-12">BEGJNPPharma - Funcionalidades</h2>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {/* Feature Card 1 */}
@@ -190,7 +178,7 @@ const Home = () => {
           <div className="max-w-2xl mx-auto">
             <h2 className="text-3xl font-bold mb-6">Gerencie sua farmácia com eficiência</h2>
             <p className="text-gray-600 mb-8">
-              PharmaGest oferece todas as ferramentas necessárias para otimizar seu negócio, 
+              BEGJNPPharma oferece todas as ferramentas necessárias para otimizar seu negócio, 
               desde o controle de estoque até entregas e vendas.
             </p>
             <Button 
