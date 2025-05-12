@@ -293,5 +293,9 @@ export const companyInfo = {
   phone: "+244 926962170",
   email: "contato@begjnp-pharma.ao",
   address: "Avenida Ho Chi Minh, 145, Luanda, Angola",
-  copyright: "© 2025 BEGJNP Pharma. Todos os direitos reservados."
+  description: "Somos uma farmácia dedicada a fornecer medicamentos de alta qualidade e atendimento personalizado.",
+  copyright: "© 2025 BEGJNP Pharma. Todos os direitos reservados.",
+  paymentIntegrationEnabled: true,
+  notificationsEnabled: true,
+  securitySettingsEnabled: false
 };

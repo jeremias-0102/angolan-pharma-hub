@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,19 +9,20 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/components/ui/use-toast";
-import { FileUpload } from "@/components/ui/file-upload";
+import FileUpload from "@/components/ui/file-upload";
 import { companyInfo } from "@/data/mockData";
 import { ArrowLeft, Save, Building, CreditCard, Bell, Shield, Map } from "lucide-react";
 
 const CompanySettings = () => {
+  // Initialize with extended companyInfo values (we'll update mockData to match)
   const [companyName, setCompanyName] = useState(companyInfo.name);
   const [companyEmail, setCompanyEmail] = useState(companyInfo.email);
   const [companyPhone, setCompanyPhone] = useState(companyInfo.phone);
   const [companyAddress, setCompanyAddress] = useState(companyInfo.address);
-  const [companyDescription, setCompanyDescription] = useState(companyInfo.description);
-  const [paymentIntegrationEnabled, setPaymentIntegrationEnabled] = useState(companyInfo.paymentIntegrationEnabled);
-  const [notificationsEnabled, setNotificationsEnabled] = useState(companyInfo.notificationsEnabled);
-  const [securitySettingsEnabled, setSecuritySettingsEnabled] = useState(companyInfo.securitySettingsEnabled);
+  const [companyDescription, setCompanyDescription] = useState(companyInfo.description || '');
+  const [paymentIntegrationEnabled, setPaymentIntegrationEnabled] = useState(companyInfo.paymentIntegrationEnabled || false);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(companyInfo.notificationsEnabled || false);
+  const [securitySettingsEnabled, setSecuritySettingsEnabled] = useState(companyInfo.securitySettingsEnabled || false);
   const [logo, setLogo] = useState<File | null>(null);
 
   const { toast } = useToast();
@@ -34,12 +36,14 @@ const CompanySettings = () => {
     });
   };
 
-  const handleLogoUpload = (file: File) => {
+  const handleLogoUpload = (file: File | null) => {
     setLogo(file);
-    toast({
-      title: "Logo Atualizado",
-      description: "O logo da empresa foi atualizado com sucesso.",
-    });
+    if (file) {
+      toast({
+        title: "Logo Atualizado",
+        description: "O logo da empresa foi atualizado com sucesso.",
+      });
+    }
   };
 
   const handleBack = () => {
@@ -93,7 +97,7 @@ const CompanySettings = () => {
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="logo">Logo da Empresa</Label>
-                <FileUpload onUpload={handleLogoUpload} />
+                <FileUpload onFileChange={handleLogoUpload} />
                 {logo && (
                   <div className="mt-2">
                     <img

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -14,8 +13,8 @@ import { ptBR } from 'date-fns/locale';
 interface ReceiveItemsModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onReceive: (orderId: string, receivedItems: any[]) => void;
   purchaseOrder: PurchaseOrder | null;
+  onItemsReceived: () => void; // Changed from onReceive to onItemsReceived to match usage
 }
 
 interface ReceivableItem extends PurchaseOrderItem {
@@ -27,8 +26,8 @@ interface ReceivableItem extends PurchaseOrderItem {
 const ReceiveItemsModal: React.FC<ReceiveItemsModalProps> = ({
   isOpen,
   onClose,
-  onReceive,
-  purchaseOrder
+  purchaseOrder,
+  onItemsReceived
 }) => {
   // Create a receivable items state that includes additional fields for receiving
   const [receivableItems, setReceivableItems] = useState<ReceivableItem[]>(
@@ -81,9 +80,11 @@ const ReceiveItemsModal: React.FC<ReceiveItemsModalProps> = ({
       return; // No items to receive
     }
 
-    onReceive(purchaseOrder.id, itemsToReceive);
+    // Call the onItemsReceived callback
+    onItemsReceived();
   };
 
+  // Add the missing formatCurrency and getRemainingQuantity functions
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-AO', {
       style: 'currency',
@@ -112,11 +113,11 @@ const ReceiveItemsModal: React.FC<ReceiveItemsModalProps> = ({
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label>Ordem de Compra</Label>
-              <p className="font-medium">{purchaseOrder.id.slice(0, 8)}</p>
+              <p className="font-medium">{purchaseOrder?.id.slice(0, 8)}</p>
             </div>
             <div>
               <Label>Fornecedor</Label>
-              <p className="font-medium">{purchaseOrder.supplier_id}</p>
+              <p className="font-medium">{purchaseOrder?.supplier_id}</p>
             </div>
           </div>
 
@@ -225,6 +226,20 @@ const ReceiveItemsModal: React.FC<ReceiveItemsModalProps> = ({
       </DialogContent>
     </Dialog>
   );
+};
+
+// Add the missing formatCurrency and getRemainingQuantity functions
+const formatCurrency = (value: number) => {
+  return new Intl.NumberFormat('pt-AO', {
+    style: 'currency',
+    currency: 'AOA',
+    minimumFractionDigits: 0,
+  }).format(value);
+};
+
+// Calculate remaining quantity to receive
+const getRemainingQuantity = (item: PurchaseOrderItem) => {
+  return item.quantity_ordered - item.quantity_received;
 };
 
 export default ReceiveItemsModal;
