@@ -10,3 +10,15 @@ interface Window {
     }
   }
 }
+
+// Adding namespace for the google maps types
+declare namespace google {
+  namespace maps {
+    class Map {
+      constructor(element: HTMLElement, options: any);
+    }
+    class Marker {
+      constructor(options: any);
+    }
+  }
+}
