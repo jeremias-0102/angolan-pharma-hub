@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MainLayout from '@/components/layout/MainLayout';
@@ -51,28 +50,32 @@ const Contact = () => {
   // Load the map after the component is mounted
   useEffect(() => {
     const loadMap = async () => {
-      // Skip if the map is already loaded or map container doesn't exist
-      if (mapLoaded || !mapRef.current) return;
-      
-      if (!window.google) {
-        // Create a script element for Google Maps API
-        const script = document.createElement('script');
-        script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyB41DRUbKWJHPxaFjMAwdrzWzbVKartNGg&libraries=places&loading=async`;
-        script.async = true;
-        script.defer = true;
-        script.onload = initializeMap;
-        document.head.appendChild(script);
-        scriptRef.current = script;
-      } else {
-        initializeMap();
+      try {
+        // Skip if the map is already loaded or map container doesn't exist
+        if (mapLoaded || !mapRef.current) return;
+        
+        if (!window.google) {
+          // Create a script element for Google Maps API
+          const script = document.createElement('script');
+          script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyB41DRUbKWJHPxaFjMAwdrzWzbVKartNGg&libraries=places&loading=async`;
+          script.async = true;
+          script.defer = true;
+          script.onload = initializeMap;
+          document.head.appendChild(script);
+          scriptRef.current = script;
+        } else {
+          initializeMap();
+        }
+      } catch (error) {
+        console.error("Error loading map:", error);
       }
     };
 
     const initializeMap = () => {
-      // Ensure we have both the Google Maps API and the DOM element
-      if (!mapRef.current || !window.google || !window.google.maps) return;
-      
       try {
+        // Ensure we have both the Google Maps API and the DOM element
+        if (!mapRef.current || !window.google || !window.google.maps) return;
+        
         // Create a new map instance
         const mapOptions = {
           center: { lat: -8.8383333, lng: 13.2344444 }, // Coordenadas de Luanda
@@ -85,7 +88,7 @@ const Contact = () => {
         );
         
         // Add a marker for the pharmacy location
-        if (window.google && window.google.maps) {
+        if (window.google && window.google.maps && window.google.maps.Marker) {
           new window.google.maps.Marker({
             position: { lat: -8.8383333, lng: 13.2344444 },
             map: googleMapRef.current,
@@ -103,7 +106,7 @@ const Contact = () => {
     
     // Clean up on component unmount
     return cleanupMap;
-  }, []);
+  }, [mapLoaded]);
   
   return (
     <MainLayout>
@@ -269,8 +272,8 @@ const Contact = () => {
                 className="w-full h-[400px] bg-gray-200 rounded-lg"
               >
                 {!mapLoaded && (
-                  <div className="flex items-center justify-center h-full">
-                    <MapPin className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <div className="flex flex-col items-center justify-center h-full">
+                    <MapPin className="h-12 w-12 text-gray-400 mb-4" />
                     <p className="text-gray-500">Carregando mapa...</p>
                   </div>
                 )}

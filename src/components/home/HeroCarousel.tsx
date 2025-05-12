@@ -36,6 +36,7 @@ const HeroCarousel: React.FC = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const autoplayInterval = 5000; // 5 seconds for automatic transition
 
   const nextSlide = () => {
     if (isTransitioning) return;
@@ -70,21 +71,23 @@ const HeroCarousel: React.FC = () => {
     }, 500);
   };
 
+  // Reset automatic slideshow
+  const resetTimeout = () => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+  };
+
   useEffect(() => {
-    // Autoplay function
-    const startAutoplay = () => {
-      timeoutRef.current = setTimeout(() => {
-        nextSlide();
-      }, 5000); // Change slide every 5 seconds
-    };
+    resetTimeout();
+    timeoutRef.current = setTimeout(() => {
+      nextSlide();
+    }, autoplayInterval);
     
-    startAutoplay();
-    
-    // Clean up on unmount
     return () => {
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      resetTimeout();
     };
-  }, [currentSlide]);
+  }, [currentSlide]); // Reset the timer when slide changes
 
   return (
     <div className="relative overflow-hidden h-[500px] md:h-[600px] lg:h-[700px]">
@@ -92,15 +95,15 @@ const HeroCarousel: React.FC = () => {
       {slides.map((slide, index) => (
         <div
           key={index}
-          className={`absolute inset-0 transition-opacity duration-1000 ${
-            index === currentSlide ? 'opacity-100' : 'opacity-0 pointer-events-none'
+          className={`absolute inset-0 transition-all duration-1000 ease-in-out ${
+            index === currentSlide ? 'opacity-100 z-10' : 'opacity-0 z-0'
           }`}
         >
-          <div className="absolute inset-0 bg-gradient-to-br from-pharma-primary/90 to-pharma-accent/80 z-10"></div>
+          <div className="absolute inset-0 bg-gradient-to-br from-pharma-primary/70 to-pharma-accent/60 z-10"></div>
           <img 
             src={slide.image} 
             alt={slide.title}
-            className="object-cover w-full h-full opacity-50"
+            className="object-cover w-full h-full opacity-70"
           />
           <div className="container mx-auto px-4 h-full relative z-20">
             <div className="flex flex-col justify-center h-full max-w-3xl">
