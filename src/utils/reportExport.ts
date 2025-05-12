@@ -139,3 +139,31 @@ export const exportToExcel = (
   // Write to file
   XLSX.writeFile(workbook, `${title.toLowerCase().replace(/\s+/g, '_')}_${currentDate}.xlsx`);
 };
+
+// Add these functions to maintain compatibility with the chart components
+export const downloadPDF = (elementId: string, title: string) => {
+  const element = document.getElementById(elementId);
+  if (!element) {
+    console.error(`Element with ID ${elementId} not found`);
+    return;
+  }
+  
+  // Create a simple data array from the chart for PDF export
+  const data = [{ title: title, date: new Date().toLocaleDateString('pt-AO') }];
+  const columns = [
+    { header: 'Relatório', accessor: 'title' },
+    { header: 'Data', accessor: 'date' }
+  ];
+  
+  exportToPDF(title, data, columns);
+};
+
+export const downloadExcel = (data: any[], filename: string) => {
+  // Map data to a format that can be exported
+  const columns = Object.keys(data[0] || {}).map(key => ({
+    header: key.charAt(0).toUpperCase() + key.slice(1),
+    accessor: key
+  }));
+  
+  exportToExcel(filename, data, columns);
+};

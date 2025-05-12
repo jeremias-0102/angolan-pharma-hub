@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MainLayout from '@/components/layout/MainLayout';
@@ -8,16 +9,45 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { getOrdersByUserId } from '@/services/orderService';
-import { Order as ModelOrder } from '@/types/models';
-import { Order } from '@/data/mockData';  // Using the mockData Order interface
-import { useToast } from '@/components/ui/use-toast';
+import { Order as ModelOrder, OrderStatus } from '@/types/models';
 import { User, Package, ShoppingBag, MapPin, Phone, Mail, Edit2 } from 'lucide-react';
+import { useToast } from '@/components/ui/use-toast';
+
+// Define a type that matches the mockData Order structure
+interface ClientOrder {
+  id: number;
+  userId: number;
+  items: {
+    id: number;
+    product: {
+      id: string;
+      name: string;
+      code: string;
+      description: string;
+      price_cost: number;
+      price_sale: number;
+      category: string;
+      manufacturer: string;
+      requiresPrescription: boolean;
+      created_at: string;
+      updated_at: string;
+    };
+    quantity: number;
+    price: number;
+  }[];
+  totalAmount: number;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+  address: string;
+  paymentMethod: string;
+}
 
 const Profile = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [orders, setOrders] = useState<Order[]>([]);
+  const [orders, setOrders] = useState<ClientOrder[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   // Redirect if not logged in
@@ -34,8 +64,8 @@ const Profile = () => {
         try {
           const userOrders = await getOrdersByUserId(user.id);
           
-          // Convert from models.Order to mockData.Order format
-          const formattedOrders: Order[] = userOrders.map((order: ModelOrder) => ({
+          // Convert from models.Order to ClientOrder format
+          const formattedOrders: ClientOrder[] = userOrders.map((order: ModelOrder) => ({
             id: parseInt(order.id),
             userId: parseInt(user.id),
             items: order.items.map(item => ({

@@ -12,7 +12,7 @@ import {
 } from 'recharts';
 import { Button } from '@/components/ui/button';
 import { Download } from 'lucide-react';
-import { downloadPDF, downloadExcel } from '@/utils/reportExport';
+import { exportToPDF, exportToExcel } from '@/utils/reportExport';
 
 const data = [
   { name: 'Jan', compras: 42000 },
@@ -25,11 +25,19 @@ const data = [
 
 const PurchasesReportChart: React.FC = () => {
   const handleDownloadPDF = () => {
-    downloadPDF('purchases-report', 'Relatório de Compras');
+    const columns = [
+      { header: 'Mês', accessor: 'name' },
+      { header: 'Compras (AOA)', accessor: 'compras' }
+    ];
+    
+    exportToPDF('Relatório de Compras', data, columns);
   };
 
   const handleDownloadExcel = () => {
-    downloadExcel(data, 'relatorio-compras');
+    exportToExcel('Relatório de Compras', data, [
+      { header: 'Mês', accessor: 'name' },
+      { header: 'Compras (AOA)', accessor: 'compras' }
+    ]);
   };
 
   return (

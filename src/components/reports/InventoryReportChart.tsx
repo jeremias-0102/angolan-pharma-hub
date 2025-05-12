@@ -12,7 +12,7 @@ import {
 } from 'recharts';
 import { Button } from '@/components/ui/button';
 import { Download } from 'lucide-react';
-import { downloadPDF, downloadExcel } from '@/utils/reportExport';
+import { exportToPDF, exportToExcel } from '@/utils/reportExport';
 
 const data = [
   { name: 'Jan', estoque: 120, minimo: 25 },
@@ -25,11 +25,21 @@ const data = [
 
 const InventoryReportChart: React.FC = () => {
   const handleDownloadPDF = () => {
-    downloadPDF('inventory-report', 'Relatório de Estoque');
+    const columns = [
+      { header: 'Mês', accessor: 'name' },
+      { header: 'Nível de Estoque', accessor: 'estoque' },
+      { header: 'Estoque Mínimo', accessor: 'minimo' }
+    ];
+    
+    exportToPDF('Relatório de Estoque', data, columns);
   };
 
   const handleDownloadExcel = () => {
-    downloadExcel(data, 'relatorio-estoque');
+    exportToExcel('Relatório de Estoque', data, [
+      { header: 'Mês', accessor: 'name' },
+      { header: 'Nível de Estoque', accessor: 'estoque' },
+      { header: 'Estoque Mínimo', accessor: 'minimo' }
+    ]);
   };
 
   return (
