@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MainLayout from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/button';
@@ -13,6 +14,9 @@ const Contact = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [mapLoaded, setMapLoaded] = useState(false);
+  const mapRef = useRef<HTMLDivElement>(null);
+  const googleMapRef = useRef<google.maps.Map | null>(null);
+  const scriptRef = useRef<HTMLScriptElement | null>(null);
   
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,48 +35,75 @@ const Contact = () => {
     navigate(-1);
   };
   
-  // Carrega o mapa após o componente ser montado
-  React.useEffect(() => {
+  // Cleanup function to prevent memory leaks and DOM issues
+  const cleanupMap = () => {
+    if (scriptRef.current && scriptRef.current.parentNode) {
+      scriptRef.current.parentNode.removeChild(scriptRef.current);
+      scriptRef.current = null;
+    }
+    
+    // Clean up Google Maps instance
+    if (googleMapRef.current) {
+      googleMapRef.current = null;
+    }
+  };
+  
+  // Load the map after the component is mounted
+  useEffect(() => {
     const loadMap = async () => {
+      // Skip if the map is already loaded or map container doesn't exist
+      if (mapLoaded || !mapRef.current) return;
+      
       if (!window.google) {
+        // Create a script element for Google Maps API
         const script = document.createElement('script');
-        script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyB41DRUbKWJHPxaFjMAwdrzWzbVKartNGg&libraries=places`;
+        script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyB41DRUbKWJHPxaFjMAwdrzWzbVKartNGg&libraries=places&loading=async`;
         script.async = true;
         script.defer = true;
         script.onload = initializeMap;
         document.head.appendChild(script);
+        scriptRef.current = script;
       } else {
         initializeMap();
       }
     };
 
     const initializeMap = () => {
-      if (!mapLoaded && document.getElementById('map') && window.google) {
+      // Ensure we have both the Google Maps API and the DOM element
+      if (!mapRef.current || !window.google || !window.google.maps) return;
+      
+      try {
+        // Create a new map instance
         const mapOptions = {
           center: { lat: -8.8383333, lng: 13.2344444 }, // Coordenadas de Luanda
           zoom: 15,
         };
         
-        const map = new window.google.maps.Map(
-          document.getElementById('map') as HTMLElement,
+        googleMapRef.current = new window.google.maps.Map(
+          mapRef.current,
           mapOptions
         );
         
-        // Adiciona um marcador para a localização da farmácia
-        if (window.google) {
+        // Add a marker for the pharmacy location
+        if (window.google && window.google.maps) {
           new window.google.maps.Marker({
             position: { lat: -8.8383333, lng: 13.2344444 },
-            map,
+            map: googleMapRef.current,
             title: "BEGJNPPharma"
           });
         }
 
         setMapLoaded(true);
+      } catch (error) {
+        console.error("Error initializing map:", error);
       }
     };
 
     loadMap();
-  }, [mapLoaded]);
+    
+    // Clean up on component unmount
+    return cleanupMap;
+  }, []);
   
   return (
     <MainLayout>
@@ -232,7 +263,11 @@ const Contact = () => {
             </div>
             
             <div className="aspect-w-16 aspect-h-9">
-              <div id="map" className="w-full h-[400px] bg-gray-200 rounded-lg">
+              <div 
+                ref={mapRef} 
+                id="map" 
+                className="w-full h-[400px] bg-gray-200 rounded-lg"
+              >
                 {!mapLoaded && (
                   <div className="flex items-center justify-center h-full">
                     <MapPin className="h-12 w-12 text-gray-400 mx-auto mb-4" />
