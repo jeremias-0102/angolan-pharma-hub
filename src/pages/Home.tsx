@@ -9,11 +9,13 @@ import { getAll, STORES } from '@/lib/database';
 import { Product as ProductType } from '@/types/models';
 import ProductCard from '@/components/products/ProductCard';
 import HeroCarousel from '@/components/home/HeroCarousel';
+import { getCompanySettings } from '@/services/settingsService';
 
 const Home = () => {
   const { user } = useAuth();
   const [featuredProducts, setFeaturedProducts] = useState<ProductType[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [companyName, setCompanyName] = useState('BEGJNP Pharma');
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -31,7 +33,19 @@ const Home = () => {
       }
     };
     
+    const fetchSettings = async () => {
+      try {
+        const settings = await getCompanySettings();
+        if (settings?.name) {
+          setCompanyName(settings.name);
+        }
+      } catch (error) {
+        console.error('Error fetching company settings:', error);
+      }
+    };
+    
     fetchProducts();
+    fetchSettings();
   }, []);
 
   // Helper for role-based redirects
@@ -124,7 +138,7 @@ const Home = () => {
       {/* Features Section */}
       <section className="py-16 bg-gray-50">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center mb-12">BEGJNPPharma - Funcionalidades</h2>
+          <h2 className="text-3xl font-bold text-center mb-12">{companyName} - Funcionalidades</h2>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {/* Feature Card 1 */}
@@ -178,7 +192,7 @@ const Home = () => {
           <div className="max-w-2xl mx-auto">
             <h2 className="text-3xl font-bold mb-6">Gerencie sua farmácia com eficiência</h2>
             <p className="text-gray-600 mb-8">
-              BEGJNPPharma oferece todas as ferramentas necessárias para otimizar seu negócio, 
+              {companyName} oferece todas as ferramentas necessárias para otimizar seu negócio, 
               desde o controle de estoque até entregas e vendas.
             </p>
             <Button 

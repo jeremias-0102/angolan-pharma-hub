@@ -1,8 +1,8 @@
 
-import React, { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ShoppingCart, Menu, X, User, LogOut } from 'lucide-react';
+import { ShoppingCart, Menu, X, User, LogOut, Home } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
 import { 
@@ -15,12 +15,30 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from '@/lib/utils';
+import { getCompanySettings } from '@/services/settingsService';
 
 const Navbar = () => {
   const { user, logout, isAuthenticated } = useAuth();
   const { totalItems } = useCart();
   const location = useLocation();
+  const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [companyName, setCompanyName] = useState('BEGJNP Pharma');
+
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const settings = await getCompanySettings();
+        if (settings?.name) {
+          setCompanyName(settings.name);
+        }
+      } catch (error) {
+        console.error('Error fetching company settings:', error);
+      }
+    };
+    
+    fetchSettings();
+  }, []);
 
   const getDashboardLink = () => {
     if (!user) return '/login';
@@ -45,6 +63,11 @@ const Navbar = () => {
     setMobileMenuOpen(!mobileMenuOpen);
   };
 
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+  };
+
   return (
     <header className="sticky top-0 z-40 w-full bg-white shadow-sm">
       <div className="container mx-auto px-4 sm:px-6">
@@ -52,7 +75,7 @@ const Navbar = () => {
           {/* Logo */}
           <div className="flex items-center">
             <Link to="/" className="flex items-center">
-              <span className="text-xl font-bold text-pharma-primary">Pharma<span className="text-pharma-secondary">Hub</span></span>
+              <span className="text-xl font-bold text-pharma-primary">{companyName}</span>
             </Link>
           </div>
 
@@ -125,7 +148,7 @@ const Navbar = () => {
                     </DropdownMenuItem>
                   </DropdownMenuGroup>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={logout} className="text-red-500 cursor-pointer">
+                  <DropdownMenuItem onClick={handleLogout} className="text-red-500 cursor-pointer">
                     <LogOut className="mr-2 h-4 w-4" />
                     <span>Sair</span>
                   </DropdownMenuItem>

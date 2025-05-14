@@ -48,8 +48,8 @@ function App() {
             <Route path="*" element={<NotFound />} />
 
             {/* Rotas de cliente */}
-            <Route path="/cliente/perfil" element={
-              <PrivateRoute allowedRoles={['client']}>
+            <Route path="/profile" element={
+              <PrivateRoute>
                 <Profile />
               </PrivateRoute>
             } />
