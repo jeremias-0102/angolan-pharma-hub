@@ -1,16 +1,6 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-
-interface CartProduct {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  price_sale: number; // Added to match the Product interface
-  stock: number;
-  image?: string;
-  needsPrescription: boolean;
-}
+import { CartProduct } from '@/types/models';
 
 export interface CartItem {
   product: CartProduct;
@@ -28,7 +18,8 @@ interface CartContextType {
   addToCart: (product: any, quantity: number) => void; // Added to support legacy code
 }
 
-const CartContext = createContext<CartContextType | undefined>(undefined);
+// Export the context so it can be imported in other files
+export const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [items, setItems] = useState<CartItem[]>([]);
