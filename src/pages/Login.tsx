@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import MainLayout from '@/components/layout/MainLayout';
@@ -13,8 +13,6 @@ import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { UserRole } from '@/types/models';
 
 // Login schema
 const loginSchema = z.object({
@@ -22,14 +20,13 @@ const loginSchema = z.object({
   password: z.string().min(6, "A senha deve ter pelo menos 6 caracteres")
 });
 
-// Registration schema
+// Registration schema - Removendo o campo de role
 const registerSchema = z.object({
   name: z.string().min(3, "O nome deve ter pelo menos 3 caracteres"),
   email: z.string().email("Email inválido"),
   password: z.string().min(6, "A senha deve ter pelo menos 6 caracteres"),
   confirmPassword: z.string().min(6, "A senha deve ter pelo menos 6 caracteres"),
   phone: z.string().optional(),
-  role: z.enum(["client", "pharmacist", "delivery", "admin"] as const).default("client"),
 }).refine(data => data.password === data.confirmPassword, {
   message: "As senhas não coincidem",
   path: ["confirmPassword"]
@@ -62,8 +59,7 @@ const Login = () => {
       email: '',
       password: '',
       confirmPassword: '',
-      phone: '',
-      role: 'client'
+      phone: ''
     }
   });
 
@@ -86,13 +82,13 @@ const Login = () => {
     const { confirmPassword, ...userData } = values;
     
     try {
-      // Ensure all required fields are present and non-optional
+      // Definir role como 'client' automaticamente
       await register({
         email: userData.email,
         name: userData.name,
         password: userData.password,
         phone: userData.phone || '',
-        role: userData.role,
+        role: 'client', // Sempre será cliente quando registrado direto no site
       });
       
       toast({
@@ -241,32 +237,6 @@ const Login = () => {
                             <FormControl>
                               <Input placeholder="+244 900 000 000" {...field} />
                             </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={registerForm.control}
-                        name="role"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Tipo de conta</FormLabel>
-                            <Select 
-                              onValueChange={field.onChange} 
-                              defaultValue={field.value}
-                            >
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Selecione um tipo de conta" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                <SelectItem value="client">Cliente</SelectItem>
-                                <SelectItem value="pharmacist">Farmacêutico</SelectItem>
-                                <SelectItem value="delivery">Entregador</SelectItem>
-                              </SelectContent>
-                            </Select>
                             <FormMessage />
                           </FormItem>
                         )}

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MainLayout from '@/components/layout/MainLayout';
@@ -22,6 +21,7 @@ import { Separator } from '@/components/ui/separator';
 import { Check, CreditCard, Truck, MapPin, Smartphone } from 'lucide-react';
 import MapLocationPicker from '@/components/checkout/MapLocationPicker';
 import PrescriptionUpload from '@/components/checkout/PrescriptionUpload';
+import { sendWhatsAppReceipt } from '@/utils/whatsappService';
 
 const Checkout = () => {
   const { items, totalPrice, clearCart } = useCart();
@@ -111,6 +111,23 @@ const Checkout = () => {
     
     setIsSubmitting(true);
     
+    // Simulando um pedido sendo criado
+    const orderId = `PED${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`;
+    const orderDate = new Date().toLocaleString('pt-BR');
+    
+    // Preparar dados do pedido para o comprovante
+    const orderDetails = {
+      id: orderId,
+      items: items,
+      total: totalPrice,
+      deliveryFee: deliveryFee,
+      customerName: formData.name,
+      customerPhone: formData.phone,
+      date: orderDate,
+      paymentMethod: getPaymentMethodName(formData.paymentMethod),
+      address: `${formData.address}, ${formData.district}, ${formData.city}`
+    };
+    
     // Simulate order processing delay
     setTimeout(() => {
       toast({
@@ -118,11 +135,28 @@ const Checkout = () => {
         description: "Seu pedido foi recebido e está em processamento.",
       });
       
+      // Enviar comprovante via WhatsApp
+      sendWhatsAppReceipt(orderDetails);
+      
       clearCart();
       navigate('/');
       
       setIsSubmitting(false);
     }, 2000);
+  };
+  
+  // Função auxiliar para obter o nome da forma de pagamento
+  const getPaymentMethodName = (method: string): string => {
+    switch (method) {
+      case 'multicaixa':
+        return 'Multicaixa Express';
+      case 'card':
+        return 'Cartão de Crédito/Débito';
+      case 'cash':
+        return 'Pagamento na Entrega';
+      default:
+        return method;
+    }
   };
   
   // Calculate delivery fee based on cart total
