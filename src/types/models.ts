@@ -26,6 +26,7 @@ export interface Product {
   description: string;
   price_cost: number;
   price_sale: number;
+  price_compare?: number; // Added for promotional pricing
   category: string;
   manufacturer: string;
   requiresPrescription: boolean;
@@ -33,6 +34,13 @@ export interface Product {
   created_at: string;
   updated_at: string;
   batches?: Batch[];
+  // Additional product fields
+  details?: string;
+  active_ingredient?: string;
+  form?: string;
+  dosage?: string;
+  usage_instructions?: string;
+  general_info?: string;
 }
 
 // Batch interface for product inventory
@@ -69,11 +77,15 @@ export interface Order {
   discount: number;
   payment_method: string;
   payment_id?: string; // ID from payment processor
+  payment_status?: 'pending' | 'paid' | 'cancelled';
   notes?: string;
   created_at: string;
   updated_at: string;
   items: OrderItem[];
   delivery?: Delivery;
+  customer_name?: string;
+  customer_phone?: string;
+  requires_prescription?: boolean;
 }
 
 // Order item interface
@@ -83,6 +95,7 @@ export interface OrderItem {
   product_id: string;
   batch_id?: string; // May be assigned during processing
   product_name: string; // Snapshot at time of order
+  product_image?: string; // Added to support product image in order item
   quantity: number;
   unit_price: number;
   total: number;
@@ -93,9 +106,10 @@ export type DeliveryStatus = 'pending' | 'assigned' | 'in_progress' | 'delivered
 
 // Delivery interface
 export interface Delivery {
-  id: string;
-  order_id: string;
+  id?: string;
+  order_id?: string;
   delivery_person_id?: string;
+  assigned_to?: string; // Added for tracking delivery assignment
   status: DeliveryStatus;
   address: string;
   city: string;
@@ -105,9 +119,11 @@ export interface Delivery {
   actual_delivery?: string;
   start_location?: [number, number]; // latitude, longitude
   end_location?: [number, number]; // latitude, longitude
+  coordinates?: [number, number]; // general location coordinates
   notes?: string;
-  created_at: string;
-  updated_at: string;
+  created_at?: string;
+  updated_at?: string;
+  fee?: number; // Added for delivery fee
 }
 
 // Supplier interface

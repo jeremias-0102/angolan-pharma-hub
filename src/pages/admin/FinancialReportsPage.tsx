@@ -13,580 +13,482 @@ import {
   BarChart3,
   FileBarChart,
   ReceiptText,
-  Calendar as CalendarIcon
+  CalendarIcon
 } from 'lucide-react';
 import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { DateRange } from 'react-day-picker';
-import { DateRangePicker } from '@/components/ui/date-range-picker';
-import ReportDownloadButtons from '@/components/reports/ReportDownloadButtons';
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
+import { ReportDownloadButtons } from '@/components/reports/ReportDownloadButtons';
 
-// Mock data for financial reports
-const balanceSheetData = {
-  assets: {
-    current: {
-      cash: 12500000,
-      accountsReceivable: 3450000,
-      inventory: 8975000,
-      prepaidExpenses: 875000
-    },
-    nonCurrent: {
-      property: 15000000,
-      equipment: 7500000,
-      accumulatedDepreciation: -3250000
-    }
+// Example finances data
+const financialData = {
+  revenue: {
+    total: 1250000,
+    previousPeriod: 980000,
+    target: 1500000
   },
-  liabilities: {
-    current: {
-      accountsPayable: 4350000,
-      shortTermDebt: 1250000,
-      currentTaxes: 1875000
-    },
-    nonCurrent: {
-      longTermDebt: 8750000
-    }
+  expenses: {
+    total: 450000,
+    previousPeriod: 520000,
+    target: 400000
   },
-  equity: {
-    capital: 25000000,
-    retainedEarnings: 6825000
-  }
+  profit: {
+    total: 800000,
+    previousPeriod: 460000,
+    target: 1000000
+  },
+  topProducts: [
+    { name: 'Paracetamol 500mg', revenue: 180000, units: 1200 },
+    { name: 'Ibuprofeno 400mg', revenue: 150000, units: 950 },
+    { name: 'Losartana 50mg', revenue: 145000, units: 850 },
+  ],
+  topCategories: [
+    { name: 'Analgésicos', revenue: 320000, percentage: 25.6 },
+    { name: 'Anti-hipertensivos', revenue: 290000, percentage: 23.2 },
+    { name: 'Antibióticos', revenue: 180000, percentage: 14.4 },
+  ],
+  salesByPaymentMethod: [
+    { method: 'Multicaixa Express', amount: 625000, percentage: 50 },
+    { method: 'Cartão de Crédito', amount: 375000, percentage: 30 },
+    { method: 'Dinheiro', amount: 250000, percentage: 20 },
+  ],
+  monthlySales: [
+    { month: 'Jan', value: 680000 },
+    { month: 'Fev', value: 720000 },
+    { month: 'Mar', value: 750000 },
+    { month: 'Abr', value: 890000 },
+    { month: 'Mai', value: 925000 },
+    { month: 'Jun', value: 980000 },
+    { month: 'Jul', value: 1050000 },
+    { month: 'Ago', value: 1120000 },
+    { month: 'Set', value: 1250000 },
+  ],
+  monthlyExpenses: [
+    { month: 'Jan', value: 410000 },
+    { month: 'Fev', value: 420000 },
+    { month: 'Mar', value: 430000 },
+    { month: 'Abr', value: 450000 },
+    { month: 'Mai', value: 460000 },
+    { month: 'Jun', value: 470000 },
+    { month: 'Jul', value: 465000 },
+    { month: 'Ago', value: 455000 },
+    { month: 'Set', value: 450000 },
+  ],
+  monthlyProfit: [
+    { month: 'Jan', value: 270000 },
+    { month: 'Fev', value: 300000 },
+    { month: 'Mar', value: 320000 },
+    { month: 'Abr', value: 440000 },
+    { month: 'Mai', value: 465000 },
+    { month: 'Jun', value: 510000 },
+    { month: 'Jul', value: 585000 },
+    { month: 'Ago', value: 665000 },
+    { month: 'Set', value: 800000 },
+  ]
 };
-
-const incomeStatementData = {
-  revenue: 45000000,
-  costOfGoodsSold: 27000000,
-  operatingExpenses: {
-    salaries: 6750000,
-    rent: 1800000,
-    utilities: 900000,
-    marketing: 1350000,
-    other: 750000
-  },
-  otherIncome: 450000,
-  taxes: 2100000
-};
-
-const paymentMethodsData = [
-  { name: 'Multicaixa', value: 45 },
-  { name: 'Cartão', value: 30 },
-  { name: 'Dinheiro', value: 25 },
-];
-
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
 
 const FinancialReportsPage = () => {
-  const [date, setDate] = useState<DateRange | undefined>({
-    from: new Date(new Date().getFullYear(), new Date().getMonth() - 1, 1),
-    to: new Date(),
-  });
-  
-  const formatDate = (date: Date | undefined) => {
-    return date ? format(date, 'dd/MM/yyyy', { locale: ptBR }) : 'Data não selecionada';
-  };
-
   const navigate = useNavigate();
-  
-  const handleBack = () => {
-    navigate('/admin');
-  };
+  const [date, setDate] = useState<Date>(new Date());
+  const [reportPeriod, setReportPeriod] = useState('monthly');
 
-  // Calculate totals
-  const totalCurrentAssets = balanceSheetData.assets.current.cash + 
-    balanceSheetData.assets.current.accountsReceivable +
-    balanceSheetData.assets.current.inventory +
-    balanceSheetData.assets.current.prepaidExpenses;
-    
-  const totalNonCurrentAssets = balanceSheetData.assets.nonCurrent.property + 
-    balanceSheetData.assets.nonCurrent.equipment +
-    balanceSheetData.assets.nonCurrent.accumulatedDepreciation;
-    
-  const totalAssets = totalCurrentAssets + totalNonCurrentAssets;
-    
-  const totalCurrentLiabilities = balanceSheetData.liabilities.current.accountsPayable +
-    balanceSheetData.liabilities.current.shortTermDebt +
-    balanceSheetData.liabilities.current.currentTaxes;
-    
-  const totalNonCurrentLiabilities = balanceSheetData.liabilities.nonCurrent.longTermDebt;
-    
-  const totalLiabilities = totalCurrentLiabilities + totalNonCurrentLiabilities;
-    
-  const totalEquity = balanceSheetData.equity.capital + balanceSheetData.equity.retainedEarnings;
-    
-  const totalLiabilitiesAndEquity = totalLiabilities + totalEquity;
-  
-  // Income Statement calculations
-  const grossProfit = incomeStatementData.revenue - incomeStatementData.costOfGoodsSold;
-  
-  const totalOperatingExpenses = incomeStatementData.operatingExpenses.salaries +
-    incomeStatementData.operatingExpenses.rent +
-    incomeStatementData.operatingExpenses.utilities +
-    incomeStatementData.operatingExpenses.marketing +
-    incomeStatementData.operatingExpenses.other;
-    
-  const operatingIncome = grossProfit - totalOperatingExpenses;
-  
-  const incomeBeforeTaxes = operatingIncome + incomeStatementData.otherIncome;
-  
-  const netIncome = incomeBeforeTaxes - incomeStatementData.taxes;
-
-  // Format currency
-  const formatCurrency = (amount: number) => {
+  const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-AO', {
       style: 'currency',
       currency: 'AOA',
-      minimumFractionDigits: 0,
-    }).format(amount);
+      maximumFractionDigits: 0
+    }).format(value);
+  };
+
+  const calculateGrowth = (current: number, previous: number) => {
+    if (!previous) return 100;
+    const growth = ((current - previous) / previous) * 100;
+    return growth;
+  };
+
+  const getGrowthColor = (growth: number) => {
+    if (growth > 0) return 'text-green-600';
+    if (growth < 0) return 'text-red-600';
+    return 'text-gray-600';
+  };
+
+  const getProgressColor = (current: number, target: number) => {
+    const percentage = (current / target) * 100;
+    if (percentage >= 90) return 'bg-green-500';
+    if (percentage >= 70) return 'bg-blue-500';
+    if (percentage >= 50) return 'bg-yellow-500';
+    return 'bg-red-500';
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center mb-4">
-        <Button variant="ghost" onClick={handleBack} className="mr-2">
-          <ArrowLeft className="h-5 w-5 mr-1" />
-          Voltar
-        </Button>
-        <h1 className="text-2xl font-bold">Relatórios Financeiros</h1>
+    <div className="container mx-auto p-6">
+      <div className="flex justify-between items-center mb-6">
+        <div className="flex items-center gap-4">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate('/admin/relatorios')}
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <h1 className="text-2xl font-bold">Relatório Financeiro</h1>
+        </div>
+        <div className="flex gap-4">
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className={cn(
+                  "w-[240px] justify-start text-left font-normal"
+                )}
+              >
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {format(date, "PPP")}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="end">
+              <Calendar
+                mode="single"
+                selected={date}
+                onSelect={(date) => date && setDate(date)}
+                initialFocus
+              />
+            </PopoverContent>
+          </Popover>
+          <Select value={reportPeriod} onValueChange={setReportPeriod}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Período" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="daily">Diário</SelectItem>
+              <SelectItem value="weekly">Semanal</SelectItem>
+              <SelectItem value="monthly">Mensal</SelectItem>
+              <SelectItem value="quarterly">Trimestral</SelectItem>
+              <SelectItem value="yearly">Anual</SelectItem>
+            </SelectContent>
+          </Select>
+          <ReportDownloadButtons reportType="financeiro" data={financialData} />
+        </div>
       </div>
 
-      <Tabs defaultValue="balance" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="balance">
-            <FileBarChart className="mr-2 h-4 w-4" />
-            Balanço Patrimonial
-          </TabsTrigger>
-          <TabsTrigger value="income">
-            <Calculator className="mr-2 h-4 w-4" />
-            Demonstração de Resultado
-          </TabsTrigger>
-          <TabsTrigger value="payment">
-            <ReceiptText className="mr-2 h-4 w-4" />
-            Métodos de Pagamento
-          </TabsTrigger>
-          <TabsTrigger value="saft">
-            <BarChart3 className="mr-2 h-4 w-4" />
-            Relatório SAFT-AO
-          </TabsTrigger>
+      <Tabs defaultValue="overview" className="mb-6">
+        <TabsList className="mb-4">
+          <TabsTrigger value="overview">Visão Geral</TabsTrigger>
+          <TabsTrigger value="revenue">Receitas</TabsTrigger>
+          <TabsTrigger value="expenses">Despesas</TabsTrigger>
+          <TabsTrigger value="profit">Lucros</TabsTrigger>
         </TabsList>
 
-        {/* Balanço Patrimonial */}
-        <TabsContent value="balance" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Balanço Patrimonial</CardTitle>
-              <CardDescription>
-                Posição financeira da empresa no período selecionado.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="grid gap-6">
-              <div className="flex items-center space-x-4">
-                <CalendarIcon className="h-4 w-4 mr-2" />
-                <span>Data de referência:</span>
-                <DateRangePicker date={date} onDateChange={setDate} />
-                <span>
-                  {formatDate(date?.to)}
-                </span>
-              </div>
-
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Ativos */}
-                <div className="space-y-4">
-                  <h3 className="text-xl font-semibold text-center">Ativos</h3>
-                  
-                  <div className="space-y-2">
-                    <h4 className="font-medium">Ativos Circulantes</h4>
-                    <div className="space-y-1">
-                      <div className="flex justify-between">
-                        <span>Caixa e Equivalentes</span>
-                        <span>{formatCurrency(balanceSheetData.assets.current.cash)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Contas a Receber</span>
-                        <span>{formatCurrency(balanceSheetData.assets.current.accountsReceivable)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Estoque</span>
-                        <span>{formatCurrency(balanceSheetData.assets.current.inventory)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Despesas Antecipadas</span>
-                        <span>{formatCurrency(balanceSheetData.assets.current.prepaidExpenses)}</span>
-                      </div>
-                      <div className="flex justify-between font-medium pt-1 border-t">
-                        <span>Total Ativos Circulantes</span>
-                        <span>{formatCurrency(totalCurrentAssets)}</span>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <h4 className="font-medium">Ativos Não Circulantes</h4>
-                    <div className="space-y-1">
-                      <div className="flex justify-between">
-                        <span>Imóveis</span>
-                        <span>{formatCurrency(balanceSheetData.assets.nonCurrent.property)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Equipamentos</span>
-                        <span>{formatCurrency(balanceSheetData.assets.nonCurrent.equipment)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Depreciação Acumulada</span>
-                        <span>{formatCurrency(balanceSheetData.assets.nonCurrent.accumulatedDepreciation)}</span>
-                      </div>
-                      <div className="flex justify-between font-medium pt-1 border-t">
-                        <span>Total Ativos Não Circulantes</span>
-                        <span>{formatCurrency(totalNonCurrentAssets)}</span>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="flex justify-between text-lg font-bold pt-2 border-t-2">
-                    <span>Total de Ativos</span>
-                    <span>{formatCurrency(totalAssets)}</span>
-                  </div>
+        <TabsContent value="overview">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg flex items-center">
+                  <FileBarChart className="mr-2 h-5 w-5 text-blue-500" />
+                  Receita Total
+                </CardTitle>
+                <CardDescription>Período atual vs. anterior</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold mb-1">
+                  {formatCurrency(financialData.revenue.total)}
                 </div>
-                
-                {/* Passivos e Patrimônio Líquido */}
-                <div className="space-y-4">
-                  <h3 className="text-xl font-semibold text-center">Passivos e Patrimônio Líquido</h3>
-                  
-                  <div className="space-y-2">
-                    <h4 className="font-medium">Passivos Circulantes</h4>
-                    <div className="space-y-1">
-                      <div className="flex justify-between">
-                        <span>Contas a Pagar</span>
-                        <span>{formatCurrency(balanceSheetData.liabilities.current.accountsPayable)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Dívidas de Curto Prazo</span>
-                        <span>{formatCurrency(balanceSheetData.liabilities.current.shortTermDebt)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Impostos a Pagar</span>
-                        <span>{formatCurrency(balanceSheetData.liabilities.current.currentTaxes)}</span>
-                      </div>
-                      <div className="flex justify-between font-medium pt-1 border-t">
-                        <span>Total Passivos Circulantes</span>
-                        <span>{formatCurrency(totalCurrentLiabilities)}</span>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <h4 className="font-medium">Passivos Não Circulantes</h4>
-                    <div className="space-y-1">
-                      <div className="flex justify-between">
-                        <span>Dívidas de Longo Prazo</span>
-                        <span>{formatCurrency(balanceSheetData.liabilities.nonCurrent.longTermDebt)}</span>
-                      </div>
-                      <div className="flex justify-between font-medium pt-1 border-t">
-                        <span>Total Passivos Não Circulantes</span>
-                        <span>{formatCurrency(totalNonCurrentLiabilities)}</span>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="flex justify-between font-medium pt-1 border-t">
-                    <span>Total Passivos</span>
-                    <span>{formatCurrency(totalLiabilities)}</span>
-                  </div>
-                  
-                  <div className="space-y-2 pt-2 border-t">
-                    <h4 className="font-medium">Patrimônio Líquido</h4>
-                    <div className="space-y-1">
-                      <div className="flex justify-between">
-                        <span>Capital</span>
-                        <span>{formatCurrency(balanceSheetData.equity.capital)}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Lucros Acumulados</span>
-                        <span>{formatCurrency(balanceSheetData.equity.retainedEarnings)}</span>
-                      </div>
-                      <div className="flex justify-between font-medium pt-1 border-t">
-                        <span>Total Patrimônio Líquido</span>
-                        <span>{formatCurrency(totalEquity)}</span>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="flex justify-between text-lg font-bold pt-2 border-t-2">
-                    <span>Total Passivos e Patrimônio Líquido</span>
-                    <span>{formatCurrency(totalLiabilitiesAndEquity)}</span>
-                  </div>
+                <div className="flex items-center gap-2 mb-3">
+                  <span className={getGrowthColor(calculateGrowth(financialData.revenue.total, financialData.revenue.previousPeriod))}>
+                    {calculateGrowth(financialData.revenue.total, financialData.revenue.previousPeriod).toFixed(1)}%
+                  </span>
+                  <span className="text-gray-500 text-sm">vs período anterior</span>
                 </div>
-              </div>
-
-              <ReportDownloadButtons 
-                title="Balanço Patrimonial" 
-                data={[
-                  { item: 'Total de Ativos', valor: totalAssets },
-                  { item: 'Total de Passivos', valor: totalLiabilities },
-                  { item: 'Patrimônio Líquido', valor: totalEquity }
-                ]} 
-                columns={[
-                  { header: 'Item', accessor: 'item' },
-                  { header: 'Valor (AOA)', accessor: 'valor' }
-                ]} 
-              />
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Demonstração de Resultado */}
-        <TabsContent value="income" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Demonstração de Resultado</CardTitle>
-              <CardDescription>
-                Desempenho financeiro da empresa para o período selecionado.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="grid gap-6">
-              <div className="flex items-center space-x-4">
-                <CalendarIcon className="h-4 w-4 mr-2" />
-                <span>Período:</span>
-                <DateRangePicker date={date} onDateChange={setDate} />
-                <span>
-                  {formatDate(date?.from)} - {formatDate(date?.to)}
-                </span>
-              </div>
-
-              <div className="space-y-6">
-                <div className="space-y-2">
-                  <div className="flex justify-between text-lg font-semibold">
-                    <span>Receita</span>
-                    <span>{formatCurrency(incomeStatementData.revenue)}</span>
-                  </div>
-                  <div className="flex justify-between text-muted-foreground">
-                    <span>Custo dos Produtos Vendidos</span>
-                    <span>- {formatCurrency(incomeStatementData.costOfGoodsSold)}</span>
-                  </div>
-                  <div className="flex justify-between font-medium pt-1 border-t">
-                    <span>Lucro Bruto</span>
-                    <span>{formatCurrency(grossProfit)}</span>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <h4 className="font-medium">Despesas Operacionais</h4>
-                  <div className="space-y-1">
-                    <div className="flex justify-between text-muted-foreground">
-                      <span>Salários</span>
-                      <span>- {formatCurrency(incomeStatementData.operatingExpenses.salaries)}</span>
-                    </div>
-                    <div className="flex justify-between text-muted-foreground">
-                      <span>Aluguel</span>
-                      <span>- {formatCurrency(incomeStatementData.operatingExpenses.rent)}</span>
-                    </div>
-                    <div className="flex justify-between text-muted-foreground">
-                      <span>Utilidades</span>
-                      <span>- {formatCurrency(incomeStatementData.operatingExpenses.utilities)}</span>
-                    </div>
-                    <div className="flex justify-between text-muted-foreground">
-                      <span>Marketing</span>
-                      <span>- {formatCurrency(incomeStatementData.operatingExpenses.marketing)}</span>
-                    </div>
-                    <div className="flex justify-between text-muted-foreground">
-                      <span>Outros</span>
-                      <span>- {formatCurrency(incomeStatementData.operatingExpenses.other)}</span>
-                    </div>
-                    <div className="flex justify-between font-medium pt-1 border-t">
-                      <span>Total Despesas Operacionais</span>
-                      <span>- {formatCurrency(totalOperatingExpenses)}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex justify-between font-medium pt-1 border-t">
-                  <span>Lucro Operacional</span>
-                  <span>{formatCurrency(operatingIncome)}</span>
-                </div>
-
                 <div className="space-y-1">
-                  <div className="flex justify-between">
-                    <span>Outras Receitas</span>
-                    <span>{formatCurrency(incomeStatementData.otherIncome)}</span>
+                  <div className="flex justify-between text-sm">
+                    <span>Progresso da meta</span>
+                    <span>{Math.round((financialData.revenue.total / financialData.revenue.target) * 100)}%</span>
                   </div>
-                  <div className="flex justify-between font-medium pt-1">
-                    <span>Lucro Antes dos Impostos</span>
-                    <span>{formatCurrency(incomeBeforeTaxes)}</span>
-                  </div>
-                  <div className="flex justify-between text-muted-foreground">
-                    <span>Impostos</span>
-                    <span>- {formatCurrency(incomeStatementData.taxes)}</span>
-                  </div>
+                  <Progress 
+                    value={(financialData.revenue.total / financialData.revenue.target) * 100} 
+                    className="h-2"
+                  />
                 </div>
+              </CardContent>
+            </Card>
 
-                <div className="flex justify-between text-lg font-bold pt-2 border-t-2">
-                  <span>Lucro Líquido</span>
-                  <span>{formatCurrency(netIncome)}</span>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg flex items-center">
+                  <Calculator className="mr-2 h-5 w-5 text-red-500" />
+                  Despesas Totais
+                </CardTitle>
+                <CardDescription>Período atual vs. anterior</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold mb-1">
+                  {formatCurrency(financialData.expenses.total)}
                 </div>
-              </div>
+                <div className="flex items-center gap-2 mb-3">
+                  <span className={getGrowthColor(-calculateGrowth(financialData.expenses.total, financialData.expenses.previousPeriod))}>
+                    {calculateGrowth(financialData.expenses.total, financialData.expenses.previousPeriod).toFixed(1)}%
+                  </span>
+                  <span className="text-gray-500 text-sm">vs período anterior</span>
+                </div>
+                <div className="space-y-1">
+                  <div className="flex justify-between text-sm">
+                    <span>Progresso da meta</span>
+                    <span>{Math.round((financialData.expenses.total / financialData.expenses.target) * 100)}%</span>
+                  </div>
+                  <Progress 
+                    value={(financialData.expenses.total / financialData.expenses.target) * 100} 
+                    className="h-2"
+                  />
+                </div>
+              </CardContent>
+            </Card>
 
-              <ReportDownloadButtons 
-                title="Demonstração de Resultado" 
-                data={[
-                  { item: 'Receita', valor: incomeStatementData.revenue },
-                  { item: 'Lucro Bruto', valor: grossProfit },
-                  { item: 'Lucro Operacional', valor: operatingIncome },
-                  { item: 'Lucro Líquido', valor: netIncome }
-                ]} 
-                columns={[
-                  { header: 'Item', accessor: 'item' },
-                  { header: 'Valor (AOA)', accessor: 'valor' }
-                ]} 
-              />
-            </CardContent>
-          </Card>
-        </TabsContent>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg flex items-center">
+                  <BarChart3 className="mr-2 h-5 w-5 text-green-500" />
+                  Lucro Líquido
+                </CardTitle>
+                <CardDescription>Período atual vs. anterior</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold mb-1">
+                  {formatCurrency(financialData.profit.total)}
+                </div>
+                <div className="flex items-center gap-2 mb-3">
+                  <span className={getGrowthColor(calculateGrowth(financialData.profit.total, financialData.profit.previousPeriod))}>
+                    {calculateGrowth(financialData.profit.total, financialData.profit.previousPeriod).toFixed(1)}%
+                  </span>
+                  <span className="text-gray-500 text-sm">vs período anterior</span>
+                </div>
+                <div className="space-y-1">
+                  <div className="flex justify-between text-sm">
+                    <span>Progresso da meta</span>
+                    <span>{Math.round((financialData.profit.total / financialData.profit.target) * 100)}%</span>
+                  </div>
+                  <Progress 
+                    value={(financialData.profit.total / financialData.profit.target) * 100} 
+                    className="h-2"
+                    style={{ backgroundColor: "#f1f5f9" }}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
 
-        {/* Métodos de Pagamento */}
-        <TabsContent value="payment" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Relatório de Métodos de Pagamento</CardTitle>
-              <CardDescription>
-                Análise dos métodos de pagamento utilizados pelos clientes.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="grid gap-6">
-              <div className="flex items-center space-x-4">
-                <CalendarIcon className="h-4 w-4 mr-2" />
-                <span>Período:</span>
-                <DateRangePicker date={date} onDateChange={setDate} />
-                <span>
-                  {formatDate(date?.from)} - {formatDate(date?.to)}
-                </span>
-              </div>
-
-              <div className="w-full aspect-[16/9] md:aspect-[21/9] lg:aspect-[3/1] flex justify-center items-center">
-                <ResponsiveContainer width="100%" height={300}>
-                  <PieChart>
-                    <Pie
-                      data={paymentMethodsData}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={true}
-                      outerRadius={80}
-                      fill="#8884d8"
-                      dataKey="value"
-                      label={({ name, value }) => `${name}: ${value}%`}
-                    >
-                      {paymentMethodsData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip formatter={(value) => `${value}%`} />
-                    <Legend />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {paymentMethodsData.map((method, idx) => (
-                  <div key={method.name} className="space-y-2">
-                    <div className="flex justify-between items-center">
-                      <h4 className="font-medium">{method.name}</h4>
-                      <span className="text-lg font-bold">{method.value}%</span>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Receitas vs Despesas</CardTitle>
+                <CardDescription>Evolução mensal</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="h-80">
+                  <ChartContainer>
+                    {/* Revenue vs Expenses Chart would be here */}
+                    <div className="w-full h-full flex items-center justify-center bg-gray-50 rounded-md">
+                      <span className="text-gray-500">Gráfico de Receitas vs Despesas</span>
                     </div>
-                    <Progress value={method.value} className="h-2" 
-                      style={{backgroundColor: '#f1f5f9'}} // light gray background
-                      indicatorClassName={`bg-[${COLORS[idx % COLORS.length]}]`} />
-                  </div>
-                ))}
-              </div>
+                  </ChartContainer>
+                </div>
+              </CardContent>
+            </Card>
 
-              <ReportDownloadButtons 
-                title="Relatório de Métodos de Pagamento" 
-                data={paymentMethodsData.map(item => ({ 
-                  metodo: item.name, 
-                  percentagem: `${item.value}%`
-                }))} 
-                columns={[
-                  { header: 'Método de Pagamento', accessor: 'metodo' },
-                  { header: 'Percentagem', accessor: 'percentagem' }
-                ]} 
-              />
-            </CardContent>
-          </Card>
-        </TabsContent>
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Lucro Líquido</CardTitle>
+                <CardDescription>Evolução mensal</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="h-80">
+                  <ChartContainer>
+                    {/* Profit Chart would be here */}
+                    <div className="w-full h-full flex items-center justify-center bg-gray-50 rounded-md">
+                      <span className="text-gray-500">Gráfico de Lucro Líquido</span>
+                    </div>
+                  </ChartContainer>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
 
-        {/* Relatório SAFT-AO */}
-        <TabsContent value="saft" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Relatório SAFT-AO</CardTitle>
-              <CardDescription>
-                Geração do arquivo SAFT-AO para a Administração Geral Tributária (AGT).
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="grid gap-6">
-              <div className="flex items-center space-x-4 mb-4">
-                <CalendarIcon className="h-4 w-4 mr-2" />
-                <span>Período:</span>
-                <DateRangePicker date={date} onDateChange={setDate} />
-                <span>
-                  {formatDate(date?.from)} - {formatDate(date?.to)}
-                </span>
-              </div>
-
-              <div className="bg-muted/50 p-6 rounded-lg border border-border">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Top Produtos</CardTitle>
+                <CardDescription>Por receita</CardDescription>
+              </CardHeader>
+              <CardContent>
                 <div className="space-y-4">
-                  <h3 className="font-medium">Sobre o SAFT-AO</h3>
-                  <p className="text-muted-foreground">
-                    O SAFT-AO (Standard Audit File for Tax - Angola) é um formato de arquivo XML padronizado usado 
-                    para exportar dados fiscais e contábeis para a Administração Geral Tributária (AGT) de Angola.
-                  </p>
-                  <p className="text-muted-foreground">
-                    Este arquivo contém informações detalhadas sobre vendas, compras, inventário e outros dados 
-                    contábeis relevantes para o período selecionado.
-                  </p>
+                  {financialData.topProducts.map((product, index) => (
+                    <div key={index} className="space-y-1">
+                      <div className="flex justify-between">
+                        <span className="font-medium">{product.name}</span>
+                        <span>{formatCurrency(product.revenue)}</span>
+                      </div>
+                      <div className="flex justify-between text-sm text-gray-500">
+                        <span>{product.units} unidades</span>
+                        <span>{((product.revenue / financialData.revenue.total) * 100).toFixed(1)}%</span>
+                      </div>
+                      <Progress 
+                        value={(product.revenue / financialData.revenue.total) * 100} 
+                        className="h-2"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Top Categorias</CardTitle>
+                <CardDescription>Por receita</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {financialData.topCategories.map((category, index) => (
+                    <div key={index} className="space-y-1">
+                      <div className="flex justify-between">
+                        <span className="font-medium">{category.name}</span>
+                        <span>{formatCurrency(category.revenue)}</span>
+                      </div>
+                      <div className="flex justify-between text-sm text-gray-500">
+                        <span>{category.percentage}% das vendas</span>
+                      </div>
+                      <Progress 
+                        value={category.percentage} 
+                        className="h-2"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Métodos de Pagamento</CardTitle>
+                <CardDescription>Distribuição</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {financialData.salesByPaymentMethod.map((method, index) => (
+                    <div key={index} className="space-y-1">
+                      <div className="flex justify-between">
+                        <span className="font-medium">{method.method}</span>
+                        <span>{formatCurrency(method.amount)}</span>
+                      </div>
+                      <div className="flex justify-between text-sm text-gray-500">
+                        <span>{method.percentage}% do total</span>
+                      </div>
+                      <Progress 
+                        value={method.percentage} 
+                        className="h-2"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="revenue">
+          <div className="grid grid-cols-1 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Evolução das Receitas</CardTitle>
+                <CardDescription>Análise detalhada das fontes de receita</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="h-80 mb-6">
+                  <ChartContainer>
+                    {/* Revenue Chart would be here */}
+                    <div className="w-full h-full flex items-center justify-center bg-gray-50 rounded-md">
+                      <span className="text-gray-500">Gráfico de Evolução das Receitas</span>
+                    </div>
+                  </ChartContainer>
                 </div>
 
-                <div className="mt-6 grid gap-4">
-                  <h3 className="font-medium">Configurações do Relatório</h3>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Versão SAFT</label>
-                      <Select defaultValue="1.01">
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione a versão" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="1.01">Versão 1.01</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className="text-sm font-medium">Tipo de Arquivo</label>
-                      <Select defaultValue="full">
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione o tipo" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="full">Arquivo Completo</SelectItem>
-                          <SelectItem value="invoices">Apenas Faturas</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <h3 className="text-lg font-medium mb-4">Receitas por Categoria</h3>
+                    {/* Categories would be here */}
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-medium mb-4">Receitas por Método de Pagamento</h3>
+                    {/* Payment methods would be here */}
                   </div>
                 </div>
-              </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
 
-              <div className="flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-2">
-                <Button className="flex items-center bg-pharma-primary hover:bg-pharma-primary/90">
-                  <FileBarChart className="h-4 w-4 mr-2" />
-                  Gerar SAFT-AO
-                </Button>
-                <Button variant="outline">
-                  Visualizar Último Relatório
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+        <TabsContent value="expenses">
+          <div className="grid grid-cols-1 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Evolução das Despesas</CardTitle>
+                <CardDescription>Análise detalhada das despesas</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="h-80 mb-6">
+                  <ChartContainer>
+                    {/* Expenses Chart would be here */}
+                    <div className="w-full h-full flex items-center justify-center bg-gray-50 rounded-md">
+                      <span className="text-gray-500">Gráfico de Evolução das Despesas</span>
+                    </div>
+                  </ChartContainer>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <h3 className="text-lg font-medium mb-4">Despesas por Categoria</h3>
+                    {/* Expense categories would be here */}
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-medium mb-4">Maiores Despesas</h3>
+                    {/* Largest expenses would be here */}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="profit">
+          <div className="grid grid-cols-1 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Análise de Lucro</CardTitle>
+                <CardDescription>Evolução e métricas de lucro</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="h-80 mb-6">
+                  <ChartContainer>
+                    {/* Profit Chart would be here */}
+                    <div className="w-full h-full flex items-center justify-center bg-gray-50 rounded-md">
+                      <span className="text-gray-500">Gráfico de Evolução do Lucro</span>
+                    </div>
+                  </ChartContainer>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <h3 className="text-lg font-medium mb-4">Margem de Lucro por Categoria</h3>
+                    {/* Profit margin would be here */}
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-medium mb-4">Produtos Mais Lucrativos</h3>
+                    {/* Most profitable products would be here */}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
       </Tabs>
     </div>
