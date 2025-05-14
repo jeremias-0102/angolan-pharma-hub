@@ -8,9 +8,11 @@ export interface Product {
   price_cost: number;
   price_sale: number;
   price_compare?: number;
+  price?: number; // Adding this to resolve references in Home.tsx and Products.tsx
   category: string;
   manufacturer: string;
   requiresPrescription: boolean;
+  needsPrescription?: boolean; // Adding this to resolve references in Products.tsx
   image?: string;
   stock: number;
   created_at: string;

@@ -154,11 +154,11 @@ const Products = () => {
                         id: product.id,
                         name: product.name,
                         description: product.description,
-                        price: product.price,
-                        price_sale: product.price, // Add the missing price_sale field
+                        price: product.price_cost || 0,
+                        price_sale: product.price_sale || 0,
                         image: product.image,
                         stock: product.stock,
-                        needsPrescription: product.needsPrescription
+                        needsPrescription: product.requiresPrescription
                       };
                       return (
                         <ProductCard key={productWithPriceSale.id} product={productWithPriceSale} />

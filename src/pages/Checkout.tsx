@@ -103,7 +103,7 @@ const Checkout = () => {
 
       const response = await api.post('/orders', orderData);
 
-      if (response && response.status === 201) {
+      if (response && response.data && response.data.status === 201) {
         toast({
           title: "Sucesso",
           description: "Encomenda submetida com sucesso!",

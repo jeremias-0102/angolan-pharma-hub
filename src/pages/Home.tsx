@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import MainLayout from '@/components/layout/MainLayout';
@@ -112,8 +113,8 @@ const Home = () => {
                   id: product.id,
                   name: product.name,
                   description: product.description,
-                  price: product.price,
-                  price_sale: product.price, // Add the missing price_sale field
+                  price: product.price_cost || 0,
+                  price_sale: product.price_sale || 0,
                   image: product.image || '/placeholder.svg',
                   stock: product.batches?.reduce((total, batch) => total + batch.quantity, 0) || 0,
                   needsPrescription: product.requiresPrescription

@@ -22,7 +22,7 @@ import SupplierFormModal from '@/components/admin/SupplierFormModal';
 import DeleteConfirmationDialog from '@/components/admin/DeleteConfirmationDialog';
 
 // Mock data - replace with API calls in production
-const sampleSuppliers = [
+const sampleSuppliers: Supplier[] = [
   {
     id: "1",
     name: "MedPharma Distribuidora",
@@ -45,6 +45,7 @@ const sampleSuppliers = [
     address: "Av Principal, 456",
     created_at: "2023-02-15T00:00:00Z",
     updated_at: "2023-02-15T00:00:00Z",
+    is_active: true
   },
   {
     id: "SUP-003",
@@ -56,6 +57,7 @@ const sampleSuppliers = [
     address: "Travessa da Saúde, 789",
     created_at: "2023-03-20T00:00:00Z",
     updated_at: "2023-03-20T00:00:00Z",
+    is_active: true
   },
 ];
 
@@ -100,6 +102,7 @@ const SuppliersManagement = () => {
         id: String(Date.now()),
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
+        is_active: supplier.is_active ?? true // Ensure is_active is set
       };
       setSuppliers((prevSuppliers) => [...prevSuppliers, newSupplier]);
     }
