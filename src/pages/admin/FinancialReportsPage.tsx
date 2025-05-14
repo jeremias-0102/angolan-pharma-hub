@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -19,7 +18,7 @@ import { format } from 'date-fns';
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-import { ReportDownloadButtons } from '@/components/reports/ReportDownloadButtons';
+import ReportDownloadButtons from '@/components/reports/ReportDownloadButtons';
 
 // Example finances data
 const financialData = {
@@ -168,7 +167,14 @@ const FinancialReportsPage = () => {
               <SelectItem value="yearly">Anual</SelectItem>
             </SelectContent>
           </Select>
-          <ReportDownloadButtons reportType="financeiro" data={financialData} />
+          <ReportDownloadButtons 
+            title="Relatório Financeiro" 
+            data={financialData} 
+            columns={[
+              { header: 'Categoria', accessor: 'name' },
+              { header: 'Valor (AOA)', accessor: 'value' }
+            ]}
+          />
         </div>
       </div>
 
