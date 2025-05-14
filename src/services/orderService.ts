@@ -1,6 +1,6 @@
 
 import { STORES, add, getAll, get, update, remove, getByIndex } from '@/lib/database';
-import { Order, OrderStatus } from '@/types/models';
+import { Order, OrderStatus, Delivery } from '@/types/models';
 import { v4 as uuidv4 } from 'uuid';
 import { sendWhatsAppReceipt } from '@/utils/whatsappService';
 
@@ -198,14 +198,18 @@ export const assignOrderToDelivery = async (
     // Criar ou atualizar informações de entrega
     if (!order.delivery) {
       order.delivery = {
+        id: uuidv4(),
+        order_id: orderId,
+        status: 'assigned',
         address: "", // Deve ser preenchido com endereço do cliente
         district: "",
         city: "",
-        status: "assigned",
-        assigned_to: deliveryPersonId
+        postal_code: "",
+        assigned_to: deliveryPersonId,
+        fee: 0
       };
     } else {
-      order.delivery.status = "assigned";
+      order.delivery.status = 'assigned';
       order.delivery.assigned_to = deliveryPersonId;
     }
     

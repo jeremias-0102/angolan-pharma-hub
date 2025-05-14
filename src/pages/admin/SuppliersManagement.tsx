@@ -22,17 +22,18 @@ import SupplierFormModal from '@/components/admin/SupplierFormModal';
 import DeleteConfirmationDialog from '@/components/admin/DeleteConfirmationDialog';
 
 // Mock data - replace with API calls in production
-const mockSuppliers: Supplier[] = [
+const sampleSuppliers = [
   {
-    id: "SUP-001",
-    name: "Pharma Inc",
-    tax_id: "123456789",
-    contact_name: "John Doe",
-    email: "john.doe@pharma.com",
-    phone: "923000000",
-    address: "Rua Exemplo, 123",
-    created_at: "2023-01-01T00:00:00Z",
-    updated_at: "2023-01-01T00:00:00Z",
+    id: "1",
+    name: "MedPharma Distribuidora",
+    tax_id: "5001234567",
+    contact_name: "João Silva",
+    email: "contato@medpharma.co.ao",
+    phone: "+244 923 456 789",
+    address: "Rua dos Coqueiros, 123, Luanda",
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+    is_active: true
   },
   {
     id: "SUP-002",
@@ -59,7 +60,7 @@ const mockSuppliers: Supplier[] = [
 ];
 
 const SuppliersManagement = () => {
-  const [suppliers, setSuppliers] = useState<Supplier[]>(mockSuppliers);
+  const [suppliers, setSuppliers] = useState<Supplier[]>(sampleSuppliers);
   const [searchQuery, setSearchQuery] = useState('');
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);

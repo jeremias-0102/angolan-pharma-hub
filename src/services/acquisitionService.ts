@@ -1,6 +1,5 @@
-
 import { STORES, add, getAll, get, update, remove, getByIndex } from '@/lib/database';
-import { PurchaseOrder, PurchaseOrderItem, Product, Batch } from '@/types/models';
+import { PurchaseOrder, PurchaseOrderItem, PurchaseOrderStatus, Product, Batch } from '@/types/models';
 import { v4 as uuidv4 } from 'uuid';
 import { getProductById, updateProduct } from './productService';
 
@@ -223,4 +222,20 @@ export const getCompletedOrdersForPeriod = async (
     console.error('Error getting completed orders for period:', error);
     throw error;
   }
+};
+
+// Update a purchase order status
+export const updatePurchaseOrderStatus = async (
+  id: string,
+  newStatus: PurchaseOrderStatus
+): Promise<PurchaseOrder> => {
+  const order = await get<PurchaseOrder>(STORES.PURCHASE_ORDERS, id);
+  if (!order) {
+    throw new Error(`Purchase order with id ${id} not found`);
+  }
+  
+  order.status = newStatus;
+  order.updated_at = new Date().toISOString();
+  
+  return await update<PurchaseOrder>(STORES.PURCHASE_ORDERS, order);
 };

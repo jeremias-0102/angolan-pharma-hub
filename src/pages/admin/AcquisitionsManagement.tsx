@@ -252,7 +252,10 @@ const AcquisitionsManagement: React.FC = () => {
       draft: "Rascunho",
       submitted: "Enviado",
       received: "Recebido",
-      cancelled: "Cancelado"
+      cancelled: "Cancelado",
+      sent: "Enviado",
+      partial: "Parcial",
+      complete: "Completo"
     };
     return statusMap[status] || status;
   };
@@ -268,6 +271,12 @@ const AcquisitionsManagement: React.FC = () => {
         return "bg-green-100 text-green-800 border-green-200";
       case "cancelled":
         return "bg-red-100 text-red-800 border-red-200";
+      case "sent":
+        return "bg-indigo-100 text-indigo-800 border-indigo-200";
+      case "partial":
+        return "bg-amber-100 text-amber-800 border-amber-200";
+      case "complete":
+        return "bg-emerald-100 text-emerald-800 border-emerald-200";
       default:
         return "bg-gray-100 text-gray-800 border-gray-200";
     }

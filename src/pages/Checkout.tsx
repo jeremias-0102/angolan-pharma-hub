@@ -12,6 +12,7 @@ import { toast } from "@/components/ui/use-toast"
 import { useUser } from '@/hooks/use-user';
 import { getBase64 } from '@/lib/image-utils';
 import { api } from '@/lib/api';
+import { OrderStatus } from '@/types/models';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import {
   Select,
@@ -102,7 +103,7 @@ const Checkout = () => {
 
       const response = await api.post('/orders', orderData);
 
-      if (response.status === 201) {
+      if (response && response.status === 201) {
         toast({
           title: "Sucesso",
           description: "Encomenda submetida com sucesso!",

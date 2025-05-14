@@ -116,7 +116,7 @@ export interface User {
   role: UserRole;
   phone?: string;
   avatar?: string;
-  address?: string; // Add address field to fix Profile.tsx error
+  address?: string;
   created_at: string;
   updated_at: string;
 }
