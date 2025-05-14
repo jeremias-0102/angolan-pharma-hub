@@ -12,6 +12,7 @@ export interface User {
   role: UserRole;
   phone?: string;
   avatar?: string;
+  address?: string;
   created_at: string;
   updated_at: string;
   password?: string; // Campo opcional para senha

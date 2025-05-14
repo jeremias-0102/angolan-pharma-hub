@@ -14,7 +14,8 @@ import {
   Calculator,
   BarChart3,
   FileBarChart,
-  ReceiptText
+  ReceiptText,
+  Calendar as CalendarIcon
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -495,7 +496,7 @@ const FinancialReportsPage = () => {
       </div>
 
       <div className="flex items-center space-x-4 mb-4">
-        <Calendar className="h-4 w-4 mr-2" />
+        <CalendarIcon className="h-4 w-4 mr-2" />
         <span>Período:</span>
         <DateRangePicker date={date} onDateChange={setDate} />
         <span>
