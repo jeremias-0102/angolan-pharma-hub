@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import MainLayout from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -18,6 +18,7 @@ const ProductDetail = () => {
   const [isLoading, setIsLoading] = useState(true);
   const { addItem } = useCart();
   const { toast } = useToast();
+  const navigate = useNavigate();
   
   useEffect(() => {
     const fetchProduct = async () => {
@@ -97,6 +98,16 @@ const ProductDetail = () => {
       title: "Produto adicionado",
       description: `${quantity} unidade(s) de ${product.name} adicionado ao seu carrinho.`,
     });
+  };
+
+  const handleBuyNow = () => {
+    if (!product) return;
+    
+    // First, add the item to cart
+    handleAddToCart();
+    
+    // Then navigate to checkout
+    navigate('/checkout');
   };
   
   if (isLoading) {
@@ -208,7 +219,7 @@ const ProductDetail = () => {
               
               {totalStock > 0 && (
                 <div className="pt-6 border-t border-gray-200">
-                  <div className="flex items-center space-x-4">
+                  <div className="flex items-center space-x-4 mb-4">
                     <div>
                       <label htmlFor="quantity" className="text-sm font-medium text-gray-500 block mb-2">
                         Quantidade
@@ -243,16 +254,49 @@ const ProductDetail = () => {
                         </Button>
                       </div>
                     </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <Button
                       onClick={handleAddToCart}
-                      className="flex-grow bg-pharma-primary hover:bg-pharma-primary/90"
+                      variant="outline"
+                      className="flex items-center justify-center text-pharma-primary border-pharma-primary hover:bg-pharma-primary hover:text-white"
                     >
                       <ShoppingCart className="mr-2 h-5 w-5" />
                       Adicionar ao Carrinho
                     </Button>
+                    
+                    <Button
+                      onClick={handleBuyNow}
+                      className="flex items-center justify-center bg-black hover:bg-black/90 text-white"
+                    >
+                      Compre Já!
+                    </Button>
                   </div>
                 </div>
               )}
+            </div>
+          </div>
+          
+          {/* Payment methods info */}
+          <div className="border-t border-gray-100 p-6">
+            <p className="text-center text-sm text-gray-500 mb-2">Faça seu checkout de forma segura</p>
+            <div className="flex justify-center space-x-4">
+              <img src="/visa.svg" alt="Visa" className="h-6" onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.onerror = null;
+                target.style.display = 'none';
+              }} />
+              <img src="/mastercard.svg" alt="Mastercard" className="h-6" onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.onerror = null;
+                target.style.display = 'none';
+              }} />
+              <img src="/multicaixa.svg" alt="Multicaixa" className="h-6" onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.onerror = null;
+                target.style.display = 'none';
+              }} />
             </div>
           </div>
         </div>

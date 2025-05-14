@@ -13,7 +13,8 @@ import {
   Truck, 
   BarChart2, 
   Box,
-  Settings
+  Settings,
+  Home
 } from 'lucide-react';
 import UsersManagement from './UsersManagement';
 import ProductsManagement from './ProductsManagement';
@@ -82,11 +83,22 @@ const AdminDashboardLayout: React.FC<{ children: React.ReactNode }> = ({ childre
             />
           ))}
         </nav>
-        <div className="absolute bottom-4 w-64 p-4">
-          <Button className="w-full" variant="outline" onClick={() => {
-            logout();
-            navigate('/login');
-          }}>
+        <div className="absolute bottom-4 w-64 p-4 space-y-2">
+          <Button 
+            className="w-full flex items-center justify-center bg-pharma-primary hover:bg-pharma-primary/90" 
+            onClick={() => navigate('/')}
+          >
+            <Home className="mr-2 h-4 w-4" />
+            Ir para Loja
+          </Button>
+          <Button 
+            className="w-full" 
+            variant="outline" 
+            onClick={() => {
+              logout();
+              navigate('/login');
+            }}
+          >
             Sair
           </Button>
         </div>
@@ -108,6 +120,7 @@ const AdminDashboardLayout: React.FC<{ children: React.ReactNode }> = ({ childre
               size="sm" 
               onClick={() => navigate('/')}
             >
+              <Home className="mr-1 h-4 w-4" />
               Ver Loja
             </Button>
           </div>

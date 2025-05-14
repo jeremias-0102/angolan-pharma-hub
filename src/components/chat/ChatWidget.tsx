@@ -1,174 +1,191 @@
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
+import { Avatar } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { useAuth } from "@/contexts/AuthContext";
+import { 
+  Sheet, 
+  SheetContent, 
+  SheetHeader, 
+  SheetTitle, 
+  SheetTrigger
+} from "@/components/ui/sheet";
+import { MessageCircle, Send, Mic, X, Volume2, Loader2 } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
-import { Send, MessageSquare, X, Mic, StopCircle } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface Message {
   id: string;
-  content: string;
-  sender: 'user' | 'support';
-  timestamp: Date;
-  type?: 'text' | 'audio';
+  text: string;
+  isUser: boolean;
+  isAudio?: boolean;
   audioUrl?: string;
 }
 
-interface AIResponse {
-  message: string;
-  instructions?: string[];
-}
+// Common questions and answers for the AI chatbot
+const knowledgeBase = {
+  greeting: [
+    "Olá! Como posso ajudar você hoje?",
+    "Bem-vindo à BEGJNP Pharma! Como posso ser útil?",
+    "Olá! Sou o assistente virtual da BEGJNP Pharma. Como posso ajudar?"
+  ],
+  register: [
+    "Para se cadastrar no nosso sistema, siga estes passos:\n\n1. Clique no botão 'Entrar' no canto superior direito\n2. Selecione 'Criar nova conta'\n3. Preencha seus dados pessoais\n4. Confirme seu email\n5. Pronto! Você já pode fazer compras"
+  ],
+  find_products: [
+    "Você pode encontrar nossos produtos de várias maneiras:\n\n1. Use a barra de pesquisa no topo da página\n2. Navegue pelas categorias no menu principal\n3. Verifique as ofertas em destaque na página inicial",
+    "Para encontrar um produto específico, use a barra de pesquisa no topo da página. Você também pode filtrar por categoria, preço ou disponibilidade na página de produtos."
+  ],
+  prescription: [
+    "Para medicamentos que exigem prescrição médica, você pode:\n\n1. Adicionar o item ao carrinho normalmente\n2. Durante o checkout, você terá a opção de fazer upload da sua receita médica\n3. Nossa equipe farmacêutica verificará a prescrição antes da aprovação final",
+    "Medicamentos com receita exigem que você envie uma foto da sua prescrição médica durante o processo de checkout. Não se preocupe, o processo é simples e seguro!"
+  ],
+  delivery: [
+    "Realizamos entregas em toda Angola! O prazo de entrega depende da sua localização:\n\n- Luanda: 1-2 dias úteis\n- Capitais provinciais: 2-4 dias úteis\n- Outras localidades: 3-7 dias úteis\n\nO valor do frete é calculado com base no seu endereço e é mostrado antes da finalização da compra.",
+    "Nossa política de entrega inclui entregas gratuitas para compras acima de 20.000 AOA em Luanda. Para outras regiões, o frete é calculado baseado na sua localização."
+  ],
+  payment: [
+    "Aceitamos diversos métodos de pagamento:\n\n- Cartões de crédito/débito (Visa, Mastercard)\n- Multicaixa Express\n- Transferência bancária\n- Pagamento em dinheiro na entrega (apenas Luanda)",
+    "Você pode pagar usando Multicaixa, cartões Visa/Mastercard ou transferência bancária. Para compras em Luanda, também oferecemos a opção de pagamento em dinheiro na entrega."
+  ],
+  return_policy: [
+    "Nossa política de devolução permite:\n\n- Devolução em até 7 dias para produtos não abertos\n- Troca imediata em caso de produtos danificados ou incorretos\n- Reembolso total para medicamentos com defeitos de fabricação\n\nPara iniciar uma devolução, entre em contato com nosso suporte."
+  ],
+  contact: [
+    "Você pode entrar em contato conosco através dos seguintes canais:\n\n- Telefone: +244 923 456 789\n- Email: contato@begjnppharma.co.ao\n- WhatsApp: +244 923 456 789\n- Endereço: Av. 4 de Fevereiro, 123, Luanda, Angola\n\nNosso horário de atendimento é de segunda a sexta, das 8h às 18h, e aos sábados das 9h às 13h."
+  ],
+  hours: [
+    "Nosso horário de funcionamento é:\n\n- Segunda a Sexta: 8h às 18h\n- Sábados: 9h às 13h\n- Domingos e Feriados: Fechado"
+  ],
+  fallback: [
+    "Não tenho certeza sobre isso. Posso ajudar com informações sobre nossos produtos, entregas, pagamentos ou posso conectar você com um farmacêutico para questões mais específicas.",
+    "Essa é uma pergunta interessante. Para obter informações mais detalhadas sobre esse assunto, recomendo falar com um de nossos farmacêuticos. Posso te conectar agora?",
+    "Peço desculpas, mas não tenho informações suficientes sobre isso. Gostaria que eu encaminhasse sua pergunta para um de nossos especialistas?",
+    "Entendo sua dúvida. Este é um tema que pode exigir a análise de um profissional. Posso encaminhar você para um de nossos farmacêuticos para melhor assistência."
+  ]
+};
+
+// Function to get appropriate response from knowledgeBase
+const getAIResponse = (message: string): string => {
+  const lowerMessage = message.toLowerCase();
+  
+  // Check for basic greetings
+  if (/olá|oi|ei|bom dia|boa tarde|boa noite|oi tudo bem|como vai|saudações|bem vindo|bemvindo/i.test(lowerMessage)) {
+    return getRandomResponse(knowledgeBase.greeting);
+  }
+  
+  // Check for registration questions
+  if (/cadastr|registr|cri(ar|e) (uma )?conta|como (me)? cadastr|como (me)? registr/i.test(lowerMessage)) {
+    return getRandomResponse(knowledgeBase.register);
+  }
+  
+  // Check for product search questions
+  if (/encontr|procur|busc|achar|pesquis|onde (está|fica|tem)|como (eu )?acho|como (eu )?encontro|onde (eu )?compro/i.test(lowerMessage)) {
+    return getRandomResponse(knowledgeBase.find_products);
+  }
+  
+  // Check for prescription related questions
+  if (/receit|prescrição|prescri(ç|c)(ao|ão)|remédio( com | de )receit/i.test(lowerMessage)) {
+    return getRandomResponse(knowledgeBase.prescription);
+  }
+  
+  // Check for delivery questions
+  if (/entreg|receb|frete|transport|prazo|quanto tempo|quando chega/i.test(lowerMessage)) {
+    return getRandomResponse(knowledgeBase.delivery);
+  }
+  
+  // Check for payment questions
+  if (/pag(ar|amento)|cartão|crédito|débito|multicaixa|transfer(ê|e)ncia|como (eu )?(posso )?pagar/i.test(lowerMessage)) {
+    return getRandomResponse(knowledgeBase.payment);
+  }
+  
+  // Check for return policy questions
+  if (/devolu(ç|c)(ao|ão)|troc(a|ar)|reembols/i.test(lowerMessage)) {
+    return getRandomResponse(knowledgeBase.return_policy);
+  }
+  
+  // Check for contact information questions
+  if (/contato|contac?t(ar|o)|telefone|email|endereço|whatsapp|falar com/i.test(lowerMessage)) {
+    return getRandomResponse(knowledgeBase.contact);
+  }
+  
+  // Check for hours of operation questions
+  if (/hor(á|a)rio|funcionamento|aberto|quando (abre|fecha)|hora (abre|fecha)/i.test(lowerMessage)) {
+    return getRandomResponse(knowledgeBase.hours);
+  }
+  
+  // Fallback response
+  return getRandomResponse(knowledgeBase.fallback);
+};
+
+// Helper function to get random response from array
+const getRandomResponse = (responses: string[]): string => {
+  const index = Math.floor(Math.random() * responses.length);
+  return responses[index];
+};
 
 const ChatWidget: React.FC = () => {
-  const [isOpen, setIsOpen] = useState(false);
+  const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
-  const [inputValue, setInputValue] = useState('');
+  const [inputMessage, setInputMessage] = useState("");
   const [isRecording, setIsRecording] = useState(false);
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
-  const { user } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-  const scrollAreaRef = useRef<HTMLDivElement>(null);
-  const audioChunksRef = useRef<BlobPart[]>([]);
+  
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const audioChunks = useRef<BlobPart[]>([]);
 
-  // Simular mensagem de boas-vindas do suporte
+  // Initialize with a welcome message
   useEffect(() => {
-    if (isOpen && messages.length === 0) {
+    if (messages.length === 0) {
       setMessages([
         {
-          id: Date.now().toString(),
-          content: "Olá! Sou o assistente virtual da BEGJNP Pharma. Como posso ajudar você hoje?",
-          sender: 'support',
-          timestamp: new Date()
+          id: "welcome",
+          text: "Olá! Bem-vindo à BEGJNP Pharma. Como posso ajudar você hoje?",
+          isUser: false
         }
       ]);
     }
-  }, [isOpen, messages.length]);
-
-  // Scrollar para o final da conversa quando receber novas mensagens
-  useEffect(() => {
-    if (scrollAreaRef.current) {
-      scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
-    }
   }, [messages]);
 
-  // Função para processar a pergunta com IA
-  const processWithAI = async (question: string): Promise<AIResponse> => {
-    // Simulação de resposta IA - Numa implementação real, isto seria uma chamada para um API como OpenAI
-    const commonResponses: Record<string, AIResponse> = {
-      "cadastro": {
-        message: "Para se cadastrar no BEGJNP Pharma, siga estes passos:",
-        instructions: [
-          "1. Clique no botão 'Entrar' no canto superior direito",
-          "2. Na tela de login, clique em 'Criar conta'",
-          "3. Preencha seus dados pessoais no formulário",
-          "4. Confirme seu email através do link enviado",
-          "5. Pronto! Agora você pode fazer compras na nossa farmácia"
-        ]
-      },
-      "horário": {
-        message: "A BEGJNP Pharma funciona nos seguintes horários:",
-        instructions: [
-          "Segunda a Sexta: 8h às 22h",
-          "Sábados: 8h às 20h",
-          "Domingos e Feriados: 9h às 18h"
-        ]
-      },
-      "entrega": {
-        message: "Sobre nossas entregas:",
-        instructions: [
-          "Realizamos entregas em toda a cidade",
-          "O prazo médio é de 1-2 horas após a confirmação do pedido",
-          "Entregas para região metropolitana podem levar até 24 horas",
-          "Pedidos com prescrição médica têm prioridade"
-        ]
-      },
-      "medicamentos": {
-        message: "Sobre nossos medicamentos:",
-        instructions: [
-          "Trabalhamos com medicamentos genéricos e de marca",
-          "Temos uma ampla variedade de produtos nacionais e importados",
-          "Para medicamentos controlados, é necessária a receita médica",
-          "Oferecemos desconto em medicamentos para tratamentos contínuos"
-        ]
+  // Auto scroll to bottom when new messages arrive
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  // Handle media recorder setup
+  useEffect(() => {
+    return () => {
+      if (mediaRecorder) {
+        mediaRecorder.removeEventListener('dataavailable', handleDataAvailable);
+        mediaRecorder.removeEventListener('stop', handleStop);
       }
     };
-    
-    // Busca por palavras-chave na pergunta
-    const lowerQuestion = question.toLowerCase();
-    
-    if (lowerQuestion.includes("cadastr") || lowerQuestion.includes("registr") || lowerQuestion.includes("criar conta")) {
-      return commonResponses["cadastro"];
-    } else if (lowerQuestion.includes("horário") || lowerQuestion.includes("hora") || lowerQuestion.includes("funcionamento")) {
-      return commonResponses["horário"];
-    } else if (lowerQuestion.includes("entrega") || lowerQuestion.includes("receber") || lowerQuestion.includes("delivery")) {
-      return commonResponses["entrega"];
-    } else if (lowerQuestion.includes("medicamento") || lowerQuestion.includes("remédio") || lowerQuestion.includes("produto")) {
-      return commonResponses["medicamentos"];
+  }, [mediaRecorder]);
+
+  const handleDataAvailable = (e: BlobEvent) => {
+    if (e.data.size > 0) {
+      audioChunks.current.push(e.data);
     }
-    
-    // Resposta genérica se nenhuma palavra-chave for encontrada
-    return { 
-      message: "Obrigado por sua pergunta. Posso ajudar com informações sobre nossos produtos, serviços, horários de funcionamento, processo de cadastro e entregas. Como posso te auxiliar melhor?"
-    };
   };
 
-  const handleSendMessage = async () => {
-    if (!inputValue.trim()) return;
-
-    // Adicionar mensagem do usuário
-    const userMessage: Message = {
+  const handleStop = () => {
+    const audioBlob = new Blob(audioChunks.current, { type: 'audio/webm' });
+    const audioUrl = URL.createObjectURL(audioBlob);
+    
+    // Add the audio message to the chat
+    const newMessage: Message = {
       id: Date.now().toString(),
-      content: inputValue,
-      sender: 'user',
-      timestamp: new Date()
+      text: "Mensagem de áudio",
+      isUser: true,
+      isAudio: true,
+      audioUrl
     };
-
-    setMessages(prev => [...prev, userMessage]);
-    setInputValue('');
-
-    try {
-      // Processar com IA
-      const aiResponse = await processWithAI(inputValue);
-      
-      // Criar mensagem de resposta
-      let responseContent = aiResponse.message;
-      
-      // Adicionar instruções à resposta, se houver
-      if (aiResponse.instructions && aiResponse.instructions.length > 0) {
-        responseContent += "\n\n" + aiResponse.instructions.join("\n");
-      }
-      
-      const supportMessage: Message = {
-        id: Date.now().toString(),
-        content: responseContent,
-        sender: 'support',
-        timestamp: new Date()
-      };
-
-      setMessages(prev => [...prev, supportMessage]);
-    } catch (error) {
-      console.error('Erro ao processar mensagem:', error);
-      
-      // Mensagem de erro em caso de falha
-      const errorMessage: Message = {
-        id: Date.now().toString(),
-        content: "Desculpe, estou com dificuldades para processar sua mensagem no momento. Por favor, tente novamente mais tarde.",
-        sender: 'support',
-        timestamp: new Date()
-      };
-      
-      setMessages(prev => [...prev, errorMessage]);
-    }
-  };
-
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleSendMessage();
-    }
+    
+    setMessages(prev => [...prev, newMessage]);
+    
+    // Simulate the AI processing the audio
+    handleAIResponse("Mensagem de áudio recebida", true);
   };
 
   const startRecording = async () => {
@@ -176,191 +193,202 @@ const ChatWidget: React.FC = () => {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const recorder = new MediaRecorder(stream);
       
-      audioChunksRef.current = [];
+      audioChunks.current = [];
       
-      recorder.addEventListener('dataavailable', (event) => {
-        audioChunksRef.current.push(event.data);
-      });
-      
-      recorder.addEventListener('stop', async () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-        const audioUrl = URL.createObjectURL(audioBlob);
-        
-        // Add user audio message
-        const audioMessage: Message = {
-          id: Date.now().toString(),
-          content: "Mensagem de áudio",
-          sender: 'user',
-          timestamp: new Date(),
-          type: 'audio',
-          audioUrl
-        };
-        
-        setMessages(prev => [...prev, audioMessage]);
-        
-        // Simulate AI response to audio
-        setTimeout(() => {
-          const supportAudioMessage: Message = {
-            id: Date.now().toString(),
-            content: "Recebi seu áudio. Nesta versão de demonstração, estou respondendo com um texto, mas em uma implementação completa, eu retornaria um áudio também. Como posso ajudar?",
-            sender: 'support',
-            timestamp: new Date()
-          };
-          
-          setMessages(prev => [...prev, supportAudioMessage]);
-        }, 1500);
-      });
+      recorder.addEventListener('dataavailable', handleDataAvailable);
+      recorder.addEventListener('stop', handleStop);
       
       recorder.start();
       setMediaRecorder(recorder);
       setIsRecording(true);
-    } catch (error) {
-      console.error('Error accessing microphone:', error);
+      
       toast({
-        title: "Erro",
-        description: "Não foi possível acessar o microfone. Por favor, verifique as permissões do navegador.",
+        title: "Gravando áudio",
+        description: "Fale sua mensagem e clique novamente para parar."
+      });
+    } catch (err) {
+      console.error('Error starting recording:', err);
+      toast({
+        title: "Erro ao gravar",
+        description: "Não foi possível acessar seu microfone.",
         variant: "destructive"
       });
     }
   };
 
   const stopRecording = () => {
-    if (mediaRecorder) {
+    if (mediaRecorder && mediaRecorder.state !== 'inactive') {
       mediaRecorder.stop();
-      setIsRecording(false);
       
-      // Stop all tracks on the stream
+      // Stop all audio tracks
       mediaRecorder.stream.getTracks().forEach(track => track.stop());
+      
+      setIsRecording(false);
     }
   };
 
-  const formatTime = (date: Date) => {
-    return date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  const toggleRecording = () => {
+    if (isRecording) {
+      stopRecording();
+    } else {
+      startRecording();
+    }
   };
 
-  const formatMessage = (content: string) => {
-    return content.split('\n').map((line, index) => (
-      <React.Fragment key={index}>
-        {line}
-        {index < content.split('\n').length - 1 && <br />}
-      </React.Fragment>
-    ));
+  const handleSendMessage = () => {
+    if (inputMessage.trim() === "") return;
+    
+    // Add user message
+    const newMessage: Message = {
+      id: Date.now().toString(),
+      text: inputMessage,
+      isUser: true
+    };
+    
+    setMessages(prev => [...prev, newMessage]);
+    handleAIResponse(inputMessage);
+    setInputMessage("");
+  };
+
+  const handleAIResponse = (userMessage: string, isAudioResponse = false) => {
+    setIsLoading(true);
+    
+    // Simulate AI thinking with a slight delay
+    setTimeout(() => {
+      // Get AI response based on user message
+      let aiResponse = "";
+      
+      if (isAudioResponse) {
+        aiResponse = "Recebi sua mensagem de áudio! Para melhor entender sua solicitação, pode digitar sua pergunta? Estou aqui para ajudar com qualquer dúvida sobre produtos, entregas ou qualquer outro assunto relacionado à BEGJNP Pharma.";
+      } else {
+        aiResponse = getAIResponse(userMessage);
+      }
+      
+      const aiMessage: Message = {
+        id: `ai-${Date.now()}`,
+        text: aiResponse,
+        isUser: false
+      };
+      
+      setMessages(prev => [...prev, aiMessage]);
+      setIsLoading(false);
+    }, 1500);
+  };
+
+  const playAudio = (url: string) => {
+    const audio = new Audio(url);
+    audio.play();
   };
 
   return (
-    <>
-      {/* Botão flutuante de chat */}
-      {!isOpen && (
-        <Button
-          onClick={() => setIsOpen(true)}
-          className="fixed bottom-6 right-6 rounded-full w-14 h-14 shadow-lg bg-pharma-primary hover:bg-pharma-primary/90 z-50"
+    <Sheet open={open} onOpenChange={setOpen}>
+      <SheetTrigger asChild>
+        <Button 
+          className="rounded-full h-14 w-14 fixed bottom-6 right-6 shadow-lg bg-pharma-primary hover:bg-pharma-primary/90 z-50"
+          size="icon"
         >
-          <MessageSquare className="h-6 w-6" />
+          <MessageCircle size={24} />
         </Button>
-      )}
-
-      {/* Widget de chat */}
-      {isOpen && (
-        <Card className="fixed bottom-6 right-6 w-80 md:w-96 h-96 shadow-xl z-50 flex flex-col">
-          <CardHeader className="py-3 px-4 border-b flex flex-row justify-between items-center">
-            <CardTitle className="text-sm font-medium">Assistente Virtual</CardTitle>
-            <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => setIsOpen(false)}>
-              <X className="h-4 w-4" />
-            </Button>
-          </CardHeader>
-          
-          <CardContent className="p-0 flex-grow overflow-hidden">
-            <ScrollArea className="h-full p-4" ref={scrollAreaRef}>
-              {messages.map(message => (
-                <div
-                  key={message.id}
-                  className={`flex mb-4 ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
-                >
-                  {message.sender === 'support' && (
-                    <Avatar className="h-8 w-8 mr-2">
-                      <AvatarImage src="/assets/pharmacy-logo.png" alt="Suporte" />
-                      <AvatarFallback>AI</AvatarFallback>
-                    </Avatar>
-                  )}
-                  
-                  <div
-                    className={`max-w-[80%] px-3 py-2 rounded-lg ${
-                      message.sender === 'user'
-                        ? 'bg-pharma-primary text-white'
-                        : 'bg-gray-100 text-gray-800'
-                    }`}
-                  >
-                    {message.type === 'audio' ? (
-                      <div className="my-1">
-                        <audio src={message.audioUrl} controls className="max-w-full h-8"></audio>
-                      </div>
-                    ) : (
-                      <p className="text-sm">{formatMessage(message.content)}</p>
-                    )}
-                    <p className={`text-xs mt-1 ${
-                      message.sender === 'user' ? 'text-white/70' : 'text-gray-500'
-                    }`}>
-                      {formatTime(message.timestamp)}
-                    </p>
-                  </div>
-                  
-                  {message.sender === 'user' && (
-                    <Avatar className="h-8 w-8 ml-2">
-                      <AvatarImage src={user?.avatar || undefined} alt={user?.name || 'Usuário'} />
-                      <AvatarFallback>{user?.name?.substring(0, 2).toUpperCase() || 'U'}</AvatarFallback>
-                    </Avatar>
-                  )}
-                </div>
-              ))}
-            </ScrollArea>
-          </CardContent>
-          
-          <CardFooter className="p-3 border-t">
-            <div className="flex w-full items-center space-x-2">
-              <Input
-                placeholder="Digite sua mensagem..."
-                value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
-                onKeyDown={handleKeyPress}
-                className="flex-grow"
-                disabled={isRecording}
-              />
-              {!isRecording ? (
-                <>
-                  <Button
-                    onClick={startRecording}
-                    size="icon"
-                    variant="outline"
-                    className="h-8 w-8"
-                    title="Enviar mensagem de áudio"
-                  >
-                    <Mic className="h-4 w-4" />
-                  </Button>
-                  <Button 
-                    onClick={handleSendMessage} 
-                    disabled={!inputValue.trim()}
-                    size="icon"
-                    className="h-8 w-8 bg-pharma-primary hover:bg-pharma-primary/90"
-                  >
-                    <Send className="h-4 w-4" />
-                  </Button>
-                </>
-              ) : (
-                <Button
-                  onClick={stopRecording}
-                  size="icon"
-                  variant="destructive"
-                  className="h-8 w-8"
-                  title="Parar gravação"
-                >
-                  <StopCircle className="h-4 w-4" />
-                </Button>
-              )}
+      </SheetTrigger>
+      <SheetContent className="sm:max-w-[400px] p-0 flex flex-col h-full">
+        <SheetHeader className="px-4 py-4 border-b bg-pharma-primary text-white">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <Avatar className="h-10 w-10 mr-2 border-2 border-white">
+                <img src="/logo.png" alt="BEGJNP Pharma" onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.onerror = null;
+                  target.src = '/placeholder.svg';
+                }}/>
+              </Avatar>
+              <SheetTitle className="text-white">Suporte ao Cliente</SheetTitle>
             </div>
-          </CardFooter>
-        </Card>
-      )}
-    </>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-8 w-8 text-white hover:bg-white/20"
+              onClick={() => setOpen(false)}
+            >
+              <X size={18} />
+            </Button>
+          </div>
+        </SheetHeader>
+        
+        <div className="flex-1 overflow-auto p-4 bg-gray-50">
+          {messages.map(msg => (
+            <div 
+              key={msg.id} 
+              className={`flex ${msg.isUser ? 'justify-end' : 'justify-start'} mb-4`}
+            >
+              <div 
+                className={`max-w-[85%] rounded-lg p-3 ${
+                  msg.isUser 
+                    ? 'bg-pharma-primary text-white rounded-tr-none' 
+                    : 'bg-white border border-gray-200 rounded-tl-none'
+                }`}
+              >
+                {msg.isAudio ? (
+                  <div className="flex items-center cursor-pointer" onClick={() => msg.audioUrl && playAudio(msg.audioUrl)}>
+                    <Volume2 size={18} className="mr-2" />
+                    <span>Reproduzir áudio</span>
+                  </div>
+                ) : (
+                  <p className="whitespace-pre-line">{msg.text}</p>
+                )}
+              </div>
+            </div>
+          ))}
+          {isLoading && (
+            <div className="flex justify-start mb-4">
+              <div className="bg-white border border-gray-200 rounded-lg rounded-tl-none p-3 max-w-[85%]">
+                <div className="flex items-center space-x-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <p>Digitando...</p>
+                </div>
+              </div>
+            </div>
+          )}
+          <div ref={messagesEndRef} />
+        </div>
+        
+        <div className="p-3 border-t bg-white">
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              className={`flex-shrink-0 ${isRecording ? 'text-red-500 animate-pulse' : ''}`}
+              onClick={toggleRecording}
+            >
+              <Mic size={20} />
+            </Button>
+            <Input
+              placeholder="Digite sua mensagem..."
+              value={inputMessage}
+              onChange={(e) => setInputMessage(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSendMessage();
+                }
+              }}
+              className="flex-1"
+              disabled={isRecording}
+            />
+            <Button 
+              size="icon" 
+              className="flex-shrink-0 bg-pharma-primary hover:bg-pharma-primary/90" 
+              onClick={handleSendMessage}
+              disabled={inputMessage.trim() === '' || isRecording}
+            >
+              <Send size={18} />
+            </Button>
+          </div>
+          <div className="text-xs text-center mt-2 text-gray-500">
+            BEGJNP Pharma • Suporte 24/7 • Farmácia Online
+          </div>
+        </div>
+      </SheetContent>
+    </Sheet>
   );
 };
 
