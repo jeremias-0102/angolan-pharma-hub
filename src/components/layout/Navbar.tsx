@@ -1,23 +1,22 @@
-
 import React, { useState, useEffect } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ShoppingCart, Menu, X, User, LogOut, Home } from 'lucide-react';
+import { ShoppingCart, User, Menu, X, Home, Search as SearchIcon, ChevronDown } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
-import { 
+import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { cn } from '@/lib/utils';
-import { getCompanySettings } from '@/services/settingsService';
+import { Input } from "@/components/ui/input";
+import NotificationBar from './NotificationBar';
+import { useIsMobile } from '@/hooks/use-mobile';
 
-const Navbar = () => {
+const Navbar: React.FC = () => {
   const { user, logout, isAuthenticated } = useAuth();
   const { totalItems } = useCart();
   const location = useLocation();
@@ -69,107 +68,98 @@ const Navbar = () => {
   };
 
   return (
-    <header className="sticky top-0 z-40 w-full bg-white shadow-sm">
-      <div className="container mx-auto px-4 sm:px-6">
-        <div className="flex h-16 items-center justify-between">
-          {/* Logo */}
-          <div className="flex items-center">
-            <Link to="/" className="flex items-center">
-              <span className="text-xl font-bold text-pharma-primary">{companyName}</span>
-            </Link>
-          </div>
+    <header className="bg-white shadow-sm sticky top-0 z-40">
+      <div className="flex items-center justify-between px-4 md:px-6 py-2 container mx-auto">
+        {/* Logo */}
+        <div className="flex items-center">
+          <Link to="/" className="flex items-center">
+            <h1 className="text-xl font-bold text-blue-600">BEGJNP<span className="text-green-600">Pharma</span></h1>
+          </Link>
+        </div>
 
-          {/* Desktop Navigation */}
-          <nav className="hidden md:flex space-x-4">
-            {navItems.map((item) => (
-              <Link 
-                key={item.name}
-                to={item.path}
-                className={cn(
-                  "px-3 py-2 text-sm font-medium transition-colors hover:text-pharma-primary",
-                  location.pathname === item.path 
-                    ? "text-pharma-primary" 
-                    : "text-gray-600"
-                )}
-              >
-                {item.name}
-              </Link>
-            ))}
-          </nav>
+        {/* Desktop Navigation */}
+        <div className="hidden md:flex items-center space-x-4">
+          <Link to="/" className="text-gray-700 hover:text-pharma-primary px-3 py-2 rounded-md text-sm font-medium">Home</Link>
+          <Link to="/produtos" className="text-gray-700 hover:text-pharma-primary px-3 py-2 rounded-md text-sm font-medium">Produtos</Link>
+          <Link to="/sobre" className="text-gray-700 hover:text-pharma-primary px-3 py-2 rounded-md text-sm font-medium">Sobre</Link>
+          <Link to="/contato" className="text-gray-700 hover:text-pharma-primary px-3 py-2 rounded-md text-sm font-medium">Contato</Link>
+        </div>
 
-          {/* Right side buttons */}
-          <div className="flex items-center space-x-2">
-            {/* Cart */}
-            <Link to="/carrinho">
-              <Button variant="ghost" className="relative p-2">
-                <ShoppingCart size={20} />
-                {totalItems > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-pharma-secondary text-white text-xs w-5 h-5 flex items-center justify-center rounded-full">
-                    {totalItems}
-                  </span>
-                )}
-              </Button>
-            </Link>
-
-            {/* User menu */}
-            {isAuthenticated ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="p-2">
-                    <User size={20} />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuLabel>
-                    <div className="flex flex-col">
-                      <span>{user?.name}</span>
-                      <span className="text-xs text-gray-500">{user?.email}</span>
-                      <span className="text-xs font-medium text-pharma-primary capitalize mt-1">
-                        {user?.role}
-                      </span>
-                    </div>
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuGroup>
-                    <DropdownMenuItem asChild>
-                      <Link to={getDashboardLink()} className="w-full cursor-pointer">
-                        Dashboard
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link to="/profile" className="w-full cursor-pointer">
-                        Meu Perfil
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link to="/pedidos" className="w-full cursor-pointer">
-                        Meus Pedidos
-                      </Link>
-                    </DropdownMenuItem>
-                  </DropdownMenuGroup>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleLogout} className="text-red-500 cursor-pointer">
-                    <LogOut className="mr-2 h-4 w-4" />
-                    <span>Sair</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            ) : (
-              <Button asChild variant="default" size="sm" className="bg-pharma-primary hover:bg-pharma-primary/90">
-                <Link to="/login">Entrar</Link>
-              </Button>
-            )}
-
-            {/* Mobile menu button */}
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="md:hidden p-2" 
-              onClick={toggleMobileMenu}
-            >
-              {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+        {/* Actions Area */}
+        <div className="flex items-center space-x-3">
+          {/* Notificações - Novo componente */}
+          <NotificationBar />
+          
+          {/* Cart */}
+          <Link to="/carrinho">
+            <Button variant="ghost" className="relative p-2">
+              <ShoppingCart size={20} />
+              {totalItems > 0 && (
+                <span className="absolute -top-1 -right-1 bg-pharma-secondary text-white text-xs w-5 h-5 flex items-center justify-center rounded-full">
+                  {totalItems}
+                </span>
+              )}
             </Button>
-          </div>
+          </Link>
+
+          {/* User menu */}
+          {isAuthenticated ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="p-2">
+                  <User size={20} />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel>
+                  <div className="flex flex-col">
+                    <span>{user?.name}</span>
+                    <span className="text-xs text-gray-500">{user?.email}</span>
+                    <span className="text-xs font-medium text-pharma-primary capitalize mt-1">
+                      {user?.role}
+                    </span>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuGroup>
+                  <DropdownMenuItem asChild>
+                    <Link to={getDashboardLink()} className="w-full cursor-pointer">
+                      Dashboard
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/profile" className="w-full cursor-pointer">
+                      Meu Perfil
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link to="/pedidos" className="w-full cursor-pointer">
+                      Meus Pedidos
+                    </Link>
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleLogout} className="text-red-500 cursor-pointer">
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Sair</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <Button asChild variant="default" size="sm" className="bg-pharma-primary hover:bg-pharma-primary/90">
+              <Link to="/login">Entrar</Link>
+            </Button>
+          )}
+
+          {/* Mobile menu button */}
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="md:hidden p-2" 
+            onClick={toggleMobileMenu}
+          >
+            {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+          </Button>
         </div>
       </div>
 

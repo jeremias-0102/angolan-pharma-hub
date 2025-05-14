@@ -1,5 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   Table, 
   TableBody, 
@@ -17,8 +18,8 @@ import {
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
-import { Search, Plus, MoreHorizontal, Edit2, Trash2 } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
+import { Search, Plus, MoreHorizontal, Edit2, Trash2, ArrowLeft } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 import { Product } from "@/types/models";
 import ProductFormModal from "@/components/admin/ProductFormModal";
 import { format } from 'date-fns';
@@ -40,6 +41,7 @@ const ProductsManagement: React.FC = () => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [productToDelete, setProductToDelete] = useState<Product | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const navigate = useNavigate();
   
   const { toast } = useToast();
 
@@ -148,6 +150,10 @@ const ProductsManagement: React.FC = () => {
       setProductToDelete(null);
     }
   };
+  
+  const handleBack = () => {
+    navigate('/admin');
+  };
 
   // Calculate total stock for a product from all batches
   const getTotalStock = (product: Product) => {
@@ -176,7 +182,13 @@ const ProductsManagement: React.FC = () => {
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Gestão de Produtos</h1>
+        <div className="flex items-center">
+          <Button variant="ghost" onClick={handleBack} className="mr-2">
+            <ArrowLeft className="h-5 w-5 mr-1" />
+            Voltar
+          </Button>
+          <h1 className="text-2xl font-bold">Gestão de Produtos</h1>
+        </div>
         <Button onClick={openAddModal} className="bg-pharma-primary hover:bg-pharma-primary/90">
           <Plus className="mr-2 h-4 w-4" /> Adicionar Produto
         </Button>
@@ -220,7 +232,7 @@ const ProductsManagement: React.FC = () => {
               <TableBody>
                 {filteredProducts.length > 0 ? (
                   filteredProducts.map((product) => (
-                    <TableRow key={product.id}>
+                    <TableRow key={product.id} className="hover:bg-gray-50">
                       <TableCell>
                         <div className="w-12 h-12 rounded border overflow-hidden">
                           <img

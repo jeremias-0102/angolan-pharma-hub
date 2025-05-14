@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MainLayout from '@/components/layout/MainLayout';
@@ -8,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Textarea } from '@/components/ui/textarea';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { 
   Card, 
   CardContent, 
@@ -22,12 +23,15 @@ import { Check, CreditCard, Truck, MapPin, Smartphone } from 'lucide-react';
 import MapLocationPicker from '@/components/checkout/MapLocationPicker';
 import PrescriptionUpload from '@/components/checkout/PrescriptionUpload';
 import { sendWhatsAppReceipt } from '@/utils/whatsappService';
+import { useNotifications } from '@/contexts/NotificationsContext';
+import { createOrder } from '@/services/orderService';
 
 const Checkout = () => {
   const { items, totalPrice, clearCart } = useCart();
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { addNotification } = useNotifications();
   
   const [formData, setFormData] = useState({
     name: user?.name || '',
@@ -78,7 +82,7 @@ const Checkout = () => {
     setLocation(coords);
   };
   
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     // Validate form
@@ -111,38 +115,106 @@ const Checkout = () => {
     
     setIsSubmitting(true);
     
-    // Simulando um pedido sendo criado
-    const orderId = `PED${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`;
-    const orderDate = new Date().toLocaleString('pt-BR');
-    
-    // Preparar dados do pedido para o comprovante
-    const orderDetails = {
-      id: orderId,
-      items: items,
-      total: totalPrice,
-      deliveryFee: deliveryFee,
-      customerName: formData.name,
-      customerPhone: formData.phone,
-      date: orderDate,
-      paymentMethod: getPaymentMethodName(formData.paymentMethod),
-      address: `${formData.address}, ${formData.district}, ${formData.city}`
-    };
-    
-    // Simulate order processing delay
-    setTimeout(() => {
-      toast({
-        title: "Pedido Realizado com Sucesso!",
-        description: "Seu pedido foi recebido e está em processamento.",
+    try {
+      // Preparar dados do pedido
+      const orderId = `PED${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`;
+      const orderDate = new Date().toISOString();
+      
+      // Criar itens do pedido
+      const orderItems = items.map(item => ({
+        id: crypto.randomUUID(),
+        product_id: item.product.id,
+        product_name: item.product.name,
+        product_image: item.product.image || '',
+        quantity: item.quantity,
+        unit_price: item.product.price_sale,
+        total: item.product.price_sale * item.quantity
+      }));
+      
+      // Criar objeto de entrega
+      const delivery = {
+        address: formData.address,
+        district: formData.district,
+        city: formData.city,
+        status: 'pending' as const,
+        fee: deliveryFee,
+        coordinates: location || undefined,
+        notes: formData.notes || undefined
+      };
+      
+      // Criar pedido na API
+      const newOrder = {
+        user_id: user?.id || 'guest',
+        status: 'pending' as const,
+        payment_method: getPaymentMethodName(formData.paymentMethod),
+        payment_status: 'pending' as const,
+        total: finalTotal,
+        items: orderItems,
+        delivery,
+        notes: formData.notes || undefined,
+        customer_name: formData.name,
+        customer_phone: formData.phone,
+        requires_prescription: requiresPrescription
+      };
+      
+      // Em uma implementação real, isso enviaria o pedido para o servidor
+      // e processaria o pagamento
+      const createdOrder = await createOrder(newOrder);
+      
+      // Preparar dados do pedido para o comprovante
+      const orderDetails = {
+        id: createdOrder.id,
+        items: items.map(item => ({
+          product: {
+            name: item.product.name,
+            price: item.product.price_sale
+          },
+          quantity: item.quantity
+        })),
+        total: totalPrice,
+        deliveryFee: deliveryFee,
+        customerName: formData.name,
+        customerPhone: formData.phone,
+        date: new Date().toLocaleDateString('pt-BR'),
+        paymentMethod: getPaymentMethodName(formData.paymentMethod),
+        address: `${formData.address}, ${formData.district}, ${formData.city}`
+      };
+      
+      // Notificar administradores sobre novo pedido
+      addNotification({
+        type: 'info',
+        title: 'Novo pedido recebido',
+        message: `Um novo pedido #${createdOrder.id} foi realizado e está aguardando aprovação.`,
+        link: '/admin/pedidos'
       });
       
-      // Enviar comprovante via WhatsApp
-      sendWhatsAppReceipt(orderDetails);
-      
-      clearCart();
-      navigate('/');
-      
+      setTimeout(() => {
+        // Mostrar mensagem de sucesso
+        toast({
+          title: "Pedido Realizado com Sucesso!",
+          description: "Seu pedido foi recebido e está em processamento.",
+        });
+        
+        // Enviar comprovante via WhatsApp se número de telefone estiver disponível
+        if (formData.phone) {
+          sendWhatsAppReceipt(orderDetails);
+        }
+        
+        // Limpar carrinho e redirecionar
+        clearCart();
+        navigate('/pedidos');
+        
+        setIsSubmitting(false);
+      }, 2000);
+    } catch (error) {
+      console.error('Erro ao processar pedido:', error);
+      toast({
+        title: "Erro ao processar pedido",
+        description: "Ocorreu um erro ao processar seu pedido. Por favor, tente novamente.",
+        variant: "destructive"
+      });
       setIsSubmitting(false);
-    }, 2000);
+    }
   };
   
   // Função auxiliar para obter o nome da forma de pagamento
@@ -170,7 +242,7 @@ const Checkout = () => {
   
   return (
     <MainLayout>
-      <div className="container mx-auto px-4 py-8">
+      <div className="container-responsive py-8">
         <h1 className="text-2xl font-bold mb-8">Finalizar Compra</h1>
         
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
@@ -179,8 +251,8 @@ const Checkout = () => {
             <form onSubmit={handleSubmit}>
               {/* Prescription Upload if needed */}
               {requiresPrescription && (
-                <Card className="mb-6">
-                  <CardHeader>
+                <Card className="mb-6 hover:shadow-md transition-all duration-300">
+                  <CardHeader className="bg-blue-50">
                     <CardTitle className="flex items-center text-pharma-primary">
                       <Check className="mr-2 h-5 w-5" />
                       Prescrição Médica
@@ -189,22 +261,22 @@ const Checkout = () => {
                       Alguns medicamentos em seu carrinho requerem prescrição médica
                     </CardDescription>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="pt-6">
                     <PrescriptionUpload onFileUpload={handlePrescriptionUpload} />
                   </CardContent>
                 </Card>
               )}
               
               {/* Delivery Information */}
-              <Card className="mb-6">
-                <CardHeader>
+              <Card className="mb-6 hover:shadow-md transition-all duration-300">
+                <CardHeader className="bg-gray-50">
                   <CardTitle className="flex items-center">
                     <MapPin className="mr-2 h-5 w-5 text-pharma-primary" />
                     Informações de Entrega
                   </CardTitle>
                   <CardDescription>Forneça detalhes para entrega do seu pedido</CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
+                <CardContent className="space-y-4 pt-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="name">Nome Completo</Label>
@@ -214,6 +286,7 @@ const Checkout = () => {
                         value={formData.name} 
                         onChange={handleChange} 
                         required 
+                        className="focus-visible"
                       />
                     </div>
                     <div className="space-y-2">
@@ -225,6 +298,7 @@ const Checkout = () => {
                         onChange={handleChange} 
                         placeholder="+244 900 000 000"
                         required 
+                        className="focus-visible"
                       />
                     </div>
                   </div>
@@ -236,6 +310,7 @@ const Checkout = () => {
                       value={formData.address} 
                       onChange={handleChange} 
                       required 
+                      className="focus-visible"
                     />
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -247,6 +322,7 @@ const Checkout = () => {
                         value={formData.district} 
                         onChange={handleChange} 
                         required 
+                        className="focus-visible"
                       />
                     </div>
                     <div className="space-y-2">
@@ -257,6 +333,7 @@ const Checkout = () => {
                         value={formData.city} 
                         onChange={handleChange} 
                         required 
+                        className="focus-visible"
                       />
                     </div>
                   </div>
@@ -276,57 +353,58 @@ const Checkout = () => {
                       onChange={handleChange} 
                       placeholder="Instruções especiais para entrega..."
                       rows={3}
+                      className="focus-visible"
                     />
                   </div>
                 </CardContent>
               </Card>
               
               {/* Payment Method */}
-              <Card className="mb-6">
-                <CardHeader>
+              <Card className="mb-6 hover:shadow-md transition-all duration-300">
+                <CardHeader className="bg-gray-50">
                   <CardTitle className="flex items-center">
                     <CreditCard className="mr-2 h-5 w-5 text-pharma-primary" />
                     Método de Pagamento
                   </CardTitle>
                   <CardDescription>Escolha como deseja pagar pelo seu pedido</CardDescription>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="pt-6">
                   <RadioGroup 
                     value={formData.paymentMethod} 
                     onValueChange={handlePaymentChange}
                     className="space-y-4"
                   >
                     {/* Multicaixa Express */}
-                    <div className="flex items-center space-x-2 border rounded-md p-4 cursor-pointer hover:bg-gray-50">
+                    <div className="flex items-center space-x-2 border rounded-md p-4 cursor-pointer hover:bg-gray-50 transition-colors">
                       <RadioGroupItem value="multicaixa" id="multicaixa" />
                       <Label htmlFor="multicaixa" className="cursor-pointer flex items-center">
                         <Smartphone className="mr-2 h-5 w-5" />
                         <div>
-                          <div>Multicaixa Express</div>
+                          <div className="font-medium">Multicaixa Express</div>
                           <div className="text-sm text-gray-500">Pagamento automático pelo número de telefone</div>
                         </div>
                       </Label>
                     </div>
                     
                     {/* Credit/Debit Card */}
-                    <div className="flex items-center space-x-2 border rounded-md p-4 cursor-pointer hover:bg-gray-50">
+                    <div className="flex items-center space-x-2 border rounded-md p-4 cursor-pointer hover:bg-gray-50 transition-colors">
                       <RadioGroupItem value="card" id="card" />
                       <Label htmlFor="card" className="cursor-pointer flex items-center">
                         <CreditCard className="mr-2 h-5 w-5" />
                         <div>
-                          <div>Cartão de Crédito/Débito</div>
+                          <div className="font-medium">Cartão de Crédito/Débito</div>
                           <div className="text-sm text-gray-500">Pagamento online seguro</div>
                         </div>
                       </Label>
                     </div>
                     
                     {/* Cash on Delivery */}
-                    <div className="flex items-center space-x-2 border rounded-md p-4 cursor-pointer hover:bg-gray-50">
+                    <div className="flex items-center space-x-2 border rounded-md p-4 cursor-pointer hover:bg-gray-50 transition-colors">
                       <RadioGroupItem value="cash" id="cash" />
                       <Label htmlFor="cash" className="cursor-pointer flex items-center">
                         <Truck className="mr-2 h-5 w-5" />
                         <div>
-                          <div>Pagamento na Entrega</div>
+                          <div className="font-medium">Pagamento na Entrega</div>
                           <div className="text-sm text-gray-500">Pague em dinheiro quando receber</div>
                         </div>
                       </Label>
@@ -344,7 +422,7 @@ const Checkout = () => {
                           value={formData.multicaixaPhone}
                           onChange={handleChange}
                           placeholder="Ex: 926 000 000"
-                          className="bg-white"
+                          className="bg-white focus-visible"
                         />
                       </div>
                       <p className="text-xs text-gray-500 mt-1">
@@ -365,7 +443,7 @@ const Checkout = () => {
                             value={formData.cardNumber}
                             onChange={handleChange}
                             placeholder="0000 0000 0000 0000"
-                            className="mt-1 bg-white"
+                            className="mt-1 bg-white focus-visible"
                           />
                         </div>
                         
@@ -378,7 +456,7 @@ const Checkout = () => {
                               value={formData.cardExpiry}
                               onChange={handleChange}
                               placeholder="MM/AA"
-                              className="mt-1 bg-white"
+                              className="mt-1 bg-white focus-visible"
                             />
                           </div>
                           
@@ -390,7 +468,7 @@ const Checkout = () => {
                               value={formData.cardCvv}
                               onChange={handleChange}
                               placeholder="123"
-                              className="mt-1 bg-white"
+                              className="mt-1 bg-white focus-visible"
                               maxLength={4}
                             />
                           </div>
@@ -452,24 +530,24 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
   onSubmit
 }) => {
   return (
-    <Card>
-      <CardHeader>
+    <Card className="sticky top-28 hover:shadow-md transition-all duration-300">
+      <CardHeader className="bg-gray-50">
         <CardTitle>Resumo do Pedido</CardTitle>
         <CardDescription>
           {items.length} {items.length === 1 ? 'item' : 'itens'} no seu carrinho
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-4 pt-6">
         {/* Order Items */}
-        <div className="space-y-2">
+        <div className="space-y-2 max-h-60 overflow-y-auto pr-2">
           {items.map((item) => (
-            <div key={item.product.id} className="flex justify-between">
+            <div key={item.product.id} className="flex justify-between hover:bg-gray-50 p-2 rounded-sm">
               <div className="flex items-start">
                 <span className="text-sm font-medium mr-2">{item.quantity}x</span>
                 <span className="text-sm">{item.product.name}</span>
               </div>
               <span className="text-sm font-medium">
-                {formatPrice(item.product.price * item.quantity)}
+                {formatPrice(item.product.price_sale * item.quantity)}
               </span>
             </div>
           ))}
@@ -495,7 +573,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
         
         <div className="flex justify-between">
           <span className="font-medium">Total</span>
-          <span className="font-bold text-lg">{formatPrice(finalTotal)}</span>
+          <span className="font-bold text-lg text-pharma-primary">{formatPrice(finalTotal)}</span>
         </div>
         
         {deliveryFee === 0 && (
@@ -507,12 +585,19 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
       </CardContent>
       <CardFooter>
         <Button 
-          className="w-full bg-pharma-primary hover:bg-pharma-primary/90" 
+          className="w-full bg-pharma-primary hover:bg-pharma-primary/90 hover-scale" 
           onClick={onSubmit}
           disabled={isSubmitting}
           type="submit"
         >
-          {isSubmitting ? "Processando..." : "Concluir Pedido"}
+          {isSubmitting ? (
+            <>
+              <div className="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full mr-2"></div>
+              Processando...
+            </>
+          ) : (
+            "Concluir Pedido"
+          )}
         </Button>
       </CardFooter>
     </Card>

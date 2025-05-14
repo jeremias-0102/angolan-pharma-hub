@@ -27,109 +27,124 @@ import { CartProvider } from './contexts/CartContext';
 import { Toaster } from "@/components/ui/toaster";
 import { PrivateRoute } from './components/PrivateRoute';
 import ReportsPage from './pages/admin/ReportsPage';
-import ChatWidget from './components/chat/ChatWidget';
+import EnhancedChatWidget from './components/chat/EnhancedChatWidget';
 import FinancialReportsPage from './pages/admin/FinancialReportsPage';
+import DeliveryOrdersPage from './pages/delivery/DeliveryOrdersPage';
+import OrderHistory from './pages/client/OrderHistory';
+import { NotificationsProvider } from './contexts/NotificationsContext';
 
 function App() {
   return (
     <Router>
       <AuthProvider>
         <CartProvider>
-          <Routes>
-            {/* Rotas públicas */}
-            <Route path="/" element={<Home />} />
-            <Route path="/sobre" element={<About />} />
-            <Route path="/contato" element={<Contact />} />
-            <Route path="/produtos" element={<Products />} />
-            <Route path="/produtos/:id" element={<ProductDetail />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/carrinho" element={<Cart />} />
-            <Route path="/checkout" element={<PrivateRoute><Checkout /></PrivateRoute>} />
-            <Route path="*" element={<NotFound />} />
-
-            {/* Rotas de cliente */}
-            <Route path="/profile" element={
-              <PrivateRoute>
-                <Profile />
-              </PrivateRoute>
-            } />
-
-            {/* Rotas de Admin */}
-            <Route path="/admin" element={
-              <PrivateRoute allowedRoles={['admin']}>
-                <AdminOverview />
-              </PrivateRoute>
-            } />
-            <Route path="/admin/dashboard" element={
-              <PrivateRoute allowedRoles={['admin']}>
-                <Dashboard />
-              </PrivateRoute>
-            } />
-            <Route path="/admin/produtos" element={
-              <PrivateRoute allowedRoles={['admin']}>
-                <ProductsManagement />
-              </PrivateRoute>
-            } />
-            <Route path="/admin/pedidos" element={
-              <PrivateRoute allowedRoles={['admin']}>
-                <OrdersManagement />
-              </PrivateRoute>
-            } />
-            <Route path="/admin/usuarios" element={
-              <PrivateRoute allowedRoles={['admin']}>
-                <UsersManagement />
-              </PrivateRoute>
-            } />
-            <Route path="/admin/fornecedores" element={
-              <PrivateRoute allowedRoles={['admin']}>
-                <SuppliersManagement />
-              </PrivateRoute>
-            } />
-            <Route path="/admin/aquisicoes" element={
-              <PrivateRoute allowedRoles={['admin']}>
-                <AcquisitionsManagement />
-              </PrivateRoute>
-            } />
-            <Route path="/admin/lotes" element={
-              <PrivateRoute allowedRoles={['admin']}>
-                <BatchesManagement />
-              </PrivateRoute>
-            } />
-            <Route path="/admin/configuracoes" element={
-              <PrivateRoute allowedRoles={['admin']}>
-                <CompanySettings />
-              </PrivateRoute>
-            } />
-            <Route path="/admin/relatorios" element={
-              <PrivateRoute allowedRoles={['admin']}>
-                <ReportsPage />
-              </PrivateRoute>
-            } />
-            <Route path="/admin/relatorios-financeiros" element={
-              <PrivateRoute allowedRoles={['admin']}>
-                <FinancialReportsPage />
-              </PrivateRoute>
-            } />
-
-            {/* Rotas de Farmacêutico */}
-            <Route path="/farmaceutico" element={
-              <PrivateRoute allowedRoles={['pharmacist']}>
-                <PharmacistDashboard />
-              </PrivateRoute>
-            } />
-
-            {/* Rotas de Entregador */}
-            <Route path="/entregador" element={
-              <PrivateRoute allowedRoles={['delivery']}>
-                <DeliveryDashboard />
-              </PrivateRoute>
-            } />
-          </Routes>
-
-          {/* Widget de chat disponível em todas as páginas */}
-          <ChatWidget />
-          
-          <Toaster />
+          <NotificationsProvider>
+            <Routes>
+              {/* Rotas públicas */}
+              <Route path="/" element={<Home />} />
+              <Route path="/sobre" element={<About />} />
+              <Route path="/contato" element={<Contact />} />
+              <Route path="/produtos" element={<Products />} />
+              <Route path="/produtos/:id" element={<ProductDetail />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/carrinho" element={<Cart />} />
+              <Route path="/checkout" element={<PrivateRoute><Checkout /></PrivateRoute>} />
+              <Route path="*" element={<NotFound />} />
+  
+              {/* Rotas de cliente */}
+              <Route path="/profile" element={
+                <PrivateRoute>
+                  <Profile />
+                </PrivateRoute>
+              } />
+              <Route path="/pedidos" element={
+                <PrivateRoute>
+                  <OrderHistory />
+                </PrivateRoute>
+              } />
+  
+              {/* Rotas de Admin */}
+              <Route path="/admin" element={
+                <PrivateRoute allowedRoles={['admin']}>
+                  <AdminOverview />
+                </PrivateRoute>
+              } />
+              <Route path="/admin/dashboard" element={
+                <PrivateRoute allowedRoles={['admin']}>
+                  <Dashboard />
+                </PrivateRoute>
+              } />
+              <Route path="/admin/produtos" element={
+                <PrivateRoute allowedRoles={['admin']}>
+                  <ProductsManagement />
+                </PrivateRoute>
+              } />
+              <Route path="/admin/pedidos" element={
+                <PrivateRoute allowedRoles={['admin']}>
+                  <OrdersManagement />
+                </PrivateRoute>
+              } />
+              <Route path="/admin/usuarios" element={
+                <PrivateRoute allowedRoles={['admin']}>
+                  <UsersManagement />
+                </PrivateRoute>
+              } />
+              <Route path="/admin/fornecedores" element={
+                <PrivateRoute allowedRoles={['admin']}>
+                  <SuppliersManagement />
+                </PrivateRoute>
+              } />
+              <Route path="/admin/aquisicoes" element={
+                <PrivateRoute allowedRoles={['admin']}>
+                  <AcquisitionsManagement />
+                </PrivateRoute>
+              } />
+              <Route path="/admin/lotes" element={
+                <PrivateRoute allowedRoles={['admin']}>
+                  <BatchesManagement />
+                </PrivateRoute>
+              } />
+              <Route path="/admin/configuracoes" element={
+                <PrivateRoute allowedRoles={['admin']}>
+                  <CompanySettings />
+                </PrivateRoute>
+              } />
+              <Route path="/admin/relatorios" element={
+                <PrivateRoute allowedRoles={['admin']}>
+                  <ReportsPage />
+                </PrivateRoute>
+              } />
+              <Route path="/admin/relatorios-financeiros" element={
+                <PrivateRoute allowedRoles={['admin']}>
+                  <FinancialReportsPage />
+                </PrivateRoute>
+              } />
+  
+              {/* Rotas de Farmacêutico */}
+              <Route path="/farmaceutico" element={
+                <PrivateRoute allowedRoles={['pharmacist']}>
+                  <PharmacistDashboard />
+                </PrivateRoute>
+              } />
+  
+              {/* Rotas de Entregador */}
+              <Route path="/entregador" element={
+                <PrivateRoute allowedRoles={['delivery']}>
+                  <DeliveryDashboard />
+                </PrivateRoute>
+              } />
+              <Route path="/entregador/pedidos" element={
+                <PrivateRoute allowedRoles={['delivery']}>
+                  <DeliveryOrdersPage />
+                </PrivateRoute>
+              } />
+            </Routes>
+  
+            {/* Widget de chat disponível em todas as páginas */}
+            <EnhancedChatWidget />
+            
+            <Toaster />
+          </NotificationsProvider>
         </CartProvider>
       </AuthProvider>
     </Router>
