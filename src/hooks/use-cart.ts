@@ -38,7 +38,6 @@ export const useCart = () => {
   return {
     ...context,
     addToCart,
-    calculateTotal,
-    cart: context.items // Add cart property for backwards compatibility
+    calculateTotal
   };
 };

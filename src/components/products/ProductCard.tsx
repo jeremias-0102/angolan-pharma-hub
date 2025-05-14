@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -19,7 +20,7 @@ interface ProductCardProps {
 }
 
 const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
-  const { addItem: addToCart } = useCart();
+  const { addItem } = useCart();
   const { toast } = useToast();
   
   // Format price to Angolan Kwanza
@@ -36,7 +37,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       ...product,
       quantity: 1,
     };
-    addToCart(productToAdd);
+    addItem(productToAdd, 1);
     toast({
       title: "Produto adicionado",
       description: `${product.name} foi adicionado ao seu carrinho.`,

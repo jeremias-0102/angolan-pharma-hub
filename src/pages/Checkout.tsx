@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useContext } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,7 +24,7 @@ import { Textarea } from "@/components/ui/textarea"
 
 const Checkout = () => {
   const navigate = useNavigate();
-  const { cart, clearCart, calculateTotal } = useCart();
+  const { items, clearCart, calculateTotal } = useCart();
   const user = useUser();
 
   const [name, setName] = useState('');
@@ -39,9 +40,9 @@ const Checkout = () => {
 
   useEffect(() => {
     // Check if there are prescription items in the cart
-    const requiresPrescription = cart.items.some(item => item.needsPrescription);
+    const requiresPrescription = items.some(item => item.product.needsPrescription);
     setHasPrescriptionItems(requiresPrescription);
-  }, [cart.items]);
+  }, [items]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files && e.target.files[0];
@@ -71,18 +72,18 @@ const Checkout = () => {
       // Create order object with all required fields
       const orderData = {
         user_id: user?.id || 'guest',
-        status: 'pending',
+        status: 'pending' as OrderStatus,
         payment_method: paymentMethod,
         payment_status: 'pending',
         total: calculateTotal(),
-        items: cart.items.map(item => ({
+        items: items.map(item => ({
           id: generateUUID(),
-          product_id: item.id,
-          product_name: item.name,
-          product_image: item.image || '',
+          product_id: item.product.id,
+          product_name: item.product.name,
+          product_image: item.product.image || '',
           quantity: item.quantity,
-          unit_price: item.price_sale || item.price,
-          total: (item.price_sale || item.price) * item.quantity
+          unit_price: item.product.price_sale || item.product.price,
+          total: (item.product.price_sale || item.product.price) * item.quantity
         })),
         shipping_address: `${address}, ${city}, ${state}, ${zipCode}`,
         shipping_details: {

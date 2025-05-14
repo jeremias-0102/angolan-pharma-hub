@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -10,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { PurchaseOrder, PurchaseOrderItem, Product, Supplier } from '@/types/models';
+import { PurchaseOrder, PurchaseOrderItem, Product, Supplier, PurchaseOrderStatus } from '@/types/models';
 import { getAllProducts } from '@/services/productService';
 import { getAllSuppliers } from '@/services/supplierService';
 import { v4 as uuidv4 } from 'uuid';

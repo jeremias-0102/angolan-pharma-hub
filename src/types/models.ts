@@ -116,6 +116,7 @@ export interface User {
   role: UserRole;
   phone?: string;
   avatar?: string;
+  address?: string; // Add address field to fix Profile.tsx error
   created_at: string;
   updated_at: string;
 }
@@ -133,11 +134,11 @@ export interface Supplier {
   is_active: boolean;
   created_at: string;
   updated_at: string;
-  tax_id: string; // Added missing tax_id field
+  tax_id: string;
 }
 
 // Purchase order related types
-export type PurchaseOrderStatus = 'draft' | 'submitted' | 'received' | 'cancelled';
+export type PurchaseOrderStatus = 'draft' | 'submitted' | 'received' | 'cancelled' | 'sent' | 'partial' | 'complete';
 
 export interface PurchaseOrder {
   id: string;
@@ -163,6 +164,8 @@ export interface PurchaseOrderItem {
   quantity_received: number;
   unit_price: number;
   total: number;
+  batch_number?: string; // Added for acquisitionService.ts
+  expiry_date?: string; // Added for acquisitionService.ts
 }
 
 export interface ReceivableItem extends PurchaseOrderItem {
