@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import Home from './pages/Home';
@@ -9,7 +10,7 @@ import Login from './pages/Login';
 import Cart from './pages/Cart';
 import Checkout from './pages/Checkout';
 import NotFound from './pages/NotFound';
-import Profile from './pages/Profile';
+import Profile from './pages/client/Profile';
 import AdminOverview from './pages/admin/AdminOverview';
 import Dashboard from './pages/admin/Dashboard';
 import ProductsManagement from './pages/admin/ProductsManagement';
@@ -23,7 +24,7 @@ import PharmacistDashboard from './pages/pharmacist/PharmacistDashboard';
 import DeliveryDashboard from './pages/delivery/DeliveryDashboard';
 import { AuthProvider } from './contexts/AuthContext';
 import { CartProvider } from './contexts/CartContext';
-import { Toaster } from "@/components/ui/toaster"
+import { Toaster } from "@/components/ui/toaster";
 import { PrivateRoute } from './components/PrivateRoute';
 import ReportsPage from './pages/admin/ReportsPage';
 import ChatWidget from './components/chat/ChatWidget';
