@@ -1,7 +1,8 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { ShoppingCart, User, Menu, X, Home, Search as SearchIcon, ChevronDown } from 'lucide-react';
+import { ShoppingCart, User, Menu, X, Home, Search as SearchIcon, ChevronDown, LogOut } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
 import {
@@ -15,6 +16,8 @@ import {
 import { Input } from "@/components/ui/input";
 import NotificationBar from './NotificationBar';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { getCompanySettings } from '@/services/settingsService';
+import { cn } from '@/lib/utils';
 
 const Navbar: React.FC = () => {
   const { user, logout, isAuthenticated } = useAuth();
@@ -121,23 +124,21 @@ const Navbar: React.FC = () => {
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuGroup>
-                  <DropdownMenuItem asChild>
-                    <Link to={getDashboardLink()} className="w-full cursor-pointer">
-                      Dashboard
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link to="/profile" className="w-full cursor-pointer">
-                      Meu Perfil
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link to="/pedidos" className="w-full cursor-pointer">
-                      Meus Pedidos
-                    </Link>
-                  </DropdownMenuItem>
-                </DropdownMenuGroup>
+                <DropdownMenuItem asChild>
+                  <Link to={getDashboardLink()} className="w-full cursor-pointer">
+                    Dashboard
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/profile" className="w-full cursor-pointer">
+                    Meu Perfil
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/pedidos" className="w-full cursor-pointer">
+                    Meus Pedidos
+                  </Link>
+                </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleLogout} className="text-red-500 cursor-pointer">
                   <LogOut className="mr-2 h-4 w-4" />
