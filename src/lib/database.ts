@@ -1,4 +1,3 @@
-
 import { User, Product, Order, Batch, Supplier, PurchaseOrder } from '@/types/models';
 
 // Database configuration
@@ -14,6 +13,7 @@ export const STORES = {
   SUPPLIERS: 'suppliers',
   PURCHASE_ORDERS: 'purchase_orders',
   SETTINGS: 'settings',
+  DELIVERIES: 'deliveries' // Added deliveries store
 };
 
 // Initialize database

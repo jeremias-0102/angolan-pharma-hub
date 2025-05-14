@@ -1,6 +1,8 @@
+
 // Import required types to ensure consistency
 import { PurchaseOrderStatus, PurchaseOrder } from '@/types/models';
 import { get, update, getAll, STORES } from '@/lib/database';
+import { getAllSuppliers } from './supplierService';
 
 // Get purchase order by ID
 const getPurchaseOrderById = async (id: string): Promise<PurchaseOrder | null> => {
@@ -34,6 +36,11 @@ const processPurchaseOrder = async (purchaseOrderId: string): Promise<boolean> =
 // Get all purchase orders
 const getAllPurchaseOrders = async (): Promise<PurchaseOrder[]> => {
   return await getAll<PurchaseOrder>(STORES.PURCHASE_ORDERS);
+};
+
+// Get all suppliers for acquisitions
+const getSuppliersForAcquisitions = async () => {
+  return await getAllSuppliers();
 };
 
 // Create purchase order
@@ -72,5 +79,6 @@ export {
   processPurchaseOrder,
   getAllPurchaseOrders,
   createPurchaseOrder,
-  deletePurchaseOrder
+  deletePurchaseOrder,
+  getSuppliersForAcquisitions
 };

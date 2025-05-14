@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Table, 
@@ -30,12 +30,13 @@ import {
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { PurchaseOrder, PurchaseOrderStatus } from "@/types/models";
+import { PurchaseOrder, PurchaseOrderStatus, Supplier } from "@/types/models";
 import { useToast } from "@/components/ui/use-toast";
 import PurchaseOrderFormModal from "@/components/admin/PurchaseOrderFormModal";
 import ReceiveItemsModal from "@/components/admin/ReceiveItemsModal";
+import { getAllPurchaseOrders, getSuppliersForAcquisitions } from "@/services/acquisitionService";
 
-// Mock data - would be replaced with API calls in production
+// When using mock data, we'll keep it for now
 const mockPurchaseOrders: PurchaseOrder[] = [
   {
     id: "PO-001",
@@ -163,14 +164,46 @@ const mockPurchaseOrders: PurchaseOrder[] = [
 
 const AcquisitionsManagement: React.FC = () => {
   const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>(mockPurchaseOrders);
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isReceiveModalOpen, setIsReceiveModalOpen] = useState(false);
   const [currentPurchaseOrder, setCurrentPurchaseOrder] = useState<PurchaseOrder | null>(null);
   const [selectedPurchaseOrder, setSelectedPurchaseOrder] = useState<PurchaseOrder | null>(null);
+  const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        // Fetch real purchase orders
+        const orders = await getAllPurchaseOrders();
+        if (orders && orders.length > 0) {
+          setPurchaseOrders(orders);
+        }
+        
+        // Fetch suppliers
+        const supplierData = await getSuppliersForAcquisitions();
+        if (supplierData) {
+          setSuppliers(supplierData);
+        }
+      } catch (error) {
+        console.error('Error fetching data:', error);
+        toast({
+          title: "Erro",
+          description: "Falha ao carregar dados de aquisições e fornecedores.",
+          variant: "destructive"
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchData();
+  }, [toast]);
 
   const filteredPurchaseOrders = purchaseOrders.filter((order) =>
     order.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -392,6 +425,7 @@ const AcquisitionsManagement: React.FC = () => {
         onClose={() => setIsFormOpen(false)}
         onSave={handleSavePurchaseOrder}
         purchaseOrder={currentPurchaseOrder}
+        suppliers={suppliers} // Pass suppliers to the modal
       />
 
       <ReceiveItemsModal

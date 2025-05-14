@@ -103,7 +103,8 @@ const Checkout = () => {
 
       const response = await api.post('/orders', orderData);
 
-      if (response && response.data && response.data.status === 201) {
+      // Fix the response handling to avoid TS error
+      if (response && response.status === 201) {
         toast({
           title: "Sucesso",
           description: "Encomenda submetida com sucesso!",

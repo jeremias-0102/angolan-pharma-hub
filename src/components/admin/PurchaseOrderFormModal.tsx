@@ -1,402 +1,321 @@
-
 import React, { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { PurchaseOrder, PurchaseOrderItem, Product, Supplier, PurchaseOrderStatus } from '@/types/models';
-import { getAllProducts } from '@/services/productService';
-import { getAllSuppliers } from '@/services/supplierService';
-import { v4 as uuidv4 } from 'uuid';
-import { Plus, Trash2 } from 'lucide-react';
-import { useToast } from '@/components/ui/use-toast';
+import { z } from 'zod';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DatePicker } from "@/components/ui/date-picker";
+import { PlusCircle, Trash } from "lucide-react";
+import { PurchaseOrder, PurchaseOrderItem, PurchaseOrderStatus, Supplier } from '@/types/models';
+import { format, parseISO, isValid } from 'date-fns';
 
 interface PurchaseOrderFormModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSave: (purchaseOrder: PurchaseOrder) => void;
   purchaseOrder: PurchaseOrder | null;
+  suppliers: Supplier[];
 }
+
+// Schema for the purchase order form
+const purchaseOrderSchema = z.object({
+  supplier_id: z.string().min(1, 'Fornecedor é obrigatório'),
+  order_date: z.date(),
+  expected_delivery: z.date(),
+  notes: z.string().optional(),
+  status: z.enum(['draft', 'submitted', 'received', 'cancelled', 'sent', 'partial', 'complete'] as const),
+  // Items are managed separately
+});
+
+type PurchaseOrderFormValues = z.infer<typeof purchaseOrderSchema>;
 
 const PurchaseOrderFormModal: React.FC<PurchaseOrderFormModalProps> = ({
   isOpen,
   onClose,
   onSave,
-  purchaseOrder
+  purchaseOrder,
+  suppliers
 }) => {
-  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
-  const [products, setProducts] = useState<Product[]>([]);
-  const [formData, setFormData] = useState<Partial<PurchaseOrder>>({
-    supplier_id: '',
-    status: 'draft',
-    notes: '',
-    total: 0,
-    items: []
+  const [items, setItems] = useState<PurchaseOrderItem[]>(purchaseOrder?.items || []);
+
+  const form = useForm<PurchaseOrderFormValues>({
+    resolver: zodResolver(purchaseOrderSchema),
+    defaultValues: {
+      supplier_id: purchaseOrder?.supplier_id || '',
+      order_date: purchaseOrder?.order_date ? parseISO(purchaseOrder.order_date) : new Date(),
+      expected_delivery: purchaseOrder?.expected_delivery ? parseISO(purchaseOrder.expected_delivery) : new Date(),
+      notes: purchaseOrder?.notes || '',
+      status: purchaseOrder?.status || 'draft',
+    },
   });
-  const [loading, setLoading] = useState(true);
-  const { toast } = useToast();
 
-  useEffect(() => {
-    const loadData = async () => {
-      try {
-        const [suppliersData, productsData] = await Promise.all([
-          getAllSuppliers(),
-          getAllProducts()
-        ]);
-        setSuppliers(suppliersData);
-        setProducts(productsData);
-        setLoading(false);
-      } catch (error) {
-        console.error('Error loading data:', error);
-        toast({
-          variant: "destructive",
-          title: "Erro ao carregar dados",
-          description: "Não foi possível carregar os fornecedores ou produtos."
-        });
-        setLoading(false);
-      }
-    };
-
-    loadData();
-
-    // Initialize form with purchase order data if editing
-    if (purchaseOrder) {
-      setFormData({
-        id: purchaseOrder.id,
-        supplier_id: purchaseOrder.supplier_id,
-        status: purchaseOrder.status,
-        notes: purchaseOrder.notes,
-        total: purchaseOrder.total,
-        items: [...purchaseOrder.items],
-        order_date: purchaseOrder.order_date,
-        expected_delivery: purchaseOrder.expected_delivery,
-        actual_delivery: purchaseOrder.actual_delivery,
-        created_at: purchaseOrder.created_at,
-        updated_at: new Date().toISOString()
-      });
-    } else {
-      // Reset form for new purchase order
-      setFormData({
-        supplier_id: '',
-        status: 'draft',
-        notes: '',
-        total: 0,
-        items: []
-      });
-    }
-  }, [purchaseOrder, isOpen, toast]);
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  const handleSelectChange = (name: string, value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  const addItem = () => {
-    const newItem: PurchaseOrderItem = {
-      id: uuidv4(),
-      purchase_order_id: purchaseOrder?.id || '',
-      product_id: '',
-      product_name: '',
-      quantity_ordered: 0,
-      quantity_received: 0,
-      unit_price: 0,
-      total: 0
-    };
-
-    setFormData(prev => ({
-      ...prev,
-      items: [...(prev.items || []), newItem]
-    }));
-  };
-
-  const updateItem = (index: number, field: keyof PurchaseOrderItem, value: any) => {
-    const updatedItems = [...(formData.items || [])];
-    updatedItems[index] = {
-      ...updatedItems[index],
-      [field]: value
-    };
-
-    // If product changed, update unit price and product name
-    if (field === 'product_id') {
-      const product = products.find(p => p.id === value);
-      if (product) {
-        updatedItems[index].unit_price = product.price_cost;
-        updatedItems[index].product_name = product.name;
-      }
-    }
-
-    // Recalculate item total
-    updatedItems[index].total = updatedItems[index].quantity_ordered * updatedItems[index].unit_price;
-
-    // Update form data with new items and recalculate total
-    setFormData(prev => ({
-      ...prev,
-      items: updatedItems,
-      total: updatedItems.reduce((sum, item) => sum + item.total, 0)
-    }));
-  };
-
-  const removeItem = (index: number) => {
-    const updatedItems = [...(formData.items || [])];
-    updatedItems.splice(index, 1);
-
-    setFormData(prev => ({
-      ...prev,
-      items: updatedItems,
-      total: updatedItems.reduce((sum, item) => sum + item.total, 0)
-    }));
-  };
-
-  const handleSubmit = () => {
-    // Validate required fields
-    if (!formData.supplier_id || !(formData.items && formData.items.length > 0)) {
-      toast({
-        variant: "destructive",
-        title: "Dados incompletos",
-        description: "Por favor, selecione um fornecedor e adicione pelo menos um item.",
-      });
+  const onSubmit = (values: PurchaseOrderFormValues) => {
+    if (!values.order_date || !isValid(values.order_date)) {
+      alert('Data do pedido inválida.');
       return;
     }
 
-    const now = new Date().toISOString();
-    const today = now.split('T')[0] + 'T00:00:00Z';
-    
+    if (!values.expected_delivery || !isValid(values.expected_delivery)) {
+      alert('Data de entrega esperada inválida.');
+      return;
+    }
+
+    const supplierName = getSupplierNameById(values.supplier_id);
+
     const purchaseOrderData: PurchaseOrder = {
-      id: formData.id || uuidv4(),
-      supplier_id: formData.supplier_id as string,
-      supplier_name: suppliers.find(s => s.id === formData.supplier_id)?.name || '',
-      status: formData.status as PurchaseOrderStatus,
-      order_date: formData.order_date || today,
-      expected_delivery: formData.expected_delivery || today,
-      actual_delivery: formData.actual_delivery,
-      notes: formData.notes,
-      total: formData.total as number,
-      items: formData.items as PurchaseOrderItem[],
-      created_at: formData.created_at || now,
-      updated_at: now
+      id: purchaseOrder?.id || '',
+      supplier_id: values.supplier_id,
+      supplier_name: supplierName,
+      status: values.status,
+      order_date: format(values.order_date, 'yyyy-MM-dd\'T\'HH:mm:ss.SSS\'Z\''),
+      expected_delivery: format(values.expected_delivery, 'yyyy-MM-dd\'T\'HH:mm:ss.SSS\'Z\''),
+      total: items.reduce((acc, item) => acc + item.total, 0),
+      notes: values.notes,
+      created_at: purchaseOrder?.created_at || new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      items: items,
     };
 
     onSave(purchaseOrderData);
-    toast({
-      title: purchaseOrder ? "Ordem atualizada" : "Ordem criada",
-      description: purchaseOrder ? "A ordem foi atualizada com sucesso." : "A ordem foi criada com sucesso.",
-    });
+    onClose();
   };
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-AO', {
-      style: 'currency',
-      currency: 'AOA',
-      minimumFractionDigits: 0,
-    }).format(value);
+  const handleAddItem = () => {
+    setItems([
+      ...items,
+      {
+        id: `item-${Date.now()}`,
+        purchase_order_id: purchaseOrder?.id || '',
+        product_id: '',
+        product_name: '',
+        quantity_ordered: 1,
+        quantity_received: 0,
+        unit_price: 0,
+        total: 0,
+      },
+    ]);
   };
 
-  // Get product name by ID
-  const getProductName = (productId: string) => {
-    const product = products.find(p => p.id === productId);
-    return product ? product.name : 'Produto não encontrado';
+  const handleRemoveItem = (id: string) => {
+    setItems(items.filter((item) => item.id !== id));
   };
 
-  if (loading) {
-    return (
-      <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="sm:max-w-[800px]">
-          <div className="flex justify-center items-center p-8">
-            <div className="animate-spin h-8 w-8 border-4 border-pharma-primary border-t-transparent rounded-full"></div>
-          </div>
-        </DialogContent>
-      </Dialog>
+  const handleItemChange = (id: string, field: string, value: string | number) => {
+    setItems(
+      items.map((item) => {
+        if (item.id === id) {
+          const updatedItem = { ...item };
+          switch (field) {
+            case 'product_id':
+              updatedItem.product_id = value as string;
+              break;
+            case 'product_name':
+              updatedItem.product_name = value as string;
+              break;
+            case 'quantity_ordered':
+              updatedItem.quantity_ordered = Number(value);
+              break;
+            case 'unit_price':
+              updatedItem.unit_price = Number(value);
+              break;
+          }
+          updatedItem.total = updatedItem.quantity_ordered * updatedItem.unit_price;
+          return updatedItem;
+        }
+        return item;
+      })
     );
-  }
+  };
 
+  // Get supplier name by ID
+  const getSupplierNameById = (id: string): string => {
+    const supplier = suppliers.find(s => s.id === id);
+    return supplier ? supplier.name : 'Desconhecido';
+  };
+
+  // Form JSX
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             {purchaseOrder ? 'Editar Ordem de Compra' : 'Nova Ordem de Compra'}
           </DialogTitle>
         </DialogHeader>
-
-        <div className="space-y-6 py-4">
-          {/* Supplier Selection */}
-          <div className="space-y-2">
-            <label htmlFor="supplier" className="text-sm font-medium">Fornecedor</label>
-            <Select 
-              value={formData.supplier_id} 
-              onValueChange={(value) => handleSelectChange('supplier_id', value)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione um fornecedor" />
-              </SelectTrigger>
-              <SelectContent>
-                {suppliers.map((supplier) => (
-                  <SelectItem key={supplier.id} value={supplier.id}>
-                    {supplier.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Status Selection */}
-          <div className="space-y-2">
-            <label htmlFor="status" className="text-sm font-medium">Status</label>
-            <Select 
-              value={formData.status} 
-              onValueChange={(value) => handleSelectChange('status', value)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione o status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="draft">Rascunho</SelectItem>
-                <SelectItem value="sent">Enviado</SelectItem>
-                <SelectItem value="partial">Parcial</SelectItem>
-                <SelectItem value="complete">Completo</SelectItem>
-                <SelectItem value="cancelled">Cancelado</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Notes */}
-          <div className="space-y-2">
-            <label htmlFor="notes" className="text-sm font-medium">Observações</label>
-            <Textarea 
-              name="notes"
-              value={formData.notes || ''}
-              onChange={handleInputChange}
-              placeholder="Observações sobre a ordem de compra"
-              rows={2}
-            />
-          </div>
-
-          {/* Items Section */}
-          <div>
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="font-medium">Itens</h3>
-              <Button 
-                type="button" 
-                size="sm" 
-                onClick={addItem}
-                className="flex items-center bg-blue-500 hover:bg-blue-600"
-              >
-                <Plus className="mr-1 h-4 w-4" /> Adicionar Item
-              </Button>
+        
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="supplier_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Fornecedor</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecionar fornecedor" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {suppliers.map((supplier) => (
+                          <SelectItem key={supplier.id} value={supplier.id}>
+                            {supplier.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="status"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Status</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecionar status" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="draft">Rascunho</SelectItem>
+                        <SelectItem value="submitted">Enviado</SelectItem>
+                        <SelectItem value="received">Recebido</SelectItem>
+                        <SelectItem value="cancelled">Cancelado</SelectItem>
+                        <SelectItem value="sent">Enviado</SelectItem>
+                        <SelectItem value="partial">Parcial</SelectItem>
+                        <SelectItem value="complete">Completo</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
 
-            {formData.items && formData.items.length > 0 ? (
-              <div className="space-y-4">
-                {formData.items.map((item, index) => (
-                  <div key={index} className="border rounded-md p-4 space-y-4">
-                    <div className="flex justify-between">
-                      <h4 className="font-medium">Item {index + 1}</h4>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => removeItem(index)}
-                      >
-                        <Trash2 className="h-4 w-4 text-red-500" />
-                      </Button>
-                    </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="order_date"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <FormLabel>Data do Pedido</FormLabel>
+                    <DatePicker
+                      onSelect={field.onChange}
+                      defaultValue={field.value}
+                    />
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {/* Product Selection */}
-                      <div>
-                        <label className="text-sm font-medium">Produto</label>
-                        <Select 
-                          value={item.product_id} 
-                          onValueChange={(value) => updateItem(index, 'product_id', value)}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecione um produto" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {products.map((product) => (
-                              <SelectItem key={product.id} value={product.id}>
-                                {product.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
+              <FormField
+                control={form.control}
+                name="expected_delivery"
+                render={({ field }) => (
+                  <FormItem className="flex flex-col">
+                    <FormLabel>Entrega Esperada</FormLabel>
+                    <DatePicker
+                      onSelect={field.onChange}
+                      default={field.value}
+                    />
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
 
-                      {/* Quantity */}
-                      <div>
-                        <label className="text-sm font-medium">Quantidade</label>
-                        <Input 
-                          type="number"
-                          min="1"
-                          value={item.quantity_ordered || ''}
-                          onChange={(e) => updateItem(index, 'quantity_ordered', parseInt(e.target.value) || 0)}
-                        />
-                      </div>
+            <FormField
+              control={form.control}
+              name="notes"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Notas</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="Notas adicionais"
+                      className="resize-none"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-                      {/* Unit Price */}
-                      <div>
-                        <label className="text-sm font-medium">Preço Unitário</label>
-                        <Input 
-                          type="number"
-                          min="0"
-                          step="0.01"
-                          value={item.unit_price || ''}
-                          onChange={(e) => updateItem(index, 'unit_price', parseFloat(e.target.value) || 0)}
-                        />
-                      </div>
-
-                      {/* Item Total (Read-only) */}
-                      <div>
-                        <label className="text-sm font-medium">Total</label>
-                        <Input 
-                          readOnly
-                          value={formatCurrency(item.quantity_ordered * item.unit_price)}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                ))}
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <h4 className="text-sm font-bold">Items</h4>
+                <Button type="button" variant="outline" size="sm" onClick={handleAddItem}>
+                  <PlusCircle className="mr-2 h-4 w-4" />
+                  Adicionar Item
+                </Button>
               </div>
-            ) : (
-              <div className="border rounded-md p-8 text-center text-gray-500">
-                <p>Nenhum item adicionado. Clique em "Adicionar Item" para começar.</p>
-              </div>
-            )}
-          </div>
+              {items.map((item) => (
+                <div key={item.id} className="grid grid-cols-1 md:grid-cols-5 gap-2">
+                  <Input
+                    type="text"
+                    placeholder="ID do Produto"
+                    value={item.product_id}
+                    onChange={(e) => handleItemChange(item.id, 'product_id', e.target.value)}
+                  />
+                  <Input
+                    type="text"
+                    placeholder="Nome do Produto"
+                    value={item.product_name}
+                    onChange={(e) => handleItemChange(item.id, 'product_name', e.target.value)}
+                  />
+                  <Input
+                    type="number"
+                    placeholder="Quantidade"
+                    value={item.quantity_ordered}
+                    onChange={(e) => handleItemChange(item.id, 'quantity_ordered', e.target.value)}
+                  />
+                  <Input
+                    type="number"
+                    placeholder="Preço Unitário"
+                    value={item.unit_price}
+                    onChange={(e) => handleItemChange(item.id, 'unit_price', e.target.value)}
+                  />
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="sm"
+                    onClick={() => handleRemoveItem(item.id)}
+                  >
+                    <Trash className="mr-2 h-4 w-4" />
+                    Remover
+                  </Button>
+                </div>
+              ))}
+            </div>
 
-          {/* Order Total */}
-          <div className="flex justify-end items-center space-x-2 border-t pt-4">
-            <span className="font-medium">Total da Ordem:</span>
-            <span className="text-xl font-bold">{formatCurrency(formData.total || 0)}</span>
-          </div>
-        </div>
-
-        <div className="flex justify-end space-x-4">
-          <Button variant="outline" onClick={onClose}>Cancelar</Button>
-          <Button 
-            className="bg-blue-500 hover:bg-blue-600 text-white" 
-            onClick={handleSubmit}
-          >
-            {purchaseOrder ? 'Salvar Alterações' : 'Criar Ordem'}
-          </Button>
-        </div>
+            <div className="flex justify-end space-x-2">
+              <Button type="button" variant="outline" onClick={onClose}>
+                Cancelar
+              </Button>
+              <Button type="submit">
+                {purchaseOrder ? 'Salvar' : 'Criar'}
+              </Button>
+            </div>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );

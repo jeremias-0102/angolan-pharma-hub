@@ -1,3 +1,4 @@
+
 import { Order, OrderStatus, Delivery, generateUUID } from '@/types/models';
 import { add, update, get, remove, getAll, STORES } from '@/lib/database';
 import { v4 as uuidv4 } from 'uuid';
@@ -79,7 +80,7 @@ export const createDelivery = async (orderId: string, deliveryDetails: any): Pro
       assigned_to: deliveryDetails.assigned_to || ''
     };
     
-    // Add delivery to database
+    // Now using the proper DELIVERIES store from STORES
     await add<Delivery>(STORES.DELIVERIES, newDelivery);
     
     // Update order with delivery
@@ -99,6 +100,7 @@ export const createDelivery = async (orderId: string, deliveryDetails: any): Pro
 
 // Update delivery status
 export const updateDeliveryStatus = async (deliveryId: string, status: Delivery['status']): Promise<Delivery | null> => {
+  // Now using the proper DELIVERIES store from STORES
   const delivery = await get<Delivery>(STORES.DELIVERIES, deliveryId);
   
   if (delivery) {
