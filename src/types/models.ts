@@ -48,6 +48,11 @@ export interface CartProduct {
   quantity: number;
 }
 
+export interface CartItem {
+  product: CartProduct;
+  quantity: number;
+}
+
 // Order related types
 export type OrderStatus = "pending" | "paid" | "processing" | "ready" | "shipping" | "delivered" | "cancelled";
 
@@ -128,14 +133,17 @@ export interface Supplier {
   is_active: boolean;
   created_at: string;
   updated_at: string;
+  tax_id: string; // Added missing tax_id field
 }
 
 // Purchase order related types
+export type PurchaseOrderStatus = 'draft' | 'submitted' | 'received' | 'cancelled';
+
 export interface PurchaseOrder {
   id: string;
   supplier_id: string;
   supplier_name: string;
-  status: 'draft' | 'submitted' | 'received' | 'cancelled';
+  status: PurchaseOrderStatus;
   order_date: string;
   expected_delivery: string;
   actual_delivery?: string;
@@ -159,11 +167,9 @@ export interface PurchaseOrderItem {
 
 export interface ReceivableItem extends PurchaseOrderItem {
   // Additional fields needed for ReceiveItemsModal
-  id: string;
-  product_id: string;
-  quantity_ordered: number;
-  quantity_received: number;
-  unit_price: number;
+  currentReceiving?: number;
+  batchNumber?: string;
+  expiryDate?: Date;
 }
 
 // Add UUID generator utility function

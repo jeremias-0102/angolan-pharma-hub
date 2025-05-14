@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -75,7 +74,9 @@ const PurchaseOrderFormModal: React.FC<PurchaseOrderFormModalProps> = ({
         notes: purchaseOrder.notes,
         total: purchaseOrder.total,
         items: [...purchaseOrder.items],
-        created_by: purchaseOrder.created_by,
+        order_date: purchaseOrder.order_date,
+        expected_delivery: purchaseOrder.expected_delivery,
+        actual_delivery: purchaseOrder.actual_delivery,
         created_at: purchaseOrder.created_at,
         updated_at: new Date().toISOString()
       });
@@ -111,9 +112,11 @@ const PurchaseOrderFormModal: React.FC<PurchaseOrderFormModalProps> = ({
       id: uuidv4(),
       purchase_order_id: purchaseOrder?.id || '',
       product_id: '',
+      product_name: '',
       quantity_ordered: 0,
       quantity_received: 0,
-      unit_price: 0
+      unit_price: 0,
+      total: 0
     };
 
     setFormData(prev => ({
@@ -129,22 +132,23 @@ const PurchaseOrderFormModal: React.FC<PurchaseOrderFormModalProps> = ({
       [field]: value
     };
 
-    // If product changed, update unit price
+    // If product changed, update unit price and product name
     if (field === 'product_id') {
       const product = products.find(p => p.id === value);
       if (product) {
         updatedItems[index].unit_price = product.price_cost;
+        updatedItems[index].product_name = product.name;
       }
     }
 
     // Recalculate item total
-    const itemTotal = updatedItems[index].quantity_ordered * updatedItems[index].unit_price;
+    updatedItems[index].total = updatedItems[index].quantity_ordered * updatedItems[index].unit_price;
 
     // Update form data with new items and recalculate total
     setFormData(prev => ({
       ...prev,
       items: updatedItems,
-      total: updatedItems.reduce((sum, item) => sum + (item.quantity_ordered * item.unit_price), 0)
+      total: updatedItems.reduce((sum, item) => sum + item.total, 0)
     }));
   };
 
@@ -155,7 +159,7 @@ const PurchaseOrderFormModal: React.FC<PurchaseOrderFormModalProps> = ({
     setFormData(prev => ({
       ...prev,
       items: updatedItems,
-      total: updatedItems.reduce((sum, item) => sum + (item.quantity_ordered * item.unit_price), 0)
+      total: updatedItems.reduce((sum, item) => sum + item.total, 0)
     }));
   };
 
@@ -171,14 +175,19 @@ const PurchaseOrderFormModal: React.FC<PurchaseOrderFormModalProps> = ({
     }
 
     const now = new Date().toISOString();
+    const today = now.split('T')[0] + 'T00:00:00Z';
+    
     const purchaseOrderData: PurchaseOrder = {
       id: formData.id || uuidv4(),
       supplier_id: formData.supplier_id as string,
-      status: formData.status as 'draft' | 'sent' | 'partial' | 'complete' | 'cancelled',
+      supplier_name: suppliers.find(s => s.id === formData.supplier_id)?.name || '',
+      status: formData.status as PurchaseOrderStatus,
+      order_date: formData.order_date || today,
+      expected_delivery: formData.expected_delivery || today,
+      actual_delivery: formData.actual_delivery,
       notes: formData.notes,
       total: formData.total as number,
       items: formData.items as PurchaseOrderItem[],
-      created_by: formData.created_by || 'current-user', // Would normally get from auth context
       created_at: formData.created_at || now,
       updated_at: now
     };

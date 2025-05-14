@@ -24,11 +24,21 @@ export const useCart = () => {
       quantity
     };
     
-    context.addItem(cartProduct);
+    context.addItem(cartProduct, quantity);
+  };
+  
+  // Add calculateTotal function to the cart context
+  const calculateTotal = () => {
+    return context.items.reduce(
+      (total, item) => total + ((item.product.price_sale || item.product.price) * item.quantity), 
+      0
+    );
   };
   
   return {
     ...context,
-    addToCart
+    addToCart,
+    calculateTotal,
+    cart: context.items // Add cart property for backwards compatibility
   };
 };

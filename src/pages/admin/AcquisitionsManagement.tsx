@@ -30,7 +30,7 @@ import {
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { PurchaseOrder } from "@/types/models";
+import { PurchaseOrder, PurchaseOrderStatus } from "@/types/models";
 import { useToast } from "@/components/ui/use-toast";
 import PurchaseOrderFormModal from "@/components/admin/PurchaseOrderFormModal";
 import ReceiveItemsModal from "@/components/admin/ReceiveItemsModal";
@@ -40,10 +40,12 @@ const mockPurchaseOrders: PurchaseOrder[] = [
   {
     id: "PO-001",
     supplier_id: "SUP-001",
+    supplier_name: "Supplier 1",
     status: "draft",
+    order_date: "2023-01-20T10:00:00Z",
+    expected_delivery: "2023-01-30T10:00:00Z",
     total: 15000,
     notes: "Encomenda inicial de teste",
-    created_by: "admin",
     created_at: "2023-01-20T10:00:00Z",
     updated_at: "2023-01-20T10:00:00Z",
     items: [
@@ -51,19 +53,23 @@ const mockPurchaseOrders: PurchaseOrder[] = [
         id: "POI-001",
         purchase_order_id: "PO-001",
         product_id: "PROD-001",
+        product_name: "Product 1",
         quantity_ordered: 50,
         quantity_received: 0,
         unit_price: 300,
+        total: 15000
       }
     ]
   },
   {
     id: "PO-002",
     supplier_id: "SUP-002",
-    status: "sent",
+    supplier_name: "Supplier 2",
+    status: "submitted",
+    order_date: "2023-02-15T14:30:00Z",
+    expected_delivery: "2023-02-25T14:30:00Z",
     total: 22000,
     notes: "Revisar prazos de entrega",
-    created_by: "admin",
     created_at: "2023-02-15T14:30:00Z",
     updated_at: "2023-02-15T14:30:00Z",
     items: [
@@ -71,19 +77,24 @@ const mockPurchaseOrders: PurchaseOrder[] = [
         id: "POI-002",
         purchase_order_id: "PO-002",
         product_id: "PROD-002",
+        product_name: "Product 2",
         quantity_ordered: 100,
         quantity_received: 0,
         unit_price: 220,
+        total: 22000
       }
     ]
   },
   {
     id: "PO-003",
     supplier_id: "SUP-001",
-    status: "partial",
+    supplier_name: "Supplier 1",
+    status: "received",
+    order_date: "2023-03-01T09:00:00Z",
+    expected_delivery: "2023-03-10T09:00:00Z",
+    actual_delivery: "2023-03-05T11:00:00Z",
     total: 8000,
     notes: "Aguardando segunda parte da entrega",
-    created_by: "admin",
     created_at: "2023-03-01T09:00:00Z",
     updated_at: "2023-03-05T11:00:00Z",
     items: [
@@ -91,19 +102,24 @@ const mockPurchaseOrders: PurchaseOrder[] = [
         id: "POI-003",
         purchase_order_id: "PO-003",
         product_id: "PROD-003",
+        product_name: "Product 3",
         quantity_ordered: 30,
         quantity_received: 15,
         unit_price: 270,
+        total: 8100
       }
     ]
   },
   {
     id: "PO-004",
     supplier_id: "SUP-003",
-    status: "complete",
+    supplier_name: "Supplier 3",
+    status: "received",
+    order_date: "2023-03-10T16:45:00Z",
+    expected_delivery: "2023-03-20T16:45:00Z",
+    actual_delivery: "2023-03-15T12:00:00Z",
     total: 12000,
     notes: "Pagamento confirmado",
-    created_by: "admin",
     created_at: "2023-03-10T16:45:00Z",
     updated_at: "2023-03-15T12:00:00Z",
     items: [
@@ -111,19 +127,23 @@ const mockPurchaseOrders: PurchaseOrder[] = [
         id: "POI-004",
         purchase_order_id: "PO-004",
         product_id: "PROD-004",
+        product_name: "Product 4",
         quantity_ordered: 60,
         quantity_received: 60,
         unit_price: 200,
+        total: 12000
       }
     ]
   },
   {
     id: "PO-005",
     supplier_id: "SUP-002",
+    supplier_name: "Supplier 2",
     status: "cancelled",
+    order_date: "2023-04-01T11:20:00Z",
+    expected_delivery: "2023-04-10T11:20:00Z",
     total: 5000,
     notes: "Pedido cancelado devido a atraso na entrega",
-    created_by: "admin",
     created_at: "2023-04-01T11:20:00Z",
     updated_at: "2023-04-02T08:00:00Z",
     items: [
@@ -131,9 +151,11 @@ const mockPurchaseOrders: PurchaseOrder[] = [
         id: "POI-005",
         purchase_order_id: "PO-005",
         product_id: "PROD-005",
+        product_name: "Product 5",
         quantity_ordered: 20,
         quantity_received: 0,
         unit_price: 250,
+        total: 5000
       }
     ]
   }
@@ -198,7 +220,7 @@ const AcquisitionsManagement: React.FC = () => {
     setIsFormOpen(false);
   };
 
-  const handleUpdateStatus = (orderId: string, newStatus: PurchaseOrder['status']) => {
+  const handleUpdateStatus = (orderId: string, newStatus: PurchaseOrderStatus) => {
     setPurchaseOrders((prevOrders) =>
       prevOrders.map((order) =>
         order.id === orderId ? { ...order, status: newStatus, updated_at: new Date().toISOString() } : order
@@ -225,27 +247,24 @@ const AcquisitionsManagement: React.FC = () => {
   };
 
   // Translate status to Portuguese
-  const translateStatus = (status: PurchaseOrder['status']): string => {
-    const statusMap: Record<PurchaseOrder['status'], string> = {
+  const translateStatus = (status: PurchaseOrderStatus): string => {
+    const statusMap: Record<PurchaseOrderStatus, string> = {
       draft: "Rascunho",
-      sent: "Enviado",
-      partial: "Parcialmente Recebido",
-      complete: "Completo",
+      submitted: "Enviado",
+      received: "Recebido",
       cancelled: "Cancelado"
     };
     return statusMap[status] || status;
   };
 
   // Get badge variant based on status
-  const getStatusBadgeVariant = (status: PurchaseOrder['status']) => {
+  const getStatusBadgeVariant = (status: PurchaseOrderStatus) => {
     switch (status) {
       case "draft":
         return "bg-gray-100 text-gray-800 border-gray-200";
-      case "sent":
+      case "submitted":
         return "bg-blue-100 text-blue-800 border-blue-200";
-      case "partial":
-        return "bg-yellow-100 text-yellow-800 border-yellow-200";
-      case "complete":
+      case "received":
         return "bg-green-100 text-green-800 border-green-200";
       case "cancelled":
         return "bg-red-100 text-red-800 border-red-200";
@@ -301,7 +320,7 @@ const AcquisitionsManagement: React.FC = () => {
                   <TableRow key={order.id}>
                     <TableCell className="font-medium">{order.id}</TableCell>
                     <TableCell>{formatDate(order.created_at)}</TableCell>
-                    <TableCell>{order.supplier_id}</TableCell>
+                    <TableCell>{order.supplier_name}</TableCell>
                     <TableCell>{order.total}</TableCell>
                     <TableCell>
                       <Badge variant="outline" className={getStatusBadgeVariant(order.status)}>
@@ -322,15 +341,15 @@ const AcquisitionsManagement: React.FC = () => {
                             <span>Editar</span>
                           </DropdownMenuItem>
                           
-                          {order.status !== "complete" && (
+                          {order.status !== "received" && (
                             <DropdownMenuItem onClick={() => handleReceiveItems(order)}>
                               <Package className="mr-2 h-4 w-4" />
                               <span>Receber Items</span>
                             </DropdownMenuItem>
                           )}
                           
-                          {order.status !== "complete" && order.status !== "cancelled" && (
-                            <DropdownMenuItem onClick={() => handleUpdateStatus(order.id, "complete")}>
+                          {order.status !== "received" && order.status !== "cancelled" && (
+                            <DropdownMenuItem onClick={() => handleUpdateStatus(order.id, "received")}>
                               <CheckCircle className="mr-2 h-4 w-4 text-green-600" />
                               <span>Marcar como Completo</span>
                             </DropdownMenuItem>
