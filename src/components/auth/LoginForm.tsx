@@ -9,6 +9,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/use-toast';
+import { PasswordInput } from "@/components/ui/password-input";
 
 const formSchema = z.object({
   email: z.string().email({ message: "Email inválido" }),
@@ -23,7 +24,7 @@ interface LoginFormProps {
 
 const LoginForm: React.FC<LoginFormProps> = ({ onForgotPassword }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { login } = useAuth();
+  const { login, user } = useAuth();
   const navigate = useNavigate();
   
   const form = useForm<FormValues>({
@@ -38,16 +39,19 @@ const LoginForm: React.FC<LoginFormProps> = ({ onForgotPassword }) => {
     setIsSubmitting(true);
     
     try {
-      const result = await login(values.email, values.password);
+      await login(values.email, values.password);
       
-      if (result) {
-        toast({
-          title: "Login bem-sucedido",
-          description: "Bem-vindo de volta!",
-        });
-        
+      toast({
+        title: "Login bem-sucedido",
+        description: "Bem-vindo de volta!",
+      });
+      
+      // Check if user is set after login - get updated user from context
+      const { user } = useAuth();
+      
+      if (user) {
         // Redirecionar com base no perfil do usuário
-        switch (result.role) {
+        switch (user.role) {
           case 'admin':
             navigate('/admin');
             break;
@@ -117,7 +121,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onForgotPassword }) => {
                   </button>
                 </div>
                 <FormControl>
-                  <Input type="password" placeholder="******" {...field} />
+                  <PasswordInput placeholder="******" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
