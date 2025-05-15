@@ -31,6 +31,12 @@ export const createSupplier = async (supplierData: Omit<Supplier, 'id' | 'create
   return supplier;
 };
 
+// Function needed for PurchaseOrderFormModal
+export const addSupplier = async (supplierData: Supplier): Promise<Supplier> => {
+  await add(STORES.SUPPLIERS, supplierData);
+  return supplierData;
+};
+
 // Atualizar fornecedor
 export const updateSupplier = async (id: string, supplierData: Partial<Supplier>): Promise<Supplier> => {
   const supplier = await get<Supplier>(STORES.SUPPLIERS, id);

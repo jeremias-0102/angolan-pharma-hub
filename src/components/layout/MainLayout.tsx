@@ -7,14 +7,15 @@ import ChatWidget from '../chat/ChatWidget';
 
 interface MainLayoutProps {
   children: React.ReactNode;
+  fullWidth?: boolean;
 }
 
-const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
+const MainLayout: React.FC<MainLayoutProps> = ({ children, fullWidth = false }) => {
   return (
     <div className="min-h-screen flex flex-col">
       <NotificationBar />
       <Navbar />
-      <main className="flex-1 container mx-auto px-4 py-8">
+      <main className={`flex-1 ${fullWidth ? 'w-full' : 'container mx-auto px-4'} py-8`}>
         {children}
       </main>
       <Footer />

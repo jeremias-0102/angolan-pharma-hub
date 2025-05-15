@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -30,7 +29,8 @@ import {
   getProductById, 
   addProduct, 
   updateProduct, 
-  deleteProduct
+  deleteProduct,
+  createProduct
 } from '@/services/productService';
 
 const ProductsManagement: React.FC = () => {
@@ -109,8 +109,18 @@ const ProductsManagement: React.FC = () => {
         });
       } else {
         // Add new product
-        const newProduct = await addProduct(product);
-        setProducts((prevProducts) => [...prevProducts, newProduct]);
+        const productData = {
+          name: product.name,
+          code: product.code,
+          category: product.category,
+          manufacturer: product.manufacturer,
+          price_sale: product.price_sale,
+          requiresPrescription: product.requiresPrescription,
+          batches: product.batches,
+          image: product.image
+        };
+        const createdProduct = await createProduct(productData);
+        setProducts((prevProducts) => [...prevProducts, createdProduct]);
         toast({
           title: "Produto adicionado",
           description: `${product.name} foi adicionado com sucesso.`,

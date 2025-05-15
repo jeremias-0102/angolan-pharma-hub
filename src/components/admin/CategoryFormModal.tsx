@@ -10,8 +10,8 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Category } from '@/types/models';
-import { addCategory, updateCategory } from '@/services/categoryService';
-import { useToast } from '@/components/ui/use-toast';
+import { createCategory, updateCategory } from '@/services/categoryService';
+import { useToast } from '@/hooks/use-toast';
 import { v4 as uuidv4 } from 'uuid';
 
 interface CategoryFormModalProps {
@@ -77,17 +77,23 @@ const CategoryFormModal: React.FC<CategoryFormModalProps> = ({
         onSave(updatedCategory);
       } else {
         // Create new category
-        const now = new Date().toISOString();
-        const newCategory: Category = {
-          id: uuidv4(),
-          name: values.name,
-          description: values.description,
-          is_active: values.is_active,
-          created_at: now,
-          updated_at: now,
-        };
-        const createdCategory = await addCategory(newCategory);
-        onSave(createdCategory);
+        try {
+          const categoryData = {
+            name: values.name,
+            description: values.description,
+            is_active: values.is_active
+          };
+          
+          const createdCategory = await createCategory(categoryData);
+          onSave(createdCategory);
+        } catch (error) {
+          console.error("Error creating category:", error);
+          toast({
+            title: "Erro",
+            description: error instanceof Error ? error.message : "Falha ao criar categoria",
+            variant: "destructive"
+          });
+        }
       }
     } catch (error) {
       console.error('Error saving category:', error);

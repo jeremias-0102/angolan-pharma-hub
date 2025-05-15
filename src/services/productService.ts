@@ -1,3 +1,4 @@
+
 import { v4 as uuidv4 } from 'uuid';
 import { Product } from '@/types/models';
 import { add, getAll, update, get, remove, getNextSequenceValue, STORES } from '@/lib/database';
@@ -17,6 +18,12 @@ export const createProduct = async (productData: Omit<Product, 'id' | 'created_a
     batches: [],
   };
 
+  await add(STORES.PRODUCTS, product);
+  return product;
+};
+
+// Function needed for ProductsManagement
+export const addProduct = async (product: Product): Promise<Product> => {
   await add(STORES.PRODUCTS, product);
   return product;
 };
@@ -51,4 +58,11 @@ export const updateProduct = async (id: string, productData: Partial<Product>): 
 // Excluir um produto
 export const deleteProduct = async (id: string): Promise<void> => {
   await remove(STORES.PRODUCTS, id);
+};
+
+// Function to save product image (simplified for now)
+export const saveImage = async (file: File): Promise<string> => {
+  // In a real app, this would upload to a storage service
+  // For now, we'll return a placeholder URL
+  return URL.createObjectURL(file);
 };

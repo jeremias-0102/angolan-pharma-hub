@@ -49,7 +49,17 @@ export default function RegisterForm() {
     setIsLoading(true);
     try {
       const { confirmPassword, ...userData } = data;
-      await registerUser(userData);
+      
+      // Ensure all required fields are present and not optional
+      const userToRegister = {
+        name: userData.name,
+        email: userData.email,
+        password: userData.password,
+        phone: userData.phone || '',  // Default to empty string if undefined
+        role: userData.role,
+      };
+      
+      await registerUser(userToRegister);
       toast({
         title: 'Registro bem-sucedido',
         description: 'Sua conta foi criada com sucesso!',
