@@ -1,144 +1,68 @@
 
-import React from 'react';
+import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import {
-  LayoutDashboard,
-  Package,
-  ShoppingCart,
-  Users,
+import { 
+  Home, 
+  Package, 
+  BoxSeam, 
+  ShoppingCart, 
+  Users, 
+  Settings, 
+  BarChart4, 
+  DollarSign,
   Truck,
-  LineChart,
-  Settings,
   Layers,
-  ClipboardList,
-  PieChart,
-  FileText,
-  Home
+  Menu,
+  Tag
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
 
-const SidebarItem = ({ 
-  path, 
-  icon: Icon, 
-  label, 
-  currentPath 
-}: { 
-  path: string; 
-  icon: React.ElementType; 
-  label: string; 
-  currentPath: string 
-}) => {
-  const isActive = currentPath === path;
-  
-  return (
-    <Link
-      to={path}
-      className={cn(
-        "flex items-center px-4 py-3 text-sm font-medium rounded-lg transition",
-        isActive
-          ? "bg-pharma-primary/10 text-pharma-primary"
-          : "text-gray-600 hover:text-pharma-primary hover:bg-pharma-primary/5"
-      )}
-    >
-      <Icon className="h-5 w-5 mr-3" />
-      <span>{label}</span>
-    </Link>
-  );
-};
+const navItems = [
+  { title: 'Dashboard', icon: <Home size={20} />, path: '/admin' },
+  { title: 'Produtos', icon: <Package size={20} />, path: '/admin/products' },
+  { title: 'Categorias', icon: <Tag size={20} />, path: '/admin/categories' },
+  { title: 'Lotes', icon: <BoxSeam size={20} />, path: '/admin/batches' },
+  { title: 'Pedidos', icon: <ShoppingCart size={20} />, path: '/admin/orders' },
+  { title: 'Fornecedores', icon: <Truck size={20} />, path: '/admin/suppliers' },
+  { title: 'Aquisições', icon: <Layers size={20} />, path: '/admin/acquisitions' },
+  { title: 'Usuários', icon: <Users size={20} />, path: '/admin/users' },
+  { title: 'Relatórios', icon: <BarChart4 size={20} />, path: '/admin/reports' },
+  { title: 'Finanças', icon: <DollarSign size={20} />, path: '/admin/financial' },
+  { title: 'Configurações', icon: <Settings size={20} />, path: '/admin/settings' },
+];
 
-const AdminSidebar = () => {
+export default function AdminSidebar() {
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const location = useLocation();
-  
-  const sidebarItems = [
-    {
-      path: '/admin',
-      icon: LayoutDashboard,
-      label: 'Visão Geral'
-    },
-    {
-      path: '/admin/dashboard',
-      icon: PieChart,
-      label: 'Dashboard'
-    },
-    {
-      path: '/admin/produtos',
-      icon: Package,
-      label: 'Produtos'
-    },
-    {
-      path: '/admin/pedidos',
-      icon: ShoppingCart,
-      label: 'Pedidos'
-    },
-    {
-      path: '/admin/usuarios',
-      icon: Users,
-      label: 'Usuários'
-    },
-    {
-      path: '/admin/fornecedores',
-      icon: Truck,
-      label: 'Fornecedores'
-    },
-    {
-      path: '/admin/aquisicoes',
-      icon: ClipboardList,
-      label: 'Aquisições'
-    },
-    {
-      path: '/admin/lotes',
-      icon: Layers,
-      label: 'Lotes'
-    },
-    {
-      path: '/admin/relatorios',
-      icon: LineChart,
-      label: 'Relatórios'
-    },
-    {
-      path: '/admin/relatorios-financeiros',
-      icon: FileText,
-      label: 'Financeiro'
-    },
-    {
-      path: '/admin/configuracoes',
-      icon: Settings,
-      label: 'Configurações'
-    }
-  ];
-  
+
+  const toggleSidebar = () => {
+    setIsCollapsed(!isCollapsed);
+  };
+
   return (
-    <div className="w-64 bg-white h-screen p-5 border-r shadow-sm">
-      <div className="flex flex-col h-full">
-        <div className="mb-6 mt-2">
-          <h1 className="text-xl font-bold text-pharma-primary">BEGJNP Pharma</h1>
-          <p className="text-sm text-gray-500">Painel Administrativo</p>
-        </div>
-        
-        <div className="space-y-1 flex-1">
-          {sidebarItems.map((item) => (
-            <SidebarItem
-              key={item.path}
-              path={item.path}
-              icon={item.icon}
-              label={item.label}
-              currentPath={location.pathname}
-            />
-          ))}
-        </div>
-        
-        <div className="pt-6 border-t">
-          <Link
-            to="/"
-            className="flex items-center px-4 py-3 text-sm font-medium rounded-lg text-gray-600 hover:text-pharma-primary hover:bg-pharma-primary/5 transition"
-          >
-            <Home className="h-5 w-5 mr-3" />
-            <span>Página Inicial</span>
-          </Link>
-        </div>
+    <div className={`bg-gray-900 text-white h-screen ${isCollapsed ? 'w-16' : 'w-64'} transition-all duration-300 ease-in-out`}>
+      <div className="flex justify-between items-center p-4 border-b border-gray-800">
+        {!isCollapsed && <h1 className="text-xl font-bold">Admin</h1>}
+        <button onClick={toggleSidebar} className={`p-1 rounded-md hover:bg-gray-800 ${isCollapsed ? 'mx-auto' : ''}`}>
+          <Menu size={24} />
+        </button>
       </div>
+      <nav className="mt-5">
+        <ul>
+          {navItems.map((item, index) => (
+            <li key={index}>
+              <Link
+                to={item.path}
+                className={`flex items-center p-3 ${isCollapsed ? 'justify-center' : 'px-5'} hover:bg-gray-800 transition-colors duration-200 ${
+                  location.pathname === item.path ? 'bg-gray-800' : ''
+                }`}
+              >
+                <span className={`mr-3 ${isCollapsed ? 'mr-0' : ''}`}>{item.icon}</span>
+                {!isCollapsed && <span>{item.title}</span>}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </nav>
     </div>
   );
-};
-
-export default AdminSidebar;
+}

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
@@ -12,6 +13,9 @@ import { DatePicker } from "@/components/ui/date-picker";
 import { PlusCircle, Trash } from "lucide-react";
 import { PurchaseOrder, PurchaseOrderItem, PurchaseOrderStatus, Supplier } from '@/types/models';
 import { format, parseISO, isValid } from 'date-fns';
+import SupplierFormModal from '@/components/admin/SupplierFormModal';
+import { useToast } from '@/components/ui/toast';
+import { addSupplier } from '@/services/supplierService';
 
 interface PurchaseOrderFormModalProps {
   isOpen: boolean;
@@ -28,7 +32,6 @@ const purchaseOrderSchema = z.object({
   expected_delivery: z.date(),
   notes: z.string().optional(),
   status: z.enum(['draft', 'submitted', 'received', 'cancelled', 'sent', 'partial', 'complete'] as const),
-  // Items are managed separately
 });
 
 type PurchaseOrderFormValues = z.infer<typeof purchaseOrderSchema>;
@@ -41,6 +44,8 @@ const PurchaseOrderFormModal: React.FC<PurchaseOrderFormModalProps> = ({
   suppliers
 }) => {
   const [items, setItems] = useState<PurchaseOrderItem[]>(purchaseOrder?.items || []);
+  const [isSupplierFormOpen, setIsSupplierFormOpen] = useState(false);
+  const { toast } = useToast();
 
   const form = useForm<PurchaseOrderFormValues>({
     resolver: zodResolver(purchaseOrderSchema),
@@ -55,12 +60,20 @@ const PurchaseOrderFormModal: React.FC<PurchaseOrderFormModalProps> = ({
 
   const onSubmit = (values: PurchaseOrderFormValues) => {
     if (!values.order_date || !isValid(values.order_date)) {
-      alert('Data do pedido inválida.');
+      toast({
+        title: "Erro",
+        description: 'Data do pedido inválida.',
+        variant: "destructive"
+      });
       return;
     }
 
     if (!values.expected_delivery || !isValid(values.expected_delivery)) {
-      alert('Data de entrega esperada inválida.');
+      toast({
+        title: "Erro",
+        description: 'Data de entrega esperada inválida.',
+        variant: "destructive"
+      });
       return;
     }
 
@@ -137,187 +150,238 @@ const PurchaseOrderFormModal: React.FC<PurchaseOrderFormModalProps> = ({
     return supplier ? supplier.name : 'Desconhecido';
   };
 
+  // Handle new supplier creation
+  const handleAddNewSupplier = async (supplierData: Omit<Supplier, 'id' | 'created_at' | 'updated_at'>) => {
+    try {
+      const newSupplier = await addSupplier(supplierData);
+      
+      // Update form with the new supplier
+      form.setValue('supplier_id', newSupplier.id);
+      
+      // Show success message
+      toast({
+        title: "Sucesso",
+        description: `Fornecedor ${newSupplier.name} adicionado com sucesso.`,
+      });
+      
+      // Close the supplier form modal
+      setIsSupplierFormOpen(false);
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Falha ao adicionar fornecedor.",
+        variant: "destructive"
+      });
+    }
+  };
+
   // Form JSX
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>
-            {purchaseOrder ? 'Editar Ordem de Compra' : 'Nova Ordem de Compra'}
-          </DialogTitle>
-        </DialogHeader>
-        
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="supplier_id"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Fornecedor</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecionar fornecedor" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {suppliers.map((supplier) => (
-                          <SelectItem key={supplier.id} value={supplier.id}>
-                            {supplier.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="status"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Status</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecionar status" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="draft">Rascunho</SelectItem>
-                        <SelectItem value="submitted">Enviado</SelectItem>
-                        <SelectItem value="received">Recebido</SelectItem>
-                        <SelectItem value="cancelled">Cancelado</SelectItem>
-                        <SelectItem value="sent">Enviado</SelectItem>
-                        <SelectItem value="partial">Parcial</SelectItem>
-                        <SelectItem value="complete">Completo</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="order_date"
-                render={({ field }) => (
-                  <FormItem className="flex flex-col">
-                    <FormLabel>Data do Pedido</FormLabel>
-                    <DatePicker
-                      onSelect={field.onChange}
-                      defaultValue={field.value}
-                    />
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="expected_delivery"
-                render={({ field }) => (
-                  <FormItem className="flex flex-col">
-                    <FormLabel>Entrega Esperada</FormLabel>
-                    <DatePicker
-                      onSelect={field.onChange}
-                      defaultValue={field.value}
-                    />
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <FormField
-              control={form.control}
-              name="notes"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Notas</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Notas adicionais"
-                      className="resize-none"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <div className="space-y-2">
-              <div className="flex justify-between items-center">
-                <h4 className="text-sm font-bold">Items</h4>
-                <Button type="button" variant="outline" size="sm" onClick={handleAddItem}>
-                  <PlusCircle className="mr-2 h-4 w-4" />
-                  Adicionar Item
-                </Button>
+    <>
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              {purchaseOrder ? 'Editar Ordem de Compra' : 'Nova Ordem de Compra'}
+            </DialogTitle>
+          </DialogHeader>
+          
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="supplier_id"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Fornecedor</FormLabel>
+                      <div className="flex space-x-2">
+                        <Select
+                          onValueChange={field.onChange}
+                          defaultValue={field.value}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecionar fornecedor" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {suppliers.length > 0 ? (
+                              suppliers.map((supplier) => (
+                                <SelectItem key={supplier.id} value={supplier.id}>
+                                  {supplier.name}
+                                </SelectItem>
+                              ))
+                            ) : (
+                              <SelectItem value="" disabled>
+                                Nenhum fornecedor cadastrado
+                              </SelectItem>
+                            )}
+                          </SelectContent>
+                        </Select>
+                        <Button 
+                          type="button" 
+                          variant="outline" 
+                          size="icon"
+                          onClick={() => setIsSupplierFormOpen(true)}
+                        >
+                          <PlusCircle className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="status"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Status</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecionar status" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="draft">Rascunho</SelectItem>
+                          <SelectItem value="submitted">Enviado</SelectItem>
+                          <SelectItem value="received">Recebido</SelectItem>
+                          <SelectItem value="cancelled">Cancelado</SelectItem>
+                          <SelectItem value="sent">Enviado</SelectItem>
+                          <SelectItem value="partial">Parcial</SelectItem>
+                          <SelectItem value="complete">Completo</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
-              {items.map((item) => (
-                <div key={item.id} className="grid grid-cols-1 md:grid-cols-5 gap-2">
-                  <Input
-                    type="text"
-                    placeholder="ID do Produto"
-                    value={item.product_id}
-                    onChange={(e) => handleItemChange(item.id, 'product_id', e.target.value)}
-                  />
-                  <Input
-                    type="text"
-                    placeholder="Nome do Produto"
-                    value={item.product_name}
-                    onChange={(e) => handleItemChange(item.id, 'product_name', e.target.value)}
-                  />
-                  <Input
-                    type="number"
-                    placeholder="Quantidade"
-                    value={item.quantity_ordered}
-                    onChange={(e) => handleItemChange(item.id, 'quantity_ordered', e.target.value)}
-                  />
-                  <Input
-                    type="number"
-                    placeholder="Preço Unitário"
-                    value={item.unit_price}
-                    onChange={(e) => handleItemChange(item.id, 'unit_price', e.target.value)}
-                  />
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => handleRemoveItem(item.id)}
-                  >
-                    <Trash className="mr-2 h-4 w-4" />
-                    Remover
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="order_date"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                      <FormLabel>Data do Pedido</FormLabel>
+                      <DatePicker
+                        onSelect={field.onChange}
+                        defaultValue={field.value}
+                      />
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="expected_delivery"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                      <FormLabel>Entrega Esperada</FormLabel>
+                      <DatePicker
+                        onSelect={field.onChange}
+                        defaultValue={field.value}
+                      />
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <FormField
+                control={form.control}
+                name="notes"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Notas</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Notas adicionais"
+                        className="resize-none"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <h4 className="text-sm font-bold">Items</h4>
+                  <Button type="button" variant="outline" size="sm" onClick={handleAddItem}>
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Adicionar Item
                   </Button>
                 </div>
-              ))}
-            </div>
+                {items.map((item) => (
+                  <div key={item.id} className="grid grid-cols-1 md:grid-cols-5 gap-2">
+                    <Input
+                      type="text"
+                      placeholder="ID do Produto"
+                      value={item.product_id}
+                      onChange={(e) => handleItemChange(item.id, 'product_id', e.target.value)}
+                    />
+                    <Input
+                      type="text"
+                      placeholder="Nome do Produto"
+                      value={item.product_name}
+                      onChange={(e) => handleItemChange(item.id, 'product_name', e.target.value)}
+                    />
+                    <Input
+                      type="number"
+                      placeholder="Quantidade"
+                      value={item.quantity_ordered}
+                      onChange={(e) => handleItemChange(item.id, 'quantity_ordered', e.target.value)}
+                    />
+                    <Input
+                      type="number"
+                      placeholder="Preço Unitário"
+                      value={item.unit_price}
+                      onChange={(e) => handleItemChange(item.id, 'unit_price', e.target.value)}
+                    />
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => handleRemoveItem(item.id)}
+                    >
+                      <Trash className="mr-2 h-4 w-4" />
+                      Remover
+                    </Button>
+                  </div>
+                ))}
+              </div>
 
-            <div className="flex justify-end space-x-2">
-              <Button type="button" variant="outline" onClick={onClose}>
-                Cancelar
-              </Button>
-              <Button type="submit">
-                {purchaseOrder ? 'Salvar' : 'Criar'}
-              </Button>
-            </div>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
+              <div className="flex justify-end space-x-2">
+                <Button type="button" variant="outline" onClick={onClose}>
+                  Cancelar
+                </Button>
+                <Button type="submit">
+                  {purchaseOrder ? 'Salvar' : 'Criar'}
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Supplier Form Modal */}
+      <SupplierFormModal
+        isOpen={isSupplierFormOpen}
+        onClose={() => setIsSupplierFormOpen(false)}
+        onSave={handleAddNewSupplier}
+        supplier={null}
+      />
+    </>
   );
 };
 

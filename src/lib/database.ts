@@ -1,8 +1,9 @@
-import { User, Product, Order, Batch, Supplier, PurchaseOrder } from '@/types/models';
+
+import { User, Product, Order, Batch, Supplier, PurchaseOrder, Category } from '@/types/models';
 
 // Database configuration
 const DB_NAME = 'pharmagestDB';
-const DB_VERSION = 2; // Increased version for schema update
+const DB_VERSION = 3; // Increased version for schema update to include categories
 
 // Store names
 export const STORES = {
@@ -13,7 +14,8 @@ export const STORES = {
   SUPPLIERS: 'suppliers',
   PURCHASE_ORDERS: 'purchase_orders',
   SETTINGS: 'settings',
-  DELIVERIES: 'deliveries' // Added deliveries store
+  DELIVERIES: 'deliveries', // Added deliveries store
+  CATEGORIES: 'categories' // Adding categories store
 };
 
 // Initialize database
@@ -48,6 +50,8 @@ export const initDB = (): Promise<IDBDatabase> => {
           const productsStore = db.createObjectStore(STORES.PRODUCTS, { keyPath: 'id' });
           productsStore.createIndex('code', 'code', { unique: true });
           productsStore.createIndex('category', 'category', { unique: false });
+          // Add category_id index for relationship
+          productsStore.createIndex('category_id', 'category_id', { unique: false });
         }
 
         if (!db.objectStoreNames.contains(STORES.ORDERS)) {
@@ -80,6 +84,16 @@ export const initDB = (): Promise<IDBDatabase> => {
         // Add settings store
         if (!db.objectStoreNames.contains(STORES.SETTINGS)) {
           db.createObjectStore(STORES.SETTINGS, { keyPath: 'id' });
+        }
+      }
+      
+      // Version 3 upgrades - add categories store
+      if (oldVersion < 3) {
+        if (!db.objectStoreNames.contains(STORES.CATEGORIES)) {
+          const categoriesStore = db.createObjectStore(STORES.CATEGORIES, { keyPath: 'id' });
+          categoriesStore.createIndex('name', 'name', { unique: true });
+          categoriesStore.createIndex('parent_id', 'parent_id', { unique: false });
+          categoriesStore.createIndex('is_active', 'is_active', { unique: false });
         }
       }
     };

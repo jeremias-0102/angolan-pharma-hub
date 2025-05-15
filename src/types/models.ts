@@ -1,4 +1,3 @@
-
 // Product related types
 export interface Product {
   id: string;
@@ -10,6 +9,7 @@ export interface Product {
   price_compare?: number;
   price?: number; // Adding this to resolve references in Home.tsx and Products.tsx
   category: string;
+  category_id?: string; // Adding category_id for relationship
   manufacturer: string;
   requiresPrescription: boolean;
   needsPrescription?: boolean; // Adding this to resolve references in Products.tsx
@@ -175,6 +175,17 @@ export interface ReceivableItem extends PurchaseOrderItem {
   currentReceiving?: number;
   batchNumber?: string;
   expiryDate?: Date;
+}
+
+// Category related types
+export interface Category {
+  id: string;
+  name: string;
+  description?: string;
+  created_at: string;
+  updated_at: string;
+  parent_id?: string; // For hierarchical categories (optional)
+  is_active: boolean;
 }
 
 // Add UUID generator utility function
