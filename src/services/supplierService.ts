@@ -1,67 +1,54 @@
 
-import { STORES, add, getAll, get, update, remove } from '@/lib/database';
-import { Supplier } from '@/types/models';
 import { v4 as uuidv4 } from 'uuid';
+import { Supplier } from '@/types/models';
+import { add, getAll, update, get, remove, getNextSequenceValue, STORES } from '@/lib/database';
 
-// Get all suppliers
+// Listar fornecedores
 export const getAllSuppliers = async (): Promise<Supplier[]> => {
-  try {
-    const suppliers = await getAll<Supplier>(STORES.SUPPLIERS);
-    return suppliers;
-  } catch (error) {
-    console.error('Error getting all suppliers:', error);
-    throw error;
-  }
+  return await getAll<Supplier>(STORES.SUPPLIERS);
 };
 
-// Get supplier by ID
+// Obter um fornecedor
 export const getSupplierById = async (id: string): Promise<Supplier | null> => {
-  try {
-    const supplier = await get<Supplier>(STORES.SUPPLIERS, id);
-    return supplier;
-  } catch (error) {
-    console.error(`Error getting supplier with ID ${id}:`, error);
-    throw error;
-  }
+  return await get<Supplier>(STORES.SUPPLIERS, id);
 };
 
-// Create a new supplier
-export const addSupplier = async (supplier: Omit<Supplier, 'id' | 'created_at' | 'updated_at'>): Promise<Supplier> => {
-  try {
-    const now = new Date().toISOString();
-    const newSupplier: Supplier = {
-      id: uuidv4(),
-      ...supplier,
-      created_at: now,
-      updated_at: now
-    };
-    
-    const result = await add<Supplier>(STORES.SUPPLIERS, newSupplier);
-    return result;
-  } catch (error) {
-    console.error('Error creating supplier:', error);
-    throw error;
-  }
+// Criar fornecedor
+export const createSupplier = async (supplierData: Omit<Supplier, 'id' | 'created_at' | 'updated_at'>): Promise<Supplier> => {
+  // Gera código fiscal autoincrementado (tax_id)
+  const taxId = await getNextSequenceValue('supplier_code');
+  
+  const now = new Date().toISOString();
+  const supplier: Supplier = {
+    ...supplierData,
+    id: uuidv4(),
+    tax_id: supplierData.tax_id || `SUPP-${taxId}`, // Usar valor autogerado se não for fornecido
+    created_at: now,
+    updated_at: now
+  };
+
+  await add(STORES.SUPPLIERS, supplier);
+  return supplier;
 };
 
-// Update a supplier
-export const updateSupplier = async (supplier: Supplier): Promise<Supplier> => {
-  try {
-    supplier.updated_at = new Date().toISOString();
-    const result = await update<Supplier>(STORES.SUPPLIERS, supplier);
-    return result;
-  } catch (error) {
-    console.error(`Error updating supplier ${supplier.id}:`, error);
-    throw error;
+// Atualizar fornecedor
+export const updateSupplier = async (id: string, supplierData: Partial<Supplier>): Promise<Supplier> => {
+  const supplier = await get<Supplier>(STORES.SUPPLIERS, id);
+  if (!supplier) {
+    throw new Error('Fornecedor não encontrado');
   }
+
+  const updatedSupplier = {
+    ...supplier,
+    ...supplierData,
+    updated_at: new Date().toISOString()
+  };
+
+  await update(STORES.SUPPLIERS, updatedSupplier);
+  return updatedSupplier;
 };
 
-// Delete a supplier
+// Excluir fornecedor
 export const deleteSupplier = async (id: string): Promise<void> => {
-  try {
-    await remove(STORES.SUPPLIERS, id);
-  } catch (error) {
-    console.error(`Error deleting supplier ${id}:`, error);
-    throw error;
-  }
+  await remove(STORES.SUPPLIERS, id);
 };

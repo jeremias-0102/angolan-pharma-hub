@@ -1,4 +1,3 @@
-
 import { User, Product, Order, Batch, Supplier, PurchaseOrder, Category } from '@/types/models';
 
 // Database configuration
@@ -14,14 +13,21 @@ export const STORES = {
   SUPPLIERS: 'suppliers',
   PURCHASE_ORDERS: 'purchase_orders',
   SETTINGS: 'settings',
-  DELIVERIES: 'deliveries', // Added deliveries store
-  CATEGORIES: 'categories' // Adding categories store
+  DELIVERIES: 'deliveries',
+  CATEGORIES: 'categories',
+  SEQUENCES: 'sequences' // Nova store para gerenciar sequências de autoincremento
 };
+
+// Sequência para autoincremento
+export interface Sequence {
+  name: string;
+  value: number;
+}
 
 // Initialize database
 export const initDB = (): Promise<IDBDatabase> => {
   return new Promise((resolve, reject) => {
-    const request = indexedDB.open(DB_NAME, DB_VERSION);
+    const request = indexedDB.open(DB_NAME, DB_VERSION + 1); // Incrementamos a versão para adicionar a store de sequências
 
     request.onerror = (event) => {
       console.error('Database error:', (event.target as IDBRequest).error);
@@ -50,7 +56,6 @@ export const initDB = (): Promise<IDBDatabase> => {
           const productsStore = db.createObjectStore(STORES.PRODUCTS, { keyPath: 'id' });
           productsStore.createIndex('code', 'code', { unique: true });
           productsStore.createIndex('category', 'category', { unique: false });
-          // Add category_id index for relationship
           productsStore.createIndex('category_id', 'category_id', { unique: false });
         }
 
@@ -96,9 +101,64 @@ export const initDB = (): Promise<IDBDatabase> => {
           categoriesStore.createIndex('is_active', 'is_active', { unique: false });
         }
       }
+      
+      // Version 4 upgrades - add sequences store for autoincrement
+      if (oldVersion < 4) {
+        if (!db.objectStoreNames.contains(STORES.SEQUENCES)) {
+          const sequencesStore = db.createObjectStore(STORES.SEQUENCES, { keyPath: 'name' });
+          
+          // Inicializa sequências para cada tipo de entidade
+          const sequences = [
+            { name: 'product_code', value: 1000 },
+            { name: 'order_code', value: 5000 },
+            { name: 'supplier_code', value: 3000 },
+            { name: 'batch_code', value: 2000 },
+            { name: 'purchase_order_code', value: 4000 },
+            { name: 'category_code', value: 100 }
+          ];
+          
+          sequences.forEach(seq => {
+            sequencesStore.add(seq);
+          });
+        }
+      }
     };
   });
 };
+
+// Generic database operations
+// Nova função para obter e incrementar sequências
+export async function getNextSequenceValue(sequenceName: string): Promise<string> {
+  const db = await initDB();
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction(STORES.SEQUENCES, 'readwrite');
+    const store = transaction.objectStore(STORES.SEQUENCES);
+    const request = store.get(sequenceName);
+
+    request.onsuccess = () => {
+      const sequence = request.result as Sequence;
+      if (!sequence) {
+        // Se não existir, criar uma nova sequência começando do 1
+        const newSequence = { name: sequenceName, value: 1 };
+        store.add(newSequence);
+        resolve('1');
+      } else {
+        // Incrementar o valor e atualizar
+        sequence.value += 1;
+        store.put(sequence);
+        // Formatar o código com zeros à esquerda
+        const formattedValue = sequence.value.toString().padStart(6, '0');
+        resolve(formattedValue);
+      }
+      db.close();
+    };
+
+    request.onerror = (event) => {
+      reject((event.target as IDBRequest).error);
+      db.close();
+    };
+  });
+}
 
 // Generic database operations
 export async function add<T>(storeName: string, data: T): Promise<T> {

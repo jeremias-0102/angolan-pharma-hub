@@ -6,6 +6,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import { CartProvider } from './contexts/CartContext';
 import { NotificationsProvider } from './contexts/NotificationsContext';
 import { Toaster } from "./components/ui/toaster";
+import ChatWidget from './components/chat/ChatWidget';
 
 // Pages
 import Home from './pages/Home';
@@ -85,6 +86,7 @@ function App() {
               <Route path="*" element={<NotFound />} />
             </Routes>
             <Toaster />
+            <ChatWidget />
           </NotificationsProvider>
         </CartProvider>
       </AuthProvider>

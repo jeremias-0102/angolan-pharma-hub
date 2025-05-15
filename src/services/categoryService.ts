@@ -1,90 +1,75 @@
 
-import { STORES, add, getAll, get, update, remove, getByIndex } from '@/lib/database';
-import { Category } from '@/types/models';
 import { v4 as uuidv4 } from 'uuid';
+import { Category } from '@/types/models';
+import { add, getAll, update, get, remove, getByIndex, getNextSequenceValue, STORES } from '@/lib/database';
 
-// Get all categories
+// Listar todas as categorias
 export const getAllCategories = async (): Promise<Category[]> => {
-  try {
-    const categories = await getAll<Category>(STORES.CATEGORIES);
-    return categories;
-  } catch (error) {
-    console.error('Error getting all categories:', error);
-    throw error;
-  }
+  const categories = await getAll<Category>(STORES.CATEGORIES);
+  return categories;
 };
 
-// Get active categories
-export const getActiveCategories = async (): Promise<Category[]> => {
-  try {
-    // Convert boolean to string "true" for indexedDB query
-    const categories = await getByIndex<Category>(STORES.CATEGORIES, 'is_active', "true");
-    return categories;
-  } catch (error) {
-    console.error('Error getting active categories:', error);
-    throw error;
-  }
-};
-
-// Get category by ID
+// Obter categoria por ID
 export const getCategoryById = async (id: string): Promise<Category | null> => {
-  try {
-    const category = await get<Category>(STORES.CATEGORIES, id);
-    return category;
-  } catch (error) {
-    console.error(`Error getting category with ID ${id}:`, error);
-    throw error;
-  }
+  return await get<Category>(STORES.CATEGORIES, id);
 };
 
-// Create a new category
-export const addCategory = async (category: Omit<Category, 'id' | 'created_at' | 'updated_at'>): Promise<Category> => {
-  try {
-    const now = new Date().toISOString();
-    const newCategory: Category = {
-      id: uuidv4(),
-      ...category,
-      created_at: now,
-      updated_at: now
-    };
-    
-    const result = await add<Category>(STORES.CATEGORIES, newCategory);
-    return result;
-  } catch (error) {
-    console.error('Error creating category:', error);
-    throw error;
+// Criar categoria
+export const createCategory = async (categoryData: Omit<Category, 'id' | 'created_at' | 'updated_at'>): Promise<Category> => {
+  // Verifica se já existe categoria com o mesmo nome
+  const existingCategories = await getByIndex<Category>(STORES.CATEGORIES, 'name', categoryData.name);
+  if (existingCategories.length > 0) {
+    throw new Error('Já existe uma categoria com este nome.');
   }
+
+  // Gera ID para a categoria usando código autoincrementado
+  const code = await getNextSequenceValue('category_code');
+  
+  const now = new Date().toISOString();
+  const category: Category = {
+    ...categoryData,
+    id: uuidv4(),
+    created_at: now,
+    updated_at: now,
+    is_active: categoryData.is_active !== undefined ? categoryData.is_active : true
+  };
+
+  await add(STORES.CATEGORIES, category);
+  return category;
 };
 
-// Update a category
-export const updateCategory = async (category: Category): Promise<Category> => {
-  try {
-    category.updated_at = new Date().toISOString();
-    const result = await update<Category>(STORES.CATEGORIES, category);
-    return result;
-  } catch (error) {
-    console.error(`Error updating category ${category.id}:`, error);
-    throw error;
+// Atualizar categoria
+export const updateCategory = async (id: string, categoryData: Partial<Category>): Promise<Category> => {
+  const category = await get<Category>(STORES.CATEGORIES, id);
+  if (!category) {
+    throw new Error('Categoria não encontrada.');
   }
+
+  // Verifica se está alterando o nome para um nome que já existe
+  if (categoryData.name && categoryData.name !== category.name) {
+    const existingCategories = await getByIndex<Category>(STORES.CATEGORIES, 'name', categoryData.name);
+    if (existingCategories.length > 0) {
+      throw new Error('Já existe uma categoria com este nome.');
+    }
+  }
+
+  const updatedCategory = {
+    ...category,
+    ...categoryData,
+    updated_at: new Date().toISOString()
+  };
+
+  await update(STORES.CATEGORIES, updatedCategory);
+  return updatedCategory;
 };
 
-// Delete a category
+// Excluir categoria
 export const deleteCategory = async (id: string): Promise<void> => {
-  try {
-    await remove(STORES.CATEGORIES, id);
-  } catch (error) {
-    console.error(`Error deleting category ${id}:`, error);
-    throw error;
-  }
+  await remove(STORES.CATEGORIES, id);
 };
 
-// Check if a category is used by any products
-export const isCategoryInUse = async (categoryId: string): Promise<boolean> => {
-  try {
-    const productsWithCategory = await getByIndex<any>(STORES.PRODUCTS, 'category_id', categoryId);
-    return productsWithCategory.length > 0;
-  } catch (error) {
-    console.error(`Error checking if category ${categoryId} is in use:`, error);
-    throw error;
-  }
+// Obter categorias ativas
+export const getActiveCategories = async (): Promise<Category[]> => {
+  const categories = await getAll<Category>(STORES.CATEGORIES);
+  return categories.filter(category => category.is_active === true);
 };
