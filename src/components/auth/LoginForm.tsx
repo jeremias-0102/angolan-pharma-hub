@@ -36,27 +36,17 @@ export default function LoginForm() {
   const onSubmit = async (data: LoginFormValues) => {
     setIsLoading(true);
     try {
-      await login(data.email, data.password)
-        .then((success) => {
-          if (success) {
-            toast({
-              title: 'Login bem-sucedido',
-              description: 'Bem-vindo de volta!',
-            });
-            navigate('/');
-          } else {
-            toast({
-              title: 'Falha no login',
-              description: 'Email ou senha inválidos',
-              variant: 'destructive',
-            });
-          }
-        });
+      await login(data.email, data.password);
+      toast({
+        title: 'Login bem-sucedido',
+        description: 'Bem-vindo de volta!',
+      });
+      navigate('/');
     } catch (error) {
       console.error('Login error:', error);
       toast({
-        title: 'Erro',
-        description: 'Ocorreu um erro ao tentar fazer login',
+        title: 'Falha no login',
+        description: 'Email ou senha inválidos',
         variant: 'destructive',
       });
     } finally {
