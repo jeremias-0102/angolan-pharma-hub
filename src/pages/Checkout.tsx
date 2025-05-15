@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
@@ -22,6 +21,12 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
+
+// Define an interface for the API response
+interface ApiResponse {
+  status: number;
+  data?: any;
+}
 
 const Checkout = () => {
   const navigate = useNavigate();
@@ -101,9 +106,9 @@ const Checkout = () => {
         discount: 0 // Add the discount field with default value
       };
 
-      const response = await api.post('/orders', orderData);
+      const response = await api.post<ApiResponse>('/orders', orderData);
 
-      // Fix the response handling with proper type checking
+      // Now response is properly typed with the ApiResponse interface
       if (response && response.status === 201) {
         toast({
           title: "Sucesso",
