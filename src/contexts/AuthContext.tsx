@@ -1,8 +1,9 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, UserRole } from '@/types/models';
 import { getAll, update, add, getByIndex, STORES } from '@/lib/database';
 import { v4 as uuidv4 } from 'uuid';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/components/ui/use-toast';
 
 interface AuthContextType {
   user: User | null;
@@ -13,8 +14,7 @@ interface AuthContextType {
   register: (userData: Omit<User, 'id' | 'created_at' | 'updated_at'>) => Promise<void>;
 }
 
-// Export the context so it can be imported in other files
-export const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -104,7 +104,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
   }, []);
 
-  const login = async (email: string, password: string): Promise<void> => {
+  const login = async (email: string, password: string) => {
     setIsLoading(true);
     
     try {

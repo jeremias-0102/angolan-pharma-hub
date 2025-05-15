@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
@@ -84,7 +85,6 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
         created_at: product?.created_at || new Date().toISOString(),
         updated_at: new Date().toISOString(),
         batches: product?.batches || [],
-        stock: product?.stock || 0,  // Add default stock value
       };
       
       onSave(productData);

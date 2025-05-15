@@ -1,354 +1,594 @@
-import React from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { ArrowDown, ArrowUp, Users } from 'lucide-react';
-import { Separator } from "@/components/ui/separator"
-import {
-  Table,
-  TableBody,
-  TableCaption,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend,
-} from 'chart.js';
-import { Bar } from 'react-chartjs-2';
 
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend
-);
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from '@/components/ui/button';
+import { Progress } from '@/components/ui/progress';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ChartContainer } from '@/components/ui/chart';
+import { 
+  ArrowLeft,
+  Calculator, 
+  BarChart3,
+  FileBarChart,
+  ReceiptText,
+  Calendar as CalendarIcon
+} from 'lucide-react';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import { DateRange } from 'react-day-picker';
+import { DateRangePicker } from '@/components/ui/date-range-picker';
+import ReportDownloadButtons from '@/components/reports/ReportDownloadButtons';
+import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 
-interface ChartConfig {
-  type: 'bar' | 'line' | 'pie';
-  data: any;
-  options: any;
-}
-
-interface ChartProps {
-  config: ChartConfig;
-}
-
-const Chart: React.FC<ChartProps> = ({ config }) => {
-  return <Bar options={config.options} data={config.data} />;
+// Mock data for financial reports
+const balanceSheetData = {
+  assets: {
+    current: {
+      cash: 12500000,
+      accountsReceivable: 3450000,
+      inventory: 8975000,
+      prepaidExpenses: 875000
+    },
+    nonCurrent: {
+      property: 15000000,
+      equipment: 7500000,
+      accumulatedDepreciation: -3250000
+    }
+  },
+  liabilities: {
+    current: {
+      accountsPayable: 4350000,
+      shortTermDebt: 1250000,
+      currentTaxes: 1875000
+    },
+    nonCurrent: {
+      longTermDebt: 8750000
+    }
+  },
+  equity: {
+    capital: 25000000,
+    retainedEarnings: 6825000
+  }
 };
 
-const data = [
-  {
-    name: "Pedro Henrique",
-    email: "pedro.henrique@mail.com",
-    date: "2023/01/05",
-    status: "active"
+const incomeStatementData = {
+  revenue: 45000000,
+  costOfGoodsSold: 27000000,
+  operatingExpenses: {
+    salaries: 6750000,
+    rent: 1800000,
+    utilities: 900000,
+    marketing: 1350000,
+    other: 750000
   },
-  {
-    name: "Maria Rita",
-    email: "maria.rita@mail.com",
-    date: "2023/03/12",
-    status: "inactive"
-  },
-  {
-    name: "Ana Clara",
-    email: "ana.clara@mail.com",
-    date: "2023/04/01",
-    status: "active"
-  },
-  {
-    name: "José Antonio",
-    email: "jose.antonio@mail.com",
-    date: "2023/06/08",
-    status: "active"
-  },
-  {
-    name: "Fernanda Silva",
-    email: "fernanda.silva@mail.com",
-    date: "2023/08/14",
-    status: "inactive"
-  },
-]
+  otherIncome: 450000,
+  taxes: 2100000
+};
+
+const paymentMethodsData = [
+  { name: 'Multicaixa', value: 45 },
+  { name: 'Cartão', value: 30 },
+  { name: 'Dinheiro', value: 25 },
+];
+
+const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
 
 const FinancialReportsPage = () => {
-  const financialData: any = {
-    revenue: { 
-      total: 2500000, 
-      previousPeriod: 2250000, 
-      target: 2800000 
-    },
-    expenses: { 
-      total: 1200000, 
-      previousPeriod: 1100000, 
-      target: 1300000 
-    },
-    profit: { 
-      total: 1300000, 
-      previousPeriod: 1150000, 
-      target: 1500000 
-    },
-    newCustomers: { 
-      total: 150, 
-      previousPeriod: 130, 
-      target: 180 
-    },
-    ordersCompleted: { 
-      total: 850, 
-      previousPeriod: 780, 
-      target: 900 
-    },
-    customerSatisfaction: { 
-      total: 4.5, 
-      previousPeriod: 4.2, 
-      target: 4.7 
-    },
-    monthlyRevenue: [
-      { month: 'Janeiro', value: 200000 },
-      { month: 'Fevereiro', value: 220000 },
-      { month: 'Março', value: 250000 },
-      { month: 'Abril', value: 230000 },
-      { month: 'Maio', value: 260000 },
-      { month: 'Junho', value: 280000 },
-    ],
-    monthlyExpenses: [
-      { month: 'Janeiro', value: 90000 },
-      { month: 'Fevereiro', value: 100000 },
-      { month: 'Março', value: 110000 },
-      { month: 'Abril', value: 105000 },
-      { month: 'Maio', value: 115000 },
-      { month: 'Junho', value: 120000 },
-    ],
-    monthlyProfit: [
-      { month: 'Janeiro', value: 110000 },
-      { month: 'Fevereiro', value: 120000 },
-      { month: 'Março', value: 140000 },
-      { month: 'Abril', value: 125000 },
-      { month: 'Maio', value: 145000 },
-      { month: 'Junho', value: 160000 },
-    ]
+  const [date, setDate] = useState<DateRange | undefined>({
+    from: new Date(new Date().getFullYear(), new Date().getMonth() - 1, 1),
+    to: new Date(),
+  });
+  
+  const formatDate = (date: Date | undefined) => {
+    return date ? format(date, 'dd/MM/yyyy', { locale: ptBR }) : 'Data não selecionada';
   };
 
-  const monthlyRevenueData = {
-    labels: financialData.monthlyRevenue.map((item: any) => item.month),
-    datasets: [
-      {
-        label: 'Receita Mensal',
-        data: financialData.monthlyRevenue.map((item: any) => item.value),
-        backgroundColor: 'rgba(54, 162, 235, 0.5)',
-      },
-    ],
+  const navigate = useNavigate();
+  
+  const handleBack = () => {
+    navigate('/admin');
   };
 
-  const monthlyExpensesData = {
-    labels: financialData.monthlyExpenses.map((item: any) => item.month),
-    datasets: [
-      {
-        label: 'Despesas Mensais',
-        data: financialData.monthlyExpenses.map((item: any) => item.value),
-        backgroundColor: 'rgba(255, 99, 132, 0.5)',
-      },
-    ],
-  };
+  // Calculate totals
+  const totalCurrentAssets = balanceSheetData.assets.current.cash + 
+    balanceSheetData.assets.current.accountsReceivable +
+    balanceSheetData.assets.current.inventory +
+    balanceSheetData.assets.current.prepaidExpenses;
+    
+  const totalNonCurrentAssets = balanceSheetData.assets.nonCurrent.property + 
+    balanceSheetData.assets.nonCurrent.equipment +
+    balanceSheetData.assets.nonCurrent.accumulatedDepreciation;
+    
+  const totalAssets = totalCurrentAssets + totalNonCurrentAssets;
+    
+  const totalCurrentLiabilities = balanceSheetData.liabilities.current.accountsPayable +
+    balanceSheetData.liabilities.current.shortTermDebt +
+    balanceSheetData.liabilities.current.currentTaxes;
+    
+  const totalNonCurrentLiabilities = balanceSheetData.liabilities.nonCurrent.longTermDebt;
+    
+  const totalLiabilities = totalCurrentLiabilities + totalNonCurrentLiabilities;
+    
+  const totalEquity = balanceSheetData.equity.capital + balanceSheetData.equity.retainedEarnings;
+    
+  const totalLiabilitiesAndEquity = totalLiabilities + totalEquity;
+  
+  // Income Statement calculations
+  const grossProfit = incomeStatementData.revenue - incomeStatementData.costOfGoodsSold;
+  
+  const totalOperatingExpenses = incomeStatementData.operatingExpenses.salaries +
+    incomeStatementData.operatingExpenses.rent +
+    incomeStatementData.operatingExpenses.utilities +
+    incomeStatementData.operatingExpenses.marketing +
+    incomeStatementData.operatingExpenses.other;
+    
+  const operatingIncome = grossProfit - totalOperatingExpenses;
+  
+  const incomeBeforeTaxes = operatingIncome + incomeStatementData.otherIncome;
+  
+  const netIncome = incomeBeforeTaxes - incomeStatementData.taxes;
 
-  const monthlyProfitData = {
-    labels: financialData.monthlyProfit.map((item: any) => item.month),
-    datasets: [
-      {
-        label: 'Lucro Mensal',
-        data: financialData.monthlyProfit.map((item: any) => item.value),
-        backgroundColor: 'rgba(75, 192, 192, 0.5)',
-      },
-    ],
+  // Format currency
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('pt-AO', {
+      style: 'currency',
+      currency: 'AOA',
+      minimumFractionDigits: 0,
+    }).format(amount);
   };
 
   return (
-    <div className="container mx-auto py-10">
-      <h1 className="text-3xl font-bold mb-6">Relatórios Financeiros</h1>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-        <Card>
-          <CardHeader>
-            <CardTitle>Receita Total</CardTitle>
-            <CardDescription>Visão geral da receita total.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{financialData.revenue.total} AOA</div>
-            <div className="flex items-center text-sm text-muted-foreground mt-2">
-              <ArrowUp className="h-4 w-4 mr-2" />
-              <span>{(((financialData.revenue.total - financialData.revenue.previousPeriod) / financialData.revenue.previousPeriod) * 100).toFixed(2)}% vs. Período Anterior</span>
-            </div>
-            <div className="flex items-center text-sm text-muted-foreground mt-2">
-              <Users className="h-4 w-4 mr-2" />
-              <span>Meta: {financialData.revenue.target} AOA</span>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Despesas Totais</CardTitle>
-            <CardDescription>Visão geral das despesas totais.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{financialData.expenses.total} AOA</div>
-            <div className="flex items-center text-sm text-muted-foreground mt-2">
-              <ArrowDown className="h-4 w-4 mr-2" />
-              <span>{(((financialData.expenses.total - financialData.expenses.previousPeriod) / financialData.expenses.previousPeriod) * 100).toFixed(2)}% vs. Período Anterior</span>
-            </div>
-             <div className="flex items-center text-sm text-muted-foreground mt-2">
-              <Users className="h-4 w-4 mr-2" />
-              <span>Meta: {financialData.expenses.target} AOA</span>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Lucro Total</CardTitle>
-            <CardDescription>Visão geral do lucro total.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{financialData.profit.total} AOA</div>
-            <div className="flex items-center text-sm text-muted-foreground mt-2">
-              <ArrowUp className="h-4 w-4 mr-2" />
-              <span>{(((financialData.profit.total - financialData.profit.previousPeriod) / financialData.profit.previousPeriod) * 100).toFixed(2)}% vs. Período Anterior</span>
-            </div>
-             <div className="flex items-center text-sm text-muted-foreground mt-2">
-              <Users className="h-4 w-4 mr-2" />
-              <span>Meta: {financialData.profit.target} AOA</span>
-            </div>
-          </CardContent>
-        </Card>
+    <div className="space-y-6">
+      <div className="flex items-center mb-4">
+        <Button variant="ghost" onClick={handleBack} className="mr-2">
+          <ArrowLeft className="h-5 w-5 mr-1" />
+          Voltar
+        </Button>
+        <h1 className="text-2xl font-bold">Relatórios Financeiros</h1>
       </div>
 
-      <Separator className="mb-8" />
+      <Tabs defaultValue="balance" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="balance">
+            <FileBarChart className="mr-2 h-4 w-4" />
+            Balanço Patrimonial
+          </TabsTrigger>
+          <TabsTrigger value="income">
+            <Calculator className="mr-2 h-4 w-4" />
+            Demonstração de Resultado
+          </TabsTrigger>
+          <TabsTrigger value="payment">
+            <ReceiptText className="mr-2 h-4 w-4" />
+            Métodos de Pagamento
+          </TabsTrigger>
+          <TabsTrigger value="saft">
+            <BarChart3 className="mr-2 h-4 w-4" />
+            Relatório SAFT-AO
+          </TabsTrigger>
+        </TabsList>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Receita Mensal</CardTitle>
-            <CardDescription>Visão geral da receita mensal.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Chart config={{
-              type: 'bar',
-              data: monthlyRevenueData,
-              options: {
-                responsive: true,
-                plugins: {
-                  legend: { position: 'top' as const },
-                  title: { display: false }
-                }
-              }
-            }}/>
-          </CardContent>
-        </Card>
+        {/* Balanço Patrimonial */}
+        <TabsContent value="balance" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Balanço Patrimonial</CardTitle>
+              <CardDescription>
+                Posição financeira da empresa no período selecionado.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-6">
+              <div className="flex items-center space-x-4">
+                <CalendarIcon className="h-4 w-4 mr-2" />
+                <span>Data de referência:</span>
+                <DateRangePicker date={date} onDateChange={setDate} />
+                <span>
+                  {formatDate(date?.to)}
+                </span>
+              </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Despesas Mensais</CardTitle>
-            <CardDescription>Visão geral das despesas mensais.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Chart config={{
-              type: 'bar',
-              data: monthlyExpensesData,
-              options: {
-                responsive: true,
-                plugins: {
-                  legend: { position: 'top' as const },
-                  title: { display: false }
-                }
-              }
-            }}/>
-          </CardContent>
-        </Card>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Ativos */}
+                <div className="space-y-4">
+                  <h3 className="text-xl font-semibold text-center">Ativos</h3>
+                  
+                  <div className="space-y-2">
+                    <h4 className="font-medium">Ativos Circulantes</h4>
+                    <div className="space-y-1">
+                      <div className="flex justify-between">
+                        <span>Caixa e Equivalentes</span>
+                        <span>{formatCurrency(balanceSheetData.assets.current.cash)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Contas a Receber</span>
+                        <span>{formatCurrency(balanceSheetData.assets.current.accountsReceivable)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Estoque</span>
+                        <span>{formatCurrency(balanceSheetData.assets.current.inventory)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Despesas Antecipadas</span>
+                        <span>{formatCurrency(balanceSheetData.assets.current.prepaidExpenses)}</span>
+                      </div>
+                      <div className="flex justify-between font-medium pt-1 border-t">
+                        <span>Total Ativos Circulantes</span>
+                        <span>{formatCurrency(totalCurrentAssets)}</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <h4 className="font-medium">Ativos Não Circulantes</h4>
+                    <div className="space-y-1">
+                      <div className="flex justify-between">
+                        <span>Imóveis</span>
+                        <span>{formatCurrency(balanceSheetData.assets.nonCurrent.property)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Equipamentos</span>
+                        <span>{formatCurrency(balanceSheetData.assets.nonCurrent.equipment)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Depreciação Acumulada</span>
+                        <span>{formatCurrency(balanceSheetData.assets.nonCurrent.accumulatedDepreciation)}</span>
+                      </div>
+                      <div className="flex justify-between font-medium pt-1 border-t">
+                        <span>Total Ativos Não Circulantes</span>
+                        <span>{formatCurrency(totalNonCurrentAssets)}</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex justify-between text-lg font-bold pt-2 border-t-2">
+                    <span>Total de Ativos</span>
+                    <span>{formatCurrency(totalAssets)}</span>
+                  </div>
+                </div>
+                
+                {/* Passivos e Patrimônio Líquido */}
+                <div className="space-y-4">
+                  <h3 className="text-xl font-semibold text-center">Passivos e Patrimônio Líquido</h3>
+                  
+                  <div className="space-y-2">
+                    <h4 className="font-medium">Passivos Circulantes</h4>
+                    <div className="space-y-1">
+                      <div className="flex justify-between">
+                        <span>Contas a Pagar</span>
+                        <span>{formatCurrency(balanceSheetData.liabilities.current.accountsPayable)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Dívidas de Curto Prazo</span>
+                        <span>{formatCurrency(balanceSheetData.liabilities.current.shortTermDebt)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Impostos a Pagar</span>
+                        <span>{formatCurrency(balanceSheetData.liabilities.current.currentTaxes)}</span>
+                      </div>
+                      <div className="flex justify-between font-medium pt-1 border-t">
+                        <span>Total Passivos Circulantes</span>
+                        <span>{formatCurrency(totalCurrentLiabilities)}</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <h4 className="font-medium">Passivos Não Circulantes</h4>
+                    <div className="space-y-1">
+                      <div className="flex justify-between">
+                        <span>Dívidas de Longo Prazo</span>
+                        <span>{formatCurrency(balanceSheetData.liabilities.nonCurrent.longTermDebt)}</span>
+                      </div>
+                      <div className="flex justify-between font-medium pt-1 border-t">
+                        <span>Total Passivos Não Circulantes</span>
+                        <span>{formatCurrency(totalNonCurrentLiabilities)}</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex justify-between font-medium pt-1 border-t">
+                    <span>Total Passivos</span>
+                    <span>{formatCurrency(totalLiabilities)}</span>
+                  </div>
+                  
+                  <div className="space-y-2 pt-2 border-t">
+                    <h4 className="font-medium">Patrimônio Líquido</h4>
+                    <div className="space-y-1">
+                      <div className="flex justify-between">
+                        <span>Capital</span>
+                        <span>{formatCurrency(balanceSheetData.equity.capital)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Lucros Acumulados</span>
+                        <span>{formatCurrency(balanceSheetData.equity.retainedEarnings)}</span>
+                      </div>
+                      <div className="flex justify-between font-medium pt-1 border-t">
+                        <span>Total Patrimônio Líquido</span>
+                        <span>{formatCurrency(totalEquity)}</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex justify-between text-lg font-bold pt-2 border-t-2">
+                    <span>Total Passivos e Patrimônio Líquido</span>
+                    <span>{formatCurrency(totalLiabilitiesAndEquity)}</span>
+                  </div>
+                </div>
+              </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Lucro Mensal</CardTitle>
-            <CardDescription>Visão geral do lucro mensal.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Chart config={{
-              type: 'bar',
-              data: monthlyProfitData,
-              options: {
-                responsive: true,
-                plugins: {
-                  legend: { position: 'top' as const },
-                  title: { display: false }
-                }
-              }
-            }}/>
-          </CardContent>
-        </Card>
-      </div>
+              <ReportDownloadButtons 
+                title="Balanço Patrimonial" 
+                data={[
+                  { item: 'Total de Ativos', valor: totalAssets },
+                  { item: 'Total de Passivos', valor: totalLiabilities },
+                  { item: 'Patrimônio Líquido', valor: totalEquity }
+                ]} 
+                columns={[
+                  { header: 'Item', accessor: 'item' },
+                  { header: 'Valor (AOA)', accessor: 'valor' }
+                ]} 
+              />
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-      <Separator className="my-8" />
+        {/* Demonstração de Resultado */}
+        <TabsContent value="income" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Demonstração de Resultado</CardTitle>
+              <CardDescription>
+                Desempenho financeiro da empresa para o período selecionado.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-6">
+              <div className="flex items-center space-x-4">
+                <CalendarIcon className="h-4 w-4 mr-2" />
+                <span>Período:</span>
+                <DateRangePicker date={date} onDateChange={setDate} />
+                <span>
+                  {formatDate(date?.from)} - {formatDate(date?.to)}
+                </span>
+              </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Novos Clientes</CardTitle>
-          <CardDescription>Lista de novos clientes.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{financialData.newCustomers.total}</div>
-          <div className="flex items-center text-sm text-muted-foreground mt-2">
-            <ArrowUp className="h-4 w-4 mr-2" />
-            <span>{(((financialData.newCustomers.total - financialData.newCustomers.previousPeriod) / financialData.newCustomers.previousPeriod) * 100).toFixed(2)}% vs. Período Anterior</span>
-          </div>
-           <div className="flex items-center text-sm text-muted-foreground mt-2">
-            <Users className="h-4 w-4 mr-2" />
-            <span>Meta: {financialData.newCustomers.target}</span>
-          </div>
-        </CardContent>
-      </Card>
+              <div className="space-y-6">
+                <div className="space-y-2">
+                  <div className="flex justify-between text-lg font-semibold">
+                    <span>Receita</span>
+                    <span>{formatCurrency(incomeStatementData.revenue)}</span>
+                  </div>
+                  <div className="flex justify-between text-muted-foreground">
+                    <span>Custo dos Produtos Vendidos</span>
+                    <span>- {formatCurrency(incomeStatementData.costOfGoodsSold)}</span>
+                  </div>
+                  <div className="flex justify-between font-medium pt-1 border-t">
+                    <span>Lucro Bruto</span>
+                    <span>{formatCurrency(grossProfit)}</span>
+                  </div>
+                </div>
 
-      <Separator className="my-8" />
+                <div className="space-y-2">
+                  <h4 className="font-medium">Despesas Operacionais</h4>
+                  <div className="space-y-1">
+                    <div className="flex justify-between text-muted-foreground">
+                      <span>Salários</span>
+                      <span>- {formatCurrency(incomeStatementData.operatingExpenses.salaries)}</span>
+                    </div>
+                    <div className="flex justify-between text-muted-foreground">
+                      <span>Aluguel</span>
+                      <span>- {formatCurrency(incomeStatementData.operatingExpenses.rent)}</span>
+                    </div>
+                    <div className="flex justify-between text-muted-foreground">
+                      <span>Utilidades</span>
+                      <span>- {formatCurrency(incomeStatementData.operatingExpenses.utilities)}</span>
+                    </div>
+                    <div className="flex justify-between text-muted-foreground">
+                      <span>Marketing</span>
+                      <span>- {formatCurrency(incomeStatementData.operatingExpenses.marketing)}</span>
+                    </div>
+                    <div className="flex justify-between text-muted-foreground">
+                      <span>Outros</span>
+                      <span>- {formatCurrency(incomeStatementData.operatingExpenses.other)}</span>
+                    </div>
+                    <div className="flex justify-between font-medium pt-1 border-t">
+                      <span>Total Despesas Operacionais</span>
+                      <span>- {formatCurrency(totalOperatingExpenses)}</span>
+                    </div>
+                  </div>
+                </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Clientes</CardTitle>
-          <CardDescription>Informações sobre os clientes.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableCaption>Lista de clientes.</TableCaption>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[100px]">Nome</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Data</TableHead>
-                <TableHead className="text-right">Status</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {data.map((item) => (
-                <TableRow key={item.email}>
-                  <TableCell className="font-medium">{item.name}</TableCell>
-                  <TableCell>{item.email}</TableCell>
-                  <TableCell>{item.date}</TableCell>
-                  <TableCell className="text-right">
-                    <Badge variant={item.status == "active" ? "default" : "secondary"}>
-                      {item.status}
-                    </Badge>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+                <div className="flex justify-between font-medium pt-1 border-t">
+                  <span>Lucro Operacional</span>
+                  <span>{formatCurrency(operatingIncome)}</span>
+                </div>
+
+                <div className="space-y-1">
+                  <div className="flex justify-between">
+                    <span>Outras Receitas</span>
+                    <span>{formatCurrency(incomeStatementData.otherIncome)}</span>
+                  </div>
+                  <div className="flex justify-between font-medium pt-1">
+                    <span>Lucro Antes dos Impostos</span>
+                    <span>{formatCurrency(incomeBeforeTaxes)}</span>
+                  </div>
+                  <div className="flex justify-between text-muted-foreground">
+                    <span>Impostos</span>
+                    <span>- {formatCurrency(incomeStatementData.taxes)}</span>
+                  </div>
+                </div>
+
+                <div className="flex justify-between text-lg font-bold pt-2 border-t-2">
+                  <span>Lucro Líquido</span>
+                  <span>{formatCurrency(netIncome)}</span>
+                </div>
+              </div>
+
+              <ReportDownloadButtons 
+                title="Demonstração de Resultado" 
+                data={[
+                  { item: 'Receita', valor: incomeStatementData.revenue },
+                  { item: 'Lucro Bruto', valor: grossProfit },
+                  { item: 'Lucro Operacional', valor: operatingIncome },
+                  { item: 'Lucro Líquido', valor: netIncome }
+                ]} 
+                columns={[
+                  { header: 'Item', accessor: 'item' },
+                  { header: 'Valor (AOA)', accessor: 'valor' }
+                ]} 
+              />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Métodos de Pagamento */}
+        <TabsContent value="payment" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Relatório de Métodos de Pagamento</CardTitle>
+              <CardDescription>
+                Análise dos métodos de pagamento utilizados pelos clientes.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-6">
+              <div className="flex items-center space-x-4">
+                <CalendarIcon className="h-4 w-4 mr-2" />
+                <span>Período:</span>
+                <DateRangePicker date={date} onDateChange={setDate} />
+                <span>
+                  {formatDate(date?.from)} - {formatDate(date?.to)}
+                </span>
+              </div>
+
+              <div className="w-full aspect-[16/9] md:aspect-[21/9] lg:aspect-[3/1] flex justify-center items-center">
+                <ResponsiveContainer width="100%" height={300}>
+                  <PieChart>
+                    <Pie
+                      data={paymentMethodsData}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={true}
+                      outerRadius={80}
+                      fill="#8884d8"
+                      dataKey="value"
+                      label={({ name, value }) => `${name}: ${value}%`}
+                    >
+                      {paymentMethodsData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(value) => `${value}%`} />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {paymentMethodsData.map((method, idx) => (
+                  <div key={method.name} className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <h4 className="font-medium">{method.name}</h4>
+                      <span className="text-lg font-bold">{method.value}%</span>
+                    </div>
+                    <Progress value={method.value} className="h-2" 
+                      style={{backgroundColor: '#f1f5f9'}} // light gray background
+                      indicatorClassName={`bg-[${COLORS[idx % COLORS.length]}]`} />
+                  </div>
+                ))}
+              </div>
+
+              <ReportDownloadButtons 
+                title="Relatório de Métodos de Pagamento" 
+                data={paymentMethodsData.map(item => ({ 
+                  metodo: item.name, 
+                  percentagem: `${item.value}%`
+                }))} 
+                columns={[
+                  { header: 'Método de Pagamento', accessor: 'metodo' },
+                  { header: 'Percentagem', accessor: 'percentagem' }
+                ]} 
+              />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Relatório SAFT-AO */}
+        <TabsContent value="saft" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Relatório SAFT-AO</CardTitle>
+              <CardDescription>
+                Geração do arquivo SAFT-AO para a Administração Geral Tributária (AGT).
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-6">
+              <div className="flex items-center space-x-4 mb-4">
+                <CalendarIcon className="h-4 w-4 mr-2" />
+                <span>Período:</span>
+                <DateRangePicker date={date} onDateChange={setDate} />
+                <span>
+                  {formatDate(date?.from)} - {formatDate(date?.to)}
+                </span>
+              </div>
+
+              <div className="bg-muted/50 p-6 rounded-lg border border-border">
+                <div className="space-y-4">
+                  <h3 className="font-medium">Sobre o SAFT-AO</h3>
+                  <p className="text-muted-foreground">
+                    O SAFT-AO (Standard Audit File for Tax - Angola) é um formato de arquivo XML padronizado usado 
+                    para exportar dados fiscais e contábeis para a Administração Geral Tributária (AGT) de Angola.
+                  </p>
+                  <p className="text-muted-foreground">
+                    Este arquivo contém informações detalhadas sobre vendas, compras, inventário e outros dados 
+                    contábeis relevantes para o período selecionado.
+                  </p>
+                </div>
+
+                <div className="mt-6 grid gap-4">
+                  <h3 className="font-medium">Configurações do Relatório</h3>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Versão SAFT</label>
+                      <Select defaultValue="1.01">
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione a versão" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="1.01">Versão 1.01</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Tipo de Arquivo</label>
+                      <Select defaultValue="full">
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione o tipo" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="full">Arquivo Completo</SelectItem>
+                          <SelectItem value="invoices">Apenas Faturas</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-2">
+                <Button className="flex items-center bg-pharma-primary hover:bg-pharma-primary/90">
+                  <FileBarChart className="h-4 w-4 mr-2" />
+                  Gerar SAFT-AO
+                </Button>
+                <Button variant="outline">
+                  Visualizar Último Relatório
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

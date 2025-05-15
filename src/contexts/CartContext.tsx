@@ -1,6 +1,15 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { CartProduct } from '@/types/models';
+
+interface CartProduct {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  stock: number;
+  image?: string;
+  needsPrescription: boolean;
+}
 
 export interface CartItem {
   product: CartProduct;
@@ -15,11 +24,9 @@ interface CartContextType {
   clearCart: () => void;
   totalItems: number;
   totalPrice: number;
-  addToCart: (product: any, quantity: number) => void; // Added to support legacy code
 }
 
-// Export the context so it can be imported in other files
-export const CartContext = createContext<CartContextType | undefined>(undefined);
+const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [items, setItems] = useState<CartItem[]>([]);
@@ -57,11 +64,6 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
   };
 
-  // Added as an alias to addItem for backward compatibility
-  const addToCart = (product: any, quantity: number) => {
-    addItem(product, quantity);
-  };
-
   const removeItem = (productId: string) => {
     setItems(prevItems => prevItems.filter(item => item.product.id !== productId));
   };
@@ -93,7 +95,6 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const value = {
     items,
     addItem,
-    addToCart, // Add the alias to the context value
     removeItem,
     updateQuantity,
     clearCart,

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Table, 
@@ -30,23 +30,20 @@ import {
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { PurchaseOrder, PurchaseOrderStatus, Supplier } from "@/types/models";
+import { PurchaseOrder } from "@/types/models";
 import { useToast } from "@/components/ui/use-toast";
 import PurchaseOrderFormModal from "@/components/admin/PurchaseOrderFormModal";
 import ReceiveItemsModal from "@/components/admin/ReceiveItemsModal";
-import { getAllPurchaseOrders, getSuppliersForAcquisitions } from "@/services/acquisitionService";
 
-// When using mock data, we'll keep it for now
+// Mock data - would be replaced with API calls in production
 const mockPurchaseOrders: PurchaseOrder[] = [
   {
     id: "PO-001",
     supplier_id: "SUP-001",
-    supplier_name: "Supplier 1",
     status: "draft",
-    order_date: "2023-01-20T10:00:00Z",
-    expected_delivery: "2023-01-30T10:00:00Z",
     total: 15000,
     notes: "Encomenda inicial de teste",
+    created_by: "admin",
     created_at: "2023-01-20T10:00:00Z",
     updated_at: "2023-01-20T10:00:00Z",
     items: [
@@ -54,23 +51,19 @@ const mockPurchaseOrders: PurchaseOrder[] = [
         id: "POI-001",
         purchase_order_id: "PO-001",
         product_id: "PROD-001",
-        product_name: "Product 1",
         quantity_ordered: 50,
         quantity_received: 0,
         unit_price: 300,
-        total: 15000
       }
     ]
   },
   {
     id: "PO-002",
     supplier_id: "SUP-002",
-    supplier_name: "Supplier 2",
-    status: "submitted",
-    order_date: "2023-02-15T14:30:00Z",
-    expected_delivery: "2023-02-25T14:30:00Z",
+    status: "sent",
     total: 22000,
     notes: "Revisar prazos de entrega",
+    created_by: "admin",
     created_at: "2023-02-15T14:30:00Z",
     updated_at: "2023-02-15T14:30:00Z",
     items: [
@@ -78,24 +71,19 @@ const mockPurchaseOrders: PurchaseOrder[] = [
         id: "POI-002",
         purchase_order_id: "PO-002",
         product_id: "PROD-002",
-        product_name: "Product 2",
         quantity_ordered: 100,
         quantity_received: 0,
         unit_price: 220,
-        total: 22000
       }
     ]
   },
   {
     id: "PO-003",
     supplier_id: "SUP-001",
-    supplier_name: "Supplier 1",
-    status: "received",
-    order_date: "2023-03-01T09:00:00Z",
-    expected_delivery: "2023-03-10T09:00:00Z",
-    actual_delivery: "2023-03-05T11:00:00Z",
+    status: "partial",
     total: 8000,
     notes: "Aguardando segunda parte da entrega",
+    created_by: "admin",
     created_at: "2023-03-01T09:00:00Z",
     updated_at: "2023-03-05T11:00:00Z",
     items: [
@@ -103,24 +91,19 @@ const mockPurchaseOrders: PurchaseOrder[] = [
         id: "POI-003",
         purchase_order_id: "PO-003",
         product_id: "PROD-003",
-        product_name: "Product 3",
         quantity_ordered: 30,
         quantity_received: 15,
         unit_price: 270,
-        total: 8100
       }
     ]
   },
   {
     id: "PO-004",
     supplier_id: "SUP-003",
-    supplier_name: "Supplier 3",
-    status: "received",
-    order_date: "2023-03-10T16:45:00Z",
-    expected_delivery: "2023-03-20T16:45:00Z",
-    actual_delivery: "2023-03-15T12:00:00Z",
+    status: "complete",
     total: 12000,
     notes: "Pagamento confirmado",
+    created_by: "admin",
     created_at: "2023-03-10T16:45:00Z",
     updated_at: "2023-03-15T12:00:00Z",
     items: [
@@ -128,23 +111,19 @@ const mockPurchaseOrders: PurchaseOrder[] = [
         id: "POI-004",
         purchase_order_id: "PO-004",
         product_id: "PROD-004",
-        product_name: "Product 4",
         quantity_ordered: 60,
         quantity_received: 60,
         unit_price: 200,
-        total: 12000
       }
     ]
   },
   {
     id: "PO-005",
     supplier_id: "SUP-002",
-    supplier_name: "Supplier 2",
     status: "cancelled",
-    order_date: "2023-04-01T11:20:00Z",
-    expected_delivery: "2023-04-10T11:20:00Z",
     total: 5000,
     notes: "Pedido cancelado devido a atraso na entrega",
+    created_by: "admin",
     created_at: "2023-04-01T11:20:00Z",
     updated_at: "2023-04-02T08:00:00Z",
     items: [
@@ -152,11 +131,9 @@ const mockPurchaseOrders: PurchaseOrder[] = [
         id: "POI-005",
         purchase_order_id: "PO-005",
         product_id: "PROD-005",
-        product_name: "Product 5",
         quantity_ordered: 20,
         quantity_received: 0,
         unit_price: 250,
-        total: 5000
       }
     ]
   }
@@ -164,46 +141,14 @@ const mockPurchaseOrders: PurchaseOrder[] = [
 
 const AcquisitionsManagement: React.FC = () => {
   const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>(mockPurchaseOrders);
-  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isReceiveModalOpen, setIsReceiveModalOpen] = useState(false);
   const [currentPurchaseOrder, setCurrentPurchaseOrder] = useState<PurchaseOrder | null>(null);
   const [selectedPurchaseOrder, setSelectedPurchaseOrder] = useState<PurchaseOrder | null>(null);
-  const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   
   const navigate = useNavigate();
-
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        // Fetch real purchase orders
-        const orders = await getAllPurchaseOrders();
-        if (orders && orders.length > 0) {
-          setPurchaseOrders(orders);
-        }
-        
-        // Fetch suppliers
-        const supplierData = await getSuppliersForAcquisitions();
-        if (supplierData) {
-          setSuppliers(supplierData);
-        }
-      } catch (error) {
-        console.error('Error fetching data:', error);
-        toast({
-          title: "Erro",
-          description: "Falha ao carregar dados de aquisições e fornecedores.",
-          variant: "destructive"
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    fetchData();
-  }, [toast]);
 
   const filteredPurchaseOrders = purchaseOrders.filter((order) =>
     order.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -253,7 +198,7 @@ const AcquisitionsManagement: React.FC = () => {
     setIsFormOpen(false);
   };
 
-  const handleUpdateStatus = (orderId: string, newStatus: PurchaseOrderStatus) => {
+  const handleUpdateStatus = (orderId: string, newStatus: PurchaseOrder['status']) => {
     setPurchaseOrders((prevOrders) =>
       prevOrders.map((order) =>
         order.id === orderId ? { ...order, status: newStatus, updated_at: new Date().toISOString() } : order
@@ -280,36 +225,30 @@ const AcquisitionsManagement: React.FC = () => {
   };
 
   // Translate status to Portuguese
-  const translateStatus = (status: PurchaseOrderStatus): string => {
-    const statusMap: Record<PurchaseOrderStatus, string> = {
+  const translateStatus = (status: PurchaseOrder['status']): string => {
+    const statusMap: Record<PurchaseOrder['status'], string> = {
       draft: "Rascunho",
-      submitted: "Enviado",
-      received: "Recebido",
-      cancelled: "Cancelado",
       sent: "Enviado",
-      partial: "Parcial",
-      complete: "Completo"
+      partial: "Parcialmente Recebido",
+      complete: "Completo",
+      cancelled: "Cancelado"
     };
     return statusMap[status] || status;
   };
 
   // Get badge variant based on status
-  const getStatusBadgeVariant = (status: PurchaseOrderStatus) => {
+  const getStatusBadgeVariant = (status: PurchaseOrder['status']) => {
     switch (status) {
       case "draft":
         return "bg-gray-100 text-gray-800 border-gray-200";
-      case "submitted":
+      case "sent":
         return "bg-blue-100 text-blue-800 border-blue-200";
-      case "received":
+      case "partial":
+        return "bg-yellow-100 text-yellow-800 border-yellow-200";
+      case "complete":
         return "bg-green-100 text-green-800 border-green-200";
       case "cancelled":
         return "bg-red-100 text-red-800 border-red-200";
-      case "sent":
-        return "bg-indigo-100 text-indigo-800 border-indigo-200";
-      case "partial":
-        return "bg-amber-100 text-amber-800 border-amber-200";
-      case "complete":
-        return "bg-emerald-100 text-emerald-800 border-emerald-200";
       default:
         return "bg-gray-100 text-gray-800 border-gray-200";
     }
@@ -362,7 +301,7 @@ const AcquisitionsManagement: React.FC = () => {
                   <TableRow key={order.id}>
                     <TableCell className="font-medium">{order.id}</TableCell>
                     <TableCell>{formatDate(order.created_at)}</TableCell>
-                    <TableCell>{order.supplier_name}</TableCell>
+                    <TableCell>{order.supplier_id}</TableCell>
                     <TableCell>{order.total}</TableCell>
                     <TableCell>
                       <Badge variant="outline" className={getStatusBadgeVariant(order.status)}>
@@ -383,15 +322,15 @@ const AcquisitionsManagement: React.FC = () => {
                             <span>Editar</span>
                           </DropdownMenuItem>
                           
-                          {order.status !== "received" && (
+                          {order.status !== "complete" && (
                             <DropdownMenuItem onClick={() => handleReceiveItems(order)}>
                               <Package className="mr-2 h-4 w-4" />
                               <span>Receber Items</span>
                             </DropdownMenuItem>
                           )}
                           
-                          {order.status !== "received" && order.status !== "cancelled" && (
-                            <DropdownMenuItem onClick={() => handleUpdateStatus(order.id, "received")}>
+                          {order.status !== "complete" && order.status !== "cancelled" && (
+                            <DropdownMenuItem onClick={() => handleUpdateStatus(order.id, "complete")}>
                               <CheckCircle className="mr-2 h-4 w-4 text-green-600" />
                               <span>Marcar como Completo</span>
                             </DropdownMenuItem>
@@ -425,7 +364,6 @@ const AcquisitionsManagement: React.FC = () => {
         onClose={() => setIsFormOpen(false)}
         onSave={handleSavePurchaseOrder}
         purchaseOrder={currentPurchaseOrder}
-        suppliers={suppliers} // Pass suppliers to the modal
       />
 
       <ReceiveItemsModal

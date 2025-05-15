@@ -1,10 +1,9 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { PurchaseOrder, PurchaseOrderItem, ReceivableItem } from '@/types/models';
+import { PurchaseOrder, PurchaseOrderItem } from '@/types/models';
 import { Check, CalendarIcon } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -16,6 +15,12 @@ interface ReceiveItemsModalProps {
   onClose: () => void;
   purchaseOrder: PurchaseOrder | null;
   onItemsReceived: () => void; // Changed from onReceive to onItemsReceived to match usage
+}
+
+interface ReceivableItem extends PurchaseOrderItem {
+  currentReceiving: number;
+  batchNumber: string;
+  expiryDate: Date | undefined;
 }
 
 const ReceiveItemsModal: React.FC<ReceiveItemsModalProps> = ({
@@ -62,13 +67,13 @@ const ReceiveItemsModal: React.FC<ReceiveItemsModalProps> = ({
 
     // Filter out items with no quantity to receive
     const itemsToReceive = receivableItems
-      .filter(item => item.currentReceiving && item.currentReceiving > 0 && item.batchNumber && item.expiryDate)
+      .filter(item => item.currentReceiving > 0 && item.batchNumber && item.expiryDate)
       .map(item => ({
         id: item.id,
         product_id: item.product_id,
-        quantity: item.currentReceiving || 0,
-        batch_number: item.batchNumber || '',
-        expiry_date: item.expiryDate?.toISOString() || '',
+        quantity: item.currentReceiving,
+        batch_number: item.batchNumber,
+        expiry_date: item.expiryDate?.toISOString(),
       }));
 
     if (itemsToReceive.length === 0) {
@@ -77,6 +82,15 @@ const ReceiveItemsModal: React.FC<ReceiveItemsModalProps> = ({
 
     // Call the onItemsReceived callback
     onItemsReceived();
+  };
+
+  // Add the missing formatCurrency and getRemainingQuantity functions
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('pt-AO', {
+      style: 'currency',
+      currency: 'AOA',
+      minimumFractionDigits: 0,
+    }).format(value);
   };
 
   // Calculate remaining quantity to receive
@@ -103,7 +117,7 @@ const ReceiveItemsModal: React.FC<ReceiveItemsModalProps> = ({
             </div>
             <div>
               <Label>Fornecedor</Label>
-              <p className="font-medium">{purchaseOrder?.supplier_name}</p>
+              <p className="font-medium">{purchaseOrder?.supplier_id}</p>
             </div>
           </div>
 
@@ -115,7 +129,7 @@ const ReceiveItemsModal: React.FC<ReceiveItemsModalProps> = ({
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label>Produto</Label>
-                    <p className="font-medium">{item.product_name}</p>
+                    <p className="font-medium">{item.product_id}</p>
                   </div>
                   <div>
                     <Label>Preço Unitário</Label>
@@ -149,7 +163,7 @@ const ReceiveItemsModal: React.FC<ReceiveItemsModalProps> = ({
                         type="number"
                         min="0"
                         max={getRemainingQuantity(item)}
-                        value={item.currentReceiving || 0}
+                        value={item.currentReceiving}
                         onChange={(e) => handleInputChange(index, 'currentReceiving', parseInt(e.target.value) || 0)}
                         className="mt-1"
                         disabled={getRemainingQuantity(item) === 0}
@@ -160,10 +174,10 @@ const ReceiveItemsModal: React.FC<ReceiveItemsModalProps> = ({
                       <Label htmlFor={`batch-${index}`}>Número do Lote</Label>
                       <Input
                         id={`batch-${index}`}
-                        value={item.batchNumber || ''}
+                        value={item.batchNumber}
                         onChange={(e) => handleInputChange(index, 'batchNumber', e.target.value)}
                         className="mt-1"
-                        disabled={!item.currentReceiving || item.currentReceiving === 0}
+                        disabled={item.currentReceiving === 0}
                       />
                     </div>
 
@@ -175,7 +189,7 @@ const ReceiveItemsModal: React.FC<ReceiveItemsModalProps> = ({
                             id={`expiry-${index}`}
                             variant="outline"
                             className="w-full justify-start text-left font-normal mt-1"
-                            disabled={!item.currentReceiving || item.currentReceiving === 0}
+                            disabled={item.currentReceiving === 0}
                           >
                             <CalendarIcon className="mr-2 h-4 w-4" />
                             {item.expiryDate ? format(item.expiryDate, 'dd/MM/yyyy') : 'Selecione uma data'}
@@ -204,7 +218,7 @@ const ReceiveItemsModal: React.FC<ReceiveItemsModalProps> = ({
           <Button 
             className="bg-pharma-primary hover:bg-pharma-primary/90 flex items-center" 
             onClick={handleSubmit}
-            disabled={!receivableItems.some(item => item.currentReceiving && item.currentReceiving > 0 && item.batchNumber && item.expiryDate)}
+            disabled={!receivableItems.some(item => item.currentReceiving > 0 && item.batchNumber && item.expiryDate)}
           >
             <Check className="mr-2 h-4 w-4" /> Confirmar Recebimento
           </Button>
@@ -214,13 +228,18 @@ const ReceiveItemsModal: React.FC<ReceiveItemsModalProps> = ({
   );
 };
 
-// Format currency helper
+// Add the missing formatCurrency and getRemainingQuantity functions
 const formatCurrency = (value: number) => {
   return new Intl.NumberFormat('pt-AO', {
     style: 'currency',
     currency: 'AOA',
     minimumFractionDigits: 0,
   }).format(value);
+};
+
+// Calculate remaining quantity to receive
+const getRemainingQuantity = (item: PurchaseOrderItem) => {
+  return item.quantity_ordered - item.quantity_received;
 };
 
 export default ReceiveItemsModal;

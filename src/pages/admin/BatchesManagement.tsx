@@ -6,10 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Search, Plus, RefreshCw, ArrowLeft } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import { useNavigate } from 'react-router-dom';
-import { useNotifications } from '@/contexts/NotificationsContext';
+import { Search, Plus, RefreshCw } from 'lucide-react';
+import { useToast } from '@/components/ui/use-toast';
 
 // Mock data until we have a proper API
 const mockBatches = [
@@ -65,8 +63,6 @@ const BatchesManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
-  const navigate = useNavigate();
-  const { addNotification } = useNotifications();
 
   // Filter batches based on search term
   const filteredBatches = batches.filter(batch => 
@@ -86,27 +82,6 @@ const BatchesManagement = () => {
     }, 800);
   };
 
-  const handleAddBatch = () => {
-    // In a real app, this would open a modal or navigate to a form
-    addNotification({
-      type: 'success',
-      title: 'Novo lote adicionado',
-      message: 'Um novo lote foi adicionado ao sistema',
-    });
-  };
-
-  const handleViewDetails = (batchId: string) => {
-    // In a real app, this would open a modal or navigate to a details page
-    toast({
-      title: "Detalhes do lote",
-      description: `Visualizando detalhes do lote ${batchId}`
-    });
-  };
-
-  const handleGoBack = () => {
-    navigate('/admin');
-  };
-
   const getBatchStatusBadge = (status: string) => {
     switch (status) {
       case 'active':
@@ -124,43 +99,11 @@ const BatchesManagement = () => {
     return new Date(dateString).toLocaleDateString('pt-BR');
   };
 
-  // Check for expiring batches
-  useEffect(() => {
-    const now = new Date();
-    const expiringBatches = batches.filter((batch) => {
-      const expiryDate = new Date(batch.expiryDate);
-      const diffTime = expiryDate.getTime() - now.getTime();
-      const diffDays = Math.ceil(diffTime / (1000 * 3600 * 24));
-      return diffDays > 0 && diffDays <= 30; // Expiring within 30 days
-    });
-
-    // Notify about expiring batches
-    if (expiringBatches.length > 0) {
-      addNotification({
-        type: 'warning',
-        title: 'Lotes próximos de expirar',
-        message: `${expiringBatches.length} lotes expirarão nos próximos 30 dias.`,
-        link: '/admin/batches',
-      });
-    }
-  }, []);
-
   return (
     <MainLayout>
       <div className="container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-6">
-          <div className="flex items-center">
-            <Button 
-              onClick={handleGoBack} 
-              variant="ghost" 
-              size="sm" 
-              className="mr-2"
-            >
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Voltar
-            </Button>
-            <h1 className="text-2xl font-bold">Gestão de Lotes</h1>
-          </div>
+          <h1 className="text-2xl font-bold">Gestão de Lotes</h1>
           <Button onClick={handleRefresh} variant="outline" size="icon" disabled={loading}>
             <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
           </Button>
@@ -180,10 +123,7 @@ const BatchesManagement = () => {
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
                 </div>
-                <Button 
-                  className="bg-blue-500 hover:bg-blue-600"
-                  onClick={handleAddBatch}
-                >
+                <Button className="bg-blue-500 hover:bg-blue-600">
                   <Plus className="h-4 w-4 mr-2" /> Novo Lote
                 </Button>
               </div>
@@ -214,13 +154,7 @@ const BatchesManagement = () => {
                         <TableCell>{formatDate(batch.expiryDate)}</TableCell>
                         <TableCell>{getBatchStatusBadge(batch.status)}</TableCell>
                         <TableCell className="text-right">
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            onClick={() => handleViewDetails(batch.id)}
-                          >
-                            Detalhes
-                          </Button>
+                          <Button variant="ghost" size="sm">Detalhes</Button>
                         </TableCell>
                       </TableRow>
                     ))

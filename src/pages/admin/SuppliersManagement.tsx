@@ -22,18 +22,17 @@ import SupplierFormModal from '@/components/admin/SupplierFormModal';
 import DeleteConfirmationDialog from '@/components/admin/DeleteConfirmationDialog';
 
 // Mock data - replace with API calls in production
-const sampleSuppliers: Supplier[] = [
+const mockSuppliers: Supplier[] = [
   {
-    id: "1",
-    name: "MedPharma Distribuidora",
-    tax_id: "5001234567",
-    contact_name: "João Silva",
-    email: "contato@medpharma.co.ao",
-    phone: "+244 923 456 789",
-    address: "Rua dos Coqueiros, 123, Luanda",
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    is_active: true
+    id: "SUP-001",
+    name: "Pharma Inc",
+    tax_id: "123456789",
+    contact_name: "John Doe",
+    email: "john.doe@pharma.com",
+    phone: "923000000",
+    address: "Rua Exemplo, 123",
+    created_at: "2023-01-01T00:00:00Z",
+    updated_at: "2023-01-01T00:00:00Z",
   },
   {
     id: "SUP-002",
@@ -45,7 +44,6 @@ const sampleSuppliers: Supplier[] = [
     address: "Av Principal, 456",
     created_at: "2023-02-15T00:00:00Z",
     updated_at: "2023-02-15T00:00:00Z",
-    is_active: true
   },
   {
     id: "SUP-003",
@@ -57,12 +55,11 @@ const sampleSuppliers: Supplier[] = [
     address: "Travessa da Saúde, 789",
     created_at: "2023-03-20T00:00:00Z",
     updated_at: "2023-03-20T00:00:00Z",
-    is_active: true
   },
 ];
 
 const SuppliersManagement = () => {
-  const [suppliers, setSuppliers] = useState<Supplier[]>(sampleSuppliers);
+  const [suppliers, setSuppliers] = useState<Supplier[]>(mockSuppliers);
   const [searchQuery, setSearchQuery] = useState('');
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -102,7 +99,6 @@ const SuppliersManagement = () => {
         id: String(Date.now()),
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-        is_active: supplier.is_active ?? true // Ensure is_active is set
       };
       setSuppliers((prevSuppliers) => [...prevSuppliers, newSupplier]);
     }

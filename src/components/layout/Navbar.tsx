@@ -90,8 +90,8 @@ const Navbar: React.FC = () => {
 
         {/* Actions Area */}
         <div className="flex items-center space-x-3">
-          {/* Notificações - Apenas para usuários autenticados */}
-          {isAuthenticated && <NotificationBar />}
+          {/* Notificações - Novo componente */}
+          <NotificationBar />
           
           {/* Cart */}
           <Link to="/carrinho">

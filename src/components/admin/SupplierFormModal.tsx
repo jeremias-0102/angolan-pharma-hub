@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
@@ -54,7 +55,6 @@ const SupplierFormModal: React.FC<SupplierFormModalProps> = ({
       email: values.email,
       phone: values.phone,
       address: values.address,
-      is_active: supplier?.is_active !== undefined ? supplier.is_active : true,
       created_at: supplier?.created_at || new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
