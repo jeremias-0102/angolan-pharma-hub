@@ -1,8 +1,8 @@
 
-// Import the toast primitives
+// Import from our local implementation instead of @/components/ui/toast
 import * as React from "react"
 import { useState, useEffect, createContext, useContext } from "react"
-import { ToastActionElement, ToastProps } from "@/components/ui/toast"
+import type { ToastActionElement, ToastProps } from "@/components/ui/toast"
 
 const TOAST_LIMIT = 5
 const TOAST_REMOVE_DELAY = 1000000

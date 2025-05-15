@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useAuth } from '@/contexts/AuthContext';
-import { toast } from '@/hooks/use-toast';
+import { toast } from '@/components/ui/use-toast';
 import { PasswordInput } from "@/components/ui/password-input";
 
 const formSchema = z.object({
@@ -24,7 +24,7 @@ interface LoginFormProps {
 
 const LoginForm: React.FC<LoginFormProps> = ({ onForgotPassword }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { login, user } = useAuth();
+  const { login } = useAuth();
   const navigate = useNavigate();
   
   const form = useForm<FormValues>({
@@ -39,15 +39,12 @@ const LoginForm: React.FC<LoginFormProps> = ({ onForgotPassword }) => {
     setIsSubmitting(true);
     
     try {
-      await login(values.email, values.password);
+      const user = await login(values.email, values.password);
       
       toast({
         title: "Login bem-sucedido",
         description: "Bem-vindo de volta!",
       });
-      
-      // Check if user is set after login - get updated user from context
-      const { user } = useAuth();
       
       if (user) {
         // Redirecionar com base no perfil do usuário
@@ -56,10 +53,10 @@ const LoginForm: React.FC<LoginFormProps> = ({ onForgotPassword }) => {
             navigate('/admin');
             break;
           case 'pharmacist':
-            navigate('/pharmacist');
+            navigate('/farmaceutico');
             break;
           case 'delivery':
-            navigate('/delivery');
+            navigate('/entrega');
             break;
           case 'client':
           default:

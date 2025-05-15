@@ -6,9 +6,9 @@ import { AuthProvider } from './contexts/AuthContext';
 import { CartProvider } from './contexts/CartContext';
 import { NotificationsProvider } from './contexts/NotificationsContext';
 import { Toaster } from "./components/ui/toaster";
-import ChatWidget from './components/chat/ChatWidget';
 
 // Pages
+import Index from './pages/Index';
 import Home from './pages/Home';
 import Products from './pages/Products';
 import ProductDetail from './pages/ProductDetail';
@@ -50,43 +50,43 @@ function App() {
         <CartProvider>
           <NotificationsProvider>
             <Routes>
-              <Route path="/" element={<MainLayout><Home /></MainLayout>} />
-              <Route path="/products" element={<MainLayout><Products /></MainLayout>} />
-              <Route path="/products/:id" element={<MainLayout><ProductDetail /></MainLayout>} />
-              <Route path="/cart" element={<MainLayout><Cart /></MainLayout>} />
+              <Route path="/" element={<Index />} />
+              <Route path="/home" element={<MainLayout><Home /></MainLayout>} />
+              <Route path="/produtos" element={<MainLayout><Products /></MainLayout>} />
+              <Route path="/produtos/:id" element={<MainLayout><ProductDetail /></MainLayout>} />
+              <Route path="/carrinho" element={<MainLayout><Cart /></MainLayout>} />
               <Route path="/checkout" element={<MainLayout><Checkout /></MainLayout>} />
-              <Route path="/about" element={<MainLayout><About /></MainLayout>} />
-              <Route path="/contact" element={<MainLayout><Contact /></MainLayout>} />
+              <Route path="/sobre" element={<MainLayout><About /></MainLayout>} />
+              <Route path="/contato" element={<MainLayout><Contact /></MainLayout>} />
               <Route path="/login" element={<Login />} />
               
               {/* Admin Routes */}
               <Route path="/admin" element={<PrivateRoute allowedRoles={['admin']}><Dashboard /></PrivateRoute>} />
-              <Route path="/admin/products" element={<PrivateRoute allowedRoles={['admin']}><ProductsManagement /></PrivateRoute>} />
+              <Route path="/admin/produtos" element={<PrivateRoute allowedRoles={['admin']}><ProductsManagement /></PrivateRoute>} />
               <Route path="/admin/batches" element={<PrivateRoute allowedRoles={['admin']}><BatchesManagement /></PrivateRoute>} />
-              <Route path="/admin/orders" element={<PrivateRoute allowedRoles={['admin']}><OrdersManagement /></PrivateRoute>} />
-              <Route path="/admin/acquisitions" element={<PrivateRoute allowedRoles={['admin']}><AcquisitionsManagement /></PrivateRoute>} />
-              <Route path="/admin/users" element={<PrivateRoute allowedRoles={['admin']}><UsersManagement /></PrivateRoute>} />
-              <Route path="/admin/reports" element={<PrivateRoute allowedRoles={['admin']}><ReportsPage /></PrivateRoute>} />
-              <Route path="/admin/financial" element={<PrivateRoute allowedRoles={['admin']}><FinancialReportsPage /></PrivateRoute>} />
-              <Route path="/admin/settings" element={<PrivateRoute allowedRoles={['admin']}><CompanySettings /></PrivateRoute>} />
-              <Route path="/admin/suppliers" element={<PrivateRoute allowedRoles={['admin']}><SuppliersManagement /></PrivateRoute>} />
-              <Route path="/admin/categories" element={<PrivateRoute allowedRoles={['admin']}><CategoriesManagement /></PrivateRoute>} />
+              <Route path="/admin/pedidos" element={<PrivateRoute allowedRoles={['admin']}><OrdersManagement /></PrivateRoute>} />
+              <Route path="/admin/aquisicoes" element={<PrivateRoute allowedRoles={['admin']}><AcquisitionsManagement /></PrivateRoute>} />
+              <Route path="/admin/usuarios" element={<PrivateRoute allowedRoles={['admin']}><UsersManagement /></PrivateRoute>} />
+              <Route path="/admin/relatorios" element={<PrivateRoute allowedRoles={['admin']}><ReportsPage /></PrivateRoute>} />
+              <Route path="/admin/financeiro" element={<PrivateRoute allowedRoles={['admin']}><FinancialReportsPage /></PrivateRoute>} />
+              <Route path="/admin/configuracoes" element={<PrivateRoute allowedRoles={['admin']}><CompanySettings /></PrivateRoute>} />
+              <Route path="/admin/fornecedores" element={<PrivateRoute allowedRoles={['admin']}><SuppliersManagement /></PrivateRoute>} />
+              <Route path="/admin/categorias" element={<PrivateRoute allowedRoles={['admin']}><CategoriesManagement /></PrivateRoute>} />
               
               {/* Client Routes */}
-              <Route path="/profile" element={<PrivateRoute allowedRoles={['client']}><MainLayout><ClientProfile /></MainLayout></PrivateRoute>} />
-              <Route path="/orders" element={<PrivateRoute allowedRoles={['client']}><MainLayout><OrderHistory /></MainLayout></PrivateRoute>} />
+              <Route path="/perfil" element={<PrivateRoute allowedRoles={['client']}><MainLayout><ClientProfile /></MainLayout></PrivateRoute>} />
+              <Route path="/pedidos" element={<PrivateRoute allowedRoles={['client']}><MainLayout><OrderHistory /></MainLayout></PrivateRoute>} />
               
               {/* Pharmacist Routes */}
-              <Route path="/pharmacist" element={<PrivateRoute allowedRoles={['pharmacist']}><PharmacistDashboard /></PrivateRoute>} />
+              <Route path="/farmaceutico" element={<PrivateRoute allowedRoles={['pharmacist']}><PharmacistDashboard /></PrivateRoute>} />
               
               {/* Delivery Routes */}
-              <Route path="/delivery" element={<PrivateRoute allowedRoles={['delivery']}><DeliveryDashboard /></PrivateRoute>} />
-              <Route path="/delivery/orders" element={<PrivateRoute allowedRoles={['delivery']}><DeliveryOrdersPage /></PrivateRoute>} />
+              <Route path="/entrega" element={<PrivateRoute allowedRoles={['delivery']}><DeliveryDashboard /></PrivateRoute>} />
+              <Route path="/entrega/pedidos" element={<PrivateRoute allowedRoles={['delivery']}><DeliveryOrdersPage /></PrivateRoute>} />
               
               <Route path="*" element={<NotFound />} />
             </Routes>
             <Toaster />
-            <ChatWidget />
           </NotificationsProvider>
         </CartProvider>
       </AuthProvider>
