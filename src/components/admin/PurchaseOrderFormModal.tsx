@@ -233,7 +233,7 @@ const PurchaseOrderFormModal: React.FC<PurchaseOrderFormModalProps> = ({
                     <FormLabel>Entrega Esperada</FormLabel>
                     <DatePicker
                       onSelect={field.onChange}
-                      default={field.value}
+                      defaultValue={field.value}
                     />
                     <FormMessage />
                   </FormItem>
