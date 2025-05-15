@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -27,11 +28,11 @@ import DeleteConfirmationDialog from '@/components/admin/DeleteConfirmationDialo
 import { 
   getAllProducts, 
   getProductById, 
-  addProduct, 
   updateProduct, 
   deleteProduct,
   createProduct
 } from '@/services/productService';
+import { useNotifications } from "@/contexts/NotificationsContext";
 
 const ProductsManagement: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
@@ -44,6 +45,7 @@ const ProductsManagement: React.FC = () => {
   const navigate = useNavigate();
   
   const { toast } = useToast();
+  const { addNotification } = useNotifications();
 
   // Load products from database
   useEffect(() => {
@@ -107,11 +109,18 @@ const ProductsManagement: React.FC = () => {
           title: "Produto atualizado",
           description: `${product.name} foi atualizado com sucesso.`,
         });
+        
+        // Add notification for product update
+        addNotification({
+          type: 'info',
+          title: 'Produto atualizado',
+          message: `O produto ${product.name} foi atualizado no sistema.`,
+          link: '/admin/products'
+        });
       } else {
         // Add new product
-        const productData = {
+        const newProduct = await createProduct({
           name: product.name,
-          code: product.code,
           category: product.category,
           manufacturer: product.manufacturer,
           price_sale: product.price_sale,
@@ -119,14 +128,22 @@ const ProductsManagement: React.FC = () => {
           description: product.description || "",
           stock: product.stock || 0,
           requiresPrescription: product.requiresPrescription,
-          batches: product.batches || [],
-          image: product.image
-        };
-        const createdProduct = await createProduct(productData);
-        setProducts((prevProducts) => [...prevProducts, createdProduct]);
+          batches: [],
+          image: product.image || ""
+        });
+        
+        setProducts((prevProducts) => [...prevProducts, newProduct]);
         toast({
           title: "Produto adicionado",
           description: `${product.name} foi adicionado com sucesso.`,
+        });
+        
+        // Add notification for new product
+        addNotification({
+          type: 'success',
+          title: 'Novo produto adicionado',
+          message: `O produto ${product.name} foi adicionado ao sistema.`,
+          link: '/admin/products'
         });
       }
       setIsModalOpen(false);
@@ -136,6 +153,13 @@ const ProductsManagement: React.FC = () => {
         variant: "destructive",
         title: "Erro ao salvar produto",
         description: "Ocorreu um erro ao salvar o produto.",
+      });
+      
+      // Add notification for error
+      addNotification({
+        type: 'error',
+        title: 'Erro ao salvar produto',
+        message: `Ocorreu um erro ao salvar o produto ${product.name}.`,
       });
     }
   };
@@ -150,6 +174,14 @@ const ProductsManagement: React.FC = () => {
         toast({
           title: "Produto excluído",
           description: `${productToDelete.name} foi excluído com sucesso.`,
+        });
+        
+        // Add notification for product deletion
+        addNotification({
+          type: 'warning',
+          title: 'Produto excluído',
+          message: `O produto ${productToDelete.name} foi removido do sistema.`,
+          link: '/admin/products'
         });
       } catch (error) {
         console.error('Error deleting product:', error);
@@ -191,6 +223,23 @@ const ProductsManagement: React.FC = () => {
       return "Data inválida";
     }
   };
+
+  // Check for low stock products
+  useEffect(() => {
+    const lowStockProducts = products.filter((product) => {
+      const stock = getTotalStock(product);
+      return stock > 0 && stock <= 10; // Low stock threshold
+    });
+
+    if (lowStockProducts.length > 0) {
+      addNotification({
+        type: 'warning',
+        title: 'Produtos com estoque baixo',
+        message: `${lowStockProducts.length} produtos estão com estoque baixo.`,
+        link: '/admin/products'
+      });
+    }
+  }, [products]);
 
   return (
     <div>

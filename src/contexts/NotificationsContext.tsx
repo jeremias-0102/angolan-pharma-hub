@@ -108,22 +108,6 @@ export const NotificationsProvider: React.FC<NotificationsProviderProps> = ({ ch
     setNotifications([]);
   };
   
-  // Simular notificações automáticas para demonstração (removido em ambiente de produção)
-  useEffect(() => {
-    if (user?.role === 'admin') {
-      const sampleNotification = setTimeout(() => {
-        addNotification({
-          type: 'info',
-          title: 'Novo pedido recebido',
-          message: 'Um novo pedido #PED1234 foi realizado e está aguardando aprovação.',
-          link: '/admin/pedidos'
-        });
-      }, 10000);
-      
-      return () => clearTimeout(sampleNotification);
-    }
-  }, [user?.role]);
-  
   return (
     <NotificationsContext.Provider
       value={{

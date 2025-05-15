@@ -13,7 +13,6 @@ interface MainLayoutProps {
 const MainLayout: React.FC<MainLayoutProps> = ({ children, fullWidth = false }) => {
   return (
     <div className="min-h-screen flex flex-col">
-      <NotificationBar />
       <Navbar />
       <main className={`flex-1 ${fullWidth ? 'w-full' : 'container mx-auto px-4'} py-8`}>
         {children}
