@@ -1,6 +1,6 @@
 
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import PrivateRoute from './components/PrivateRoute';
+import { PrivateRoute } from './components/PrivateRoute';
 import MainLayout from "./components/layout/MainLayout";
 import { AuthProvider } from './contexts/AuthContext';
 import { CartProvider } from './contexts/CartContext';

@@ -4,7 +4,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { 
   Home, 
   Package, 
-  BoxSeam, 
+  Package2, // Replacing BoxSeam with Package2
   ShoppingCart, 
   Users, 
   Settings, 
@@ -20,7 +20,7 @@ const navItems = [
   { title: 'Dashboard', icon: <Home size={20} />, path: '/admin' },
   { title: 'Produtos', icon: <Package size={20} />, path: '/admin/products' },
   { title: 'Categorias', icon: <Tag size={20} />, path: '/admin/categories' },
-  { title: 'Lotes', icon: <BoxSeam size={20} />, path: '/admin/batches' },
+  { title: 'Lotes', icon: <Package2 size={20} />, path: '/admin/batches' }, // Updated icon
   { title: 'Pedidos', icon: <ShoppingCart size={20} />, path: '/admin/orders' },
   { title: 'Fornecedores', icon: <Truck size={20} />, path: '/admin/suppliers' },
   { title: 'Aquisições', icon: <Layers size={20} />, path: '/admin/acquisitions' },

@@ -17,7 +17,8 @@ export const getAllCategories = async (): Promise<Category[]> => {
 // Get active categories
 export const getActiveCategories = async (): Promise<Category[]> => {
   try {
-    const categories = await getByIndex<Category>(STORES.CATEGORIES, 'is_active', true);
+    // Convert boolean to string "true" for indexedDB query
+    const categories = await getByIndex<Category>(STORES.CATEGORIES, 'is_active', "true");
     return categories;
   } catch (error) {
     console.error('Error getting active categories:', error);

@@ -10,7 +10,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { PasswordInput } from '@/components/ui/password-input';
-import { useToast } from '@/components/ui/toast';
+import { useToast } from '@/hooks/use-toast';
 
 const formSchema = z.object({
   email: z.string().email({ message: 'Email inválido' }),
@@ -36,20 +36,22 @@ export default function LoginForm() {
   const onSubmit = async (data: LoginFormValues) => {
     setIsLoading(true);
     try {
-      const success = await login(data.email, data.password);
-      if (success) {
-        toast({
-          title: 'Login bem-sucedido',
-          description: 'Bem-vindo de volta!',
+      await login(data.email, data.password)
+        .then((success) => {
+          if (success) {
+            toast({
+              title: 'Login bem-sucedido',
+              description: 'Bem-vindo de volta!',
+            });
+            navigate('/');
+          } else {
+            toast({
+              title: 'Falha no login',
+              description: 'Email ou senha inválidos',
+              variant: 'destructive',
+            });
+          }
         });
-        navigate('/');
-      } else {
-        toast({
-          title: 'Falha no login',
-          description: 'Email ou senha inválidos',
-          variant: 'destructive',
-        });
-      }
     } catch (error) {
       console.error('Login error:', error);
       toast({

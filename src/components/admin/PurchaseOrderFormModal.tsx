@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
@@ -9,13 +8,53 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { DatePicker } from "@/components/ui/date-picker";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { CalendarIcon } from "lucide-react";
+import { format, parseISO, isValid } from 'date-fns';
+import { cn } from "@/lib/utils";
 import { PlusCircle, Trash } from "lucide-react";
 import { PurchaseOrder, PurchaseOrderItem, PurchaseOrderStatus, Supplier } from '@/types/models';
-import { format, parseISO, isValid } from 'date-fns';
 import SupplierFormModal from '@/components/admin/SupplierFormModal';
-import { useToast } from '@/components/ui/toast';
+import { useToast } from "@/hooks/use-toast";
 import { addSupplier } from '@/services/supplierService';
+
+// Custom DatePicker component to replace the imported one
+const DatePicker = ({ onSelect, defaultValue }) => {
+  const [date, setDate] = useState(defaultValue || new Date());
+  const [isOpen, setIsOpen] = useState(false);
+
+  const handleSelect = (selectedDate) => {
+    setDate(selectedDate);
+    setIsOpen(false);
+    onSelect(selectedDate);
+  };
+
+  return (
+    <Popover open={isOpen} onOpenChange={setIsOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          className={cn(
+            "w-full justify-start text-left font-normal",
+            !date && "text-muted-foreground"
+          )}
+        >
+          <CalendarIcon className="mr-2 h-4 w-4" />
+          {date ? format(date, "PPP") : <span>Selecione uma data</span>}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-auto p-0">
+        <Calendar
+          mode="single"
+          selected={date}
+          onSelect={handleSelect}
+          initialFocus
+        />
+      </PopoverContent>
+    </Popover>
+  );
+};
 
 interface PurchaseOrderFormModalProps {
   isOpen: boolean;
