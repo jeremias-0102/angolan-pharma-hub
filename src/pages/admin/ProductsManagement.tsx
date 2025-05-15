@@ -99,7 +99,7 @@ const ProductsManagement: React.FC = () => {
     try {
       if (product.id) {
         // Update existing product
-        const updatedProduct = await updateProduct(product);
+        const updatedProduct = await updateProduct(product.id, product);
         setProducts((prevProducts) =>
           prevProducts.map((p) => (p.id === updatedProduct.id ? updatedProduct : p))
         );
@@ -115,8 +115,11 @@ const ProductsManagement: React.FC = () => {
           category: product.category,
           manufacturer: product.manufacturer,
           price_sale: product.price_sale,
+          price_cost: product.price_cost || 0,
+          description: product.description || "",
+          stock: product.stock || 0,
           requiresPrescription: product.requiresPrescription,
-          batches: product.batches,
+          batches: product.batches || [],
           image: product.image
         };
         const createdProduct = await createProduct(productData);

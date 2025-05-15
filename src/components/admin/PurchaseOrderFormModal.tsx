@@ -189,7 +189,7 @@ const PurchaseOrderFormModal: React.FC<PurchaseOrderFormModalProps> = ({
     return supplier ? supplier.name : 'Desconhecido';
   };
 
-  // Handle new supplier creation
+  // Function to handle new supplier creation
   const handleAddNewSupplier = async (supplierData: Omit<Supplier, 'id' | 'created_at' | 'updated_at'>) => {
     try {
       const newSupplier = await addSupplier(supplierData);
