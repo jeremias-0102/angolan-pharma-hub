@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import MainLayout from '@/components/layout/MainLayout';
 import ProductCard from '@/components/products/ProductCard';
@@ -150,17 +149,21 @@ const Products = () => {
               <TabsContent value={activeTab} className="mt-0">
                 {sortedProducts.length > 0 ? (
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                    {sortedProducts.map(product => (
-                      <ProductCard key={product.id} product={{
+                    {sortedProducts.map(product => {
+                      const productWithPriceSale = {
                         id: product.id,
                         name: product.name,
-                        price: product.price_sale,
                         description: product.description,
+                        price: product.price_cost || 0,
+                        price_sale: product.price_sale || 0,
                         image: product.image,
-                        stock: product.batches?.reduce((total, batch) => total + batch.quantity, 0) || 0,
+                        stock: product.stock,
                         needsPrescription: product.requiresPrescription
-                      }} />
-                    ))}
+                      };
+                      return (
+                        <ProductCard key={productWithPriceSale.id} product={productWithPriceSale} />
+                      );
+                    })}
                   </div>
                 ) : (
                   <div className="text-center py-12">

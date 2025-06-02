@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, UserRole } from '@/types/models';
 import { getAll, update, add, getByIndex, STORES } from '@/lib/database';
@@ -14,7 +13,8 @@ interface AuthContextType {
   register: (userData: Omit<User, 'id' | 'created_at' | 'updated_at'>) => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+// Export the context so it can be imported in other files
+export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);

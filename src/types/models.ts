@@ -1,24 +1,5 @@
 
-// Types/interfaces para o sistema PharmaGest
-
-// User roles
-export type UserRole = 'admin' | 'pharmacist' | 'delivery' | 'client';
-
-// User interface
-export interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: UserRole;
-  phone?: string;
-  avatar?: string;
-  address?: string;
-  created_at: string;
-  updated_at: string;
-  password?: string; // Campo opcional para senha
-}
-
-// Product interface
+// Product related types
 export interface Product {
   id: string;
   code: string;
@@ -26,16 +7,26 @@ export interface Product {
   description: string;
   price_cost: number;
   price_sale: number;
+  price_compare?: number;
+  price?: number; // Adding this to resolve references in Home.tsx and Products.tsx
   category: string;
   manufacturer: string;
   requiresPrescription: boolean;
+  needsPrescription?: boolean; // Adding this to resolve references in Products.tsx
   image?: string;
+  stock: number;
   created_at: string;
   updated_at: string;
-  batches?: Batch[];
+  batches: Batch[];
+  active_ingredient?: string;
+  dosage?: string;
+  form?: string;
+  details?: string;
+  usage_instructions?: string;
+  general_info?: string;
+  quantity?: number; // Used when adding to cart
 }
 
-// Batch interface for product inventory
 export interface Batch {
   id: string;
   product_id: string;
@@ -46,126 +37,151 @@ export interface Batch {
   created_at: string;
 }
 
-// Stock movement for tracking inventory changes
-export interface StockMovement {
+// Cart related types
+export interface CartProduct {
   id: string;
-  batch_id: string;
-  quantity: number; // positive for additions, negative for removals
-  reason: 'purchase' | 'sale' | 'adjustment' | 'return' | 'expired';
-  reference_id?: string; // order_id or purchase_id if applicable
-  created_by: string; // user_id
-  created_at: string;
+  name: string;
+  description: string;
+  price: number;
+  price_sale: number;
+  image?: string;
+  stock: number;
+  needsPrescription: boolean;
+  quantity: number;
 }
 
-// Order status
-export type OrderStatus = 'pending' | 'paid' | 'processing' | 'ready' | 'shipping' | 'delivered' | 'cancelled';
+export interface CartItem {
+  product: CartProduct;
+  quantity: number;
+}
 
-// Order interface
+// Order related types
+export type OrderStatus = "pending" | "paid" | "processing" | "ready" | "shipping" | "delivered" | "cancelled";
+
 export interface Order {
   id: string;
   user_id: string;
   status: OrderStatus;
-  total: number;
-  discount: number;
   payment_method: string;
-  payment_id?: string; // ID from payment processor
-  notes?: string;
+  payment_status: 'pending' | 'paid' | 'failed';
+  total: number;
+  items: OrderItem[];
+  shipping_address: string;
+  shipping_details: any;
   created_at: string;
   updated_at: string;
-  items: OrderItem[];
+  customer_name: string;
+  customer_email: string;
+  customer_phone: string;
+  requires_prescription: boolean;
+  prescription_image?: string;
+  discount: number;
+  notes?: string;
   delivery?: Delivery;
 }
 
-// Order item interface
 export interface OrderItem {
   id: string;
   order_id: string;
   product_id: string;
-  batch_id?: string; // May be assigned during processing
-  product_name: string; // Snapshot at time of order
+  product_name: string;
+  product_image: string;
   quantity: number;
   unit_price: number;
   total: number;
 }
 
-// Delivery status
-export type DeliveryStatus = 'pending' | 'assigned' | 'in_progress' | 'delivered' | 'failed';
-
-// Delivery interface
 export interface Delivery {
   id: string;
   order_id: string;
-  delivery_person_id?: string;
-  status: DeliveryStatus;
+  status: 'pending' | 'assigned' | 'in_progress' | 'delivered' | 'failed';
   address: string;
-  city: string;
-  district: string;
+  district?: string;
+  city?: string;
   postal_code?: string;
+  delivery_date?: string;
   estimated_delivery?: string;
   actual_delivery?: string;
-  start_location?: [number, number]; // latitude, longitude
-  end_location?: [number, number]; // latitude, longitude
   notes?: string;
+  fee: number;
+  assigned_to: string;
+}
+
+// User related types
+export type UserRole = 'admin' | 'pharmacist' | 'delivery' | 'client';
+
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  password?: string;
+  role: UserRole;
+  phone?: string;
+  avatar?: string;
+  address?: string;
   created_at: string;
   updated_at: string;
 }
 
-// Supplier interface
+// Supplier related types
 export interface Supplier {
   id: string;
   name: string;
-  tax_id: string; // NIF/NIPC
-  contact_name: string;
+  contact_name?: string;
   email: string;
   phone: string;
   address: string;
+  website?: string;
+  notes?: string;
+  is_active: boolean;
   created_at: string;
   updated_at: string;
+  tax_id: string;
 }
 
-// Purchase order for restocking
+// Purchase order related types
+export type PurchaseOrderStatus = 'draft' | 'submitted' | 'received' | 'cancelled' | 'sent' | 'partial' | 'complete';
+
 export interface PurchaseOrder {
   id: string;
   supplier_id: string;
-  status: 'draft' | 'sent' | 'partial' | 'complete' | 'cancelled';
+  supplier_name: string;
+  status: PurchaseOrderStatus;
+  order_date: string;
+  expected_delivery: string;
+  actual_delivery?: string;
   total: number;
   notes?: string;
-  created_by: string;
   created_at: string;
   updated_at: string;
   items: PurchaseOrderItem[];
 }
 
-// Purchase order item
 export interface PurchaseOrderItem {
   id: string;
   purchase_order_id: string;
   product_id: string;
+  product_name: string;
   quantity_ordered: number;
   quantity_received: number;
   unit_price: number;
-  batch_number?: string;
-  expiry_date?: string;
+  total: number;
+  batch_number?: string; // Added for acquisitionService.ts
+  expiry_date?: string; // Added for acquisitionService.ts
 }
 
-// Sales summary for reporting
-export interface SalesSummary {
-  date: string;
-  total_sales: number;
-  total_orders: number;
-  average_order_value: number;
-  top_products: {
-    product_id: string;
-    product_name: string;
-    quantity: number;
-    total: number;
-  }[];
+export interface ReceivableItem extends PurchaseOrderItem {
+  // Additional fields needed for ReceiveItemsModal
+  currentReceiving?: number;
+  batchNumber?: string;
+  expiryDate?: Date;
 }
 
-// Stock alert configuration
-export interface StockAlert {
-  product_id: string;
-  min_quantity: number;
-  expiry_days_threshold: number; // Alert X days before expiration
-  enabled: boolean;
+// Add UUID generator utility function
+export function generateUUID(): string {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0, 
+        v = c == 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
 }

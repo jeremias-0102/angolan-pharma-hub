@@ -1,4 +1,7 @@
-import { Product } from '@/types/models';
+import { Product, Batch } from '@/types/models';
+
+// Define empty batches array for mockProducts
+const emptyBatches: Batch[] = [];
 
 // Mock products with proper type
 export const mockProducts: Product[] = [
@@ -13,8 +16,10 @@ export const mockProducts: Product[] = [
     manufacturer: 'Pharma Labs',
     requiresPrescription: false,
     image: '/placeholder.svg',
+    stock: 100,
     created_at: '2025-01-15T10:30:00Z',
     updated_at: '2025-01-15T10:30:00Z',
+    batches: [...emptyBatches],
   },
   {
     id: '2',
@@ -27,8 +32,10 @@ export const mockProducts: Product[] = [
     manufacturer: 'Pharma Labs',
     requiresPrescription: false,
     image: '/placeholder.svg',
+    stock: 75,
     created_at: '2025-01-15T10:30:00Z',
     updated_at: '2025-01-15T10:30:00Z',
+    batches: [...emptyBatches],
   },
   {
     id: '3',
@@ -41,8 +48,10 @@ export const mockProducts: Product[] = [
     manufacturer: 'Pharma Labs',
     requiresPrescription: false,
     image: '/placeholder.svg',
+    stock: 120,
     created_at: '2025-01-15T10:30:00Z',
     updated_at: '2025-01-15T10:30:00Z',
+    batches: [...emptyBatches],
   },
   {
     id: '4',
@@ -55,8 +64,10 @@ export const mockProducts: Product[] = [
     manufacturer: 'Pharma Labs',
     requiresPrescription: true,
     image: '/placeholder.svg',
+    stock: 50,
     created_at: '2025-01-15T10:30:00Z',
     updated_at: '2025-01-15T10:30:00Z',
+    batches: [...emptyBatches],
   },
   {
     id: '5',
@@ -69,8 +80,10 @@ export const mockProducts: Product[] = [
     manufacturer: 'Pharma Labs',
     requiresPrescription: false,
     image: '/placeholder.svg',
+    stock: 85,
     created_at: '2025-01-15T10:30:00Z',
     updated_at: '2025-01-15T10:30:00Z',
+    batches: [...emptyBatches],
   },
   {
     id: '6',
@@ -83,8 +96,10 @@ export const mockProducts: Product[] = [
     manufacturer: 'Pharma Labs',
     requiresPrescription: false,
     image: '/placeholder.svg',
+    stock: 90,
     created_at: '2025-01-15T10:30:00Z',
     updated_at: '2025-01-15T10:30:00Z',
+    batches: [...emptyBatches],
   },
   {
     id: '7',
@@ -97,8 +112,10 @@ export const mockProducts: Product[] = [
     manufacturer: 'Pharma Labs',
     requiresPrescription: false,
     image: '/placeholder.svg',
+    stock: 110,
     created_at: '2025-01-15T10:30:00Z',
     updated_at: '2025-01-15T10:30:00Z',
+    batches: [...emptyBatches],
   },
   {
     id: '8',
@@ -111,8 +128,10 @@ export const mockProducts: Product[] = [
     manufacturer: 'Pharma Labs',
     requiresPrescription: false,
     image: '/placeholder.svg',
+    stock: 70,
     created_at: '2025-01-15T10:30:00Z',
     updated_at: '2025-01-15T10:30:00Z',
+    batches: [...emptyBatches],
   },
   {
     id: '9',
@@ -125,8 +144,10 @@ export const mockProducts: Product[] = [
     manufacturer: 'Pharma Labs',
     requiresPrescription: false,
     image: '/placeholder.svg',
+    stock: 150,
     created_at: '2025-01-15T10:30:00Z',
     updated_at: '2025-01-15T10:30:00Z',
+    batches: [...emptyBatches],
   },
   {
     id: '10',
@@ -139,8 +160,10 @@ export const mockProducts: Product[] = [
     manufacturer: 'Pharma Labs',
     requiresPrescription: false,
     image: '/placeholder.svg',
+    stock: 65,
     created_at: '2025-01-15T10:30:00Z',
     updated_at: '2025-01-15T10:30:00Z',
+    batches: [...emptyBatches],
   },
 ];
 

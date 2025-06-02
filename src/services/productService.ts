@@ -1,4 +1,3 @@
-
 import { Product, Batch } from '@/types/models';
 import { add, update, get, remove, getAll, STORES } from '@/lib/database';
 import { v4 as uuidv4 } from 'uuid';
@@ -128,7 +127,8 @@ export const initializeSampleProducts = async (): Promise<void> => {
         image: 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8cGFyYWNldGFtb2x8ZW58MHx8MHx8fDA%3D&auto=format&fit=crop&w=500&q=60',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-        batches: []
+        batches: [],
+        stock: 150
       },
       {
         id: uuidv4(),
@@ -143,7 +143,8 @@ export const initializeSampleProducts = async (): Promise<void> => {
         image: 'https://images.unsplash.com/photo-1471864190281-a93a3070b6de?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTd8fG1lZGljaW5lfGVufDB8fDB8fHww&auto=format&fit=crop&w=500&q=60',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-        batches: []
+        batches: [],
+        stock: 80
       },
       {
         id: uuidv4(),
@@ -158,7 +159,8 @@ export const initializeSampleProducts = async (): Promise<void> => {
         image: 'https://images.unsplash.com/photo-1550572017-26b5655c6527?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8OHx8bWVkaWNpbmV8ZW58MHx8MHx8fDA%3D&auto=format&fit=crop&w=500&q=60',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-        batches: []
+        batches: [],
+        stock: 120
       }
     ];
     

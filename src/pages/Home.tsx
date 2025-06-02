@@ -108,17 +108,19 @@ const Home = () => {
             </div>
           ) : featuredProducts.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              {featuredProducts.map((product) => (
-                <ProductCard key={product.id} product={{
+              {featuredProducts.map((product) => {
+                const productWithPriceSale = {
                   id: product.id,
                   name: product.name,
-                  price: product.price_sale,
                   description: product.description,
+                  price: product.price_cost || 0,
+                  price_sale: product.price_sale || 0,
                   image: product.image || '/placeholder.svg',
                   stock: product.batches?.reduce((total, batch) => total + batch.quantity, 0) || 0,
                   needsPrescription: product.requiresPrescription
-                }} />
-              ))}
+                };
+                return <ProductCard key={product.id} product={productWithPriceSale} />;
+              })}
             </div>
           ) : (
             <div className="text-center py-12 bg-gray-50 rounded-lg">

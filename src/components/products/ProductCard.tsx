@@ -12,6 +12,7 @@ interface ProductCardProps {
     name: string;
     description: string;
     price: number;
+    price_sale: number;
     image?: string;
     stock: number;
     needsPrescription: boolean;
@@ -32,19 +33,15 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   };
 
   const handleAddToCart = () => {
-    if (product.needsPrescription) {
-      toast({
-        title: "Prescrição médica necessária",
-        description: "Este produto requer prescrição médica. Por favor, adicione a sua prescrição durante o checkout.",
-        variant: "destructive",
-      });
-    } else {
-      addItem(product, 1);
-      toast({
-        title: "Produto adicionado",
-        description: `${product.name} foi adicionado ao seu carrinho.`,
-      });
-    }
+    const productToAdd = {
+      ...product,
+      quantity: 1,
+    };
+    addItem(productToAdd, 1);
+    toast({
+      title: "Produto adicionado",
+      description: `${product.name} foi adicionado ao seu carrinho.`,
+    });
   };
 
   return (
