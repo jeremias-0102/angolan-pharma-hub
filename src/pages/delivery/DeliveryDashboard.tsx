@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import MainLayout from '@/components/layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -212,7 +213,18 @@ const DeliveryDashboard = () => {
                                 onClick={() => {
                                   toast({
                                     title: "Detalhes da entrega",
-                                    description: `Endereço: ${delivery.address}\nTelefone: ${delivery.phone}`,
+                                    description: (
+                                      <div className="mt-2 space-y-2 text-sm">
+                                        <div className="flex items-start">
+                                          <MapPin className="h-4 w-4 mr-2 mt-0.5" />
+                                          <span>{delivery.address}</span>
+                                        </div>
+                                        <div className="flex items-center">
+                                          <Phone className="h-4 w-4 mr-2" />
+                                          <span>{delivery.phone}</span>
+                                        </div>
+                                      </div>
+                                    ),
                                   });
                                 }}
                               >

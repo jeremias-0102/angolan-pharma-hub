@@ -15,7 +15,7 @@ const LoginForm: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-  const { login, user } = useAuth();
+  const { login } = useAuth();
   const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -23,9 +23,8 @@ const LoginForm: React.FC = () => {
     setIsLoading(true);
 
     try {
-      await login(email, password);
+      const user = await login(email, password);
       
-      // After login, the user should be available in the context
       if (user) {
         toast({
           title: "Login realizado com sucesso!",
@@ -49,9 +48,6 @@ const LoginForm: React.FC = () => {
           default:
             navigate('/');
         }
-      } else {
-        // If login was successful but user is not available, redirect to home
-        navigate('/');
       }
     } catch (error) {
       toast({
