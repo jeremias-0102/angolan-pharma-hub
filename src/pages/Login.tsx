@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -14,6 +13,8 @@ import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { initializeDemoUsers } from '@/services/demoUserService';
+import { handleSocialLogin } from '@/services/socialAuthService';
 
 // Login schema
 const loginSchema = z.object({
@@ -42,6 +43,19 @@ const Login = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("login");
+
+  // Initialize demo users on component mount
+  useEffect(() => {
+    const initDemo = async () => {
+      try {
+        await initializeDemoUsers();
+      } catch (error) {
+        console.error('Error initializing demo users:', error);
+      }
+    };
+    
+    initDemo();
+  }, []);
 
   // Login form
   const loginForm = useForm<LoginValues>({
@@ -107,11 +121,14 @@ const Login = () => {
   };
 
   // Simular login social (em produção seria integrado com APIs reais)
-  const handleSocialLogin = (provider: 'google' | 'facebook' | 'twitter') => {
+  const handleSocialAuth = (provider: 'google' | 'facebook' | 'twitter') => {
     toast({
-      title: "Login Social",
-      description: `Integração com ${provider} será implementada em breve.`,
+      title: "Redirecionando...",
+      description: `Iniciando login com ${provider}`,
     });
+    
+    // Call the actual social login function
+    handleSocialLogin(provider);
   };
 
   return (
@@ -197,7 +214,7 @@ const Login = () => {
                         <Button
                           type="button"
                           variant="outline"
-                          onClick={() => handleSocialLogin('google')}
+                          onClick={() => handleSocialAuth('google')}
                           className="w-full"
                         >
                           <svg className="w-4 h-4" viewBox="0 0 24 24">
@@ -210,7 +227,7 @@ const Login = () => {
                         <Button
                           type="button"
                           variant="outline"
-                          onClick={() => handleSocialLogin('facebook')}
+                          onClick={() => handleSocialAuth('facebook')}
                           className="w-full"
                         >
                           <svg className="w-4 h-4" viewBox="0 0 24 24">
@@ -220,11 +237,11 @@ const Login = () => {
                         <Button
                           type="button"
                           variant="outline"
-                          onClick={() => handleSocialLogin('twitter')}
+                          onClick={() => handleSocialAuth('twitter')}
                           className="w-full"
                         >
                           <svg className="w-4 h-4" viewBox="0 0 24 24">
-                            <path fill="currentColor" d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                            <path fill="currentColor" d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.80l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
                           </svg>
                         </Button>
                       </div>
@@ -335,7 +352,7 @@ const Login = () => {
                         <Button
                           type="button"
                           variant="outline"
-                          onClick={() => handleSocialLogin('google')}
+                          onClick={() => handleSocialAuth('google')}
                           className="w-full"
                         >
                           <svg className="w-4 h-4" viewBox="0 0 24 24">
@@ -348,7 +365,7 @@ const Login = () => {
                         <Button
                           type="button"
                           variant="outline"
-                          onClick={() => handleSocialLogin('facebook')}
+                          onClick={() => handleSocialAuth('facebook')}
                           className="w-full"
                         >
                           <svg className="w-4 h-4" viewBox="0 0 24 24">
@@ -358,11 +375,11 @@ const Login = () => {
                         <Button
                           type="button"
                           variant="outline"
-                          onClick={() => handleSocialLogin('twitter')}
+                          onClick={() => handleSocialAuth('twitter')}
                           className="w-full"
                         >
                           <svg className="w-4 h-4" viewBox="0 0 24 24">
-                            <path fill="currentColor" d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                            <path fill="currentColor" d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.80l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
                           </svg>
                         </Button>
                       </div>

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -9,6 +8,7 @@ import { Separator } from '@/components/ui/separator';
 import { Eye, EyeOff, Mail, Lock } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { handleSocialLogin } from '@/services/socialAuthService';
 
 const LoginForm: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -40,11 +40,14 @@ const LoginForm: React.FC = () => {
     });
   };
 
-  const handleSocialLogin = (provider: 'google' | 'facebook' | 'twitter') => {
+  const handleSocialAuth = (provider: 'google' | 'facebook' | 'twitter') => {
     toast({
-      title: "Login Social",
-      description: `Integração com ${provider} será implementada em breve.`,
+      title: "Redirecionando...",
+      description: `Iniciando login com ${provider}`,
     });
+    
+    // Call the actual social login function
+    handleSocialLogin(provider);
   };
 
   return (
@@ -130,7 +133,7 @@ const LoginForm: React.FC = () => {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => handleSocialLogin('google')}
+                onClick={() => handleSocialAuth('google')}
                 className="w-full"
               >
                 <svg className="w-4 h-4" viewBox="0 0 24 24">
@@ -143,7 +146,7 @@ const LoginForm: React.FC = () => {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => handleSocialLogin('facebook')}
+                onClick={() => handleSocialAuth('facebook')}
                 className="w-full"
               >
                 <svg className="w-4 h-4" viewBox="0 0 24 24">
@@ -153,7 +156,7 @@ const LoginForm: React.FC = () => {
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => handleSocialLogin('twitter')}
+                onClick={() => handleSocialAuth('twitter')}
                 className="w-full"
               >
                 <svg className="w-4 h-4" viewBox="0 0 24 24">
