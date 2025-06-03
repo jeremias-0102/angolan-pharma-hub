@@ -1,6 +1,6 @@
 
 import { User } from '@/types/models';
-import { save, STORES } from '@/lib/database';
+import { add, STORES } from '@/lib/database';
 
 export const initializeDemoUsers = async (): Promise<void> => {
   try {
@@ -33,7 +33,7 @@ export const initializeDemoUsers = async (): Promise<void> => {
 
     // Save demo users to database
     for (const user of demoUsers) {
-      await save(STORES.USERS, user.id, user);
+      await add(STORES.USERS, user);
     }
 
     console.log('Demo users initialized successfully');
