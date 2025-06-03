@@ -2,6 +2,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
+import { startExpiryMonitoring } from '@/services/expiryCheckService';
 
 export type NotificationType = 'info' | 'success' | 'warning' | 'error';
 
@@ -37,6 +38,13 @@ export const NotificationsProvider: React.FC<NotificationsProviderProps> = ({ ch
   
   // Calcular contagem de notificações não lidas
   const unreadCount = notifications.filter(n => !n.isRead).length;
+  
+  // Inicializar monitoramento de expiração para admins e farmacêuticos
+  useEffect(() => {
+    if (user && (user.role === 'admin' || user.role === 'pharmacist')) {
+      startExpiryMonitoring();
+    }
+  }, [user?.role]);
   
   // Efeito para carregar notificações do localStorage se disponível
   useEffect(() => {
@@ -107,22 +115,6 @@ export const NotificationsProvider: React.FC<NotificationsProviderProps> = ({ ch
   const clearNotifications = () => {
     setNotifications([]);
   };
-  
-  // Simular notificações automáticas para demonstração (removido em ambiente de produção)
-  useEffect(() => {
-    if (user?.role === 'admin') {
-      const sampleNotification = setTimeout(() => {
-        addNotification({
-          type: 'info',
-          title: 'Novo pedido recebido',
-          message: 'Um novo pedido #PED1234 foi realizado e está aguardando aprovação.',
-          link: '/admin/pedidos'
-        });
-      }, 10000);
-      
-      return () => clearTimeout(sampleNotification);
-    }
-  }, [user?.role]);
   
   return (
     <NotificationsContext.Provider
