@@ -43,9 +43,12 @@ const Products = () => {
     fetchProducts();
   }, []);
   
-  // Get unique categories
+  // Get unique categories - handle both string and Category object types
   const categories = Array.from(
-    new Set(products.map(product => product.category))
+    new Set(products.map(product => {
+      const category = product.category;
+      return typeof category === 'string' ? category : category.name;
+    }))
   );
   
   // Filter products based on search query and active tab
@@ -53,7 +56,8 @@ const Products = () => {
     const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
                          product.description.toLowerCase().includes(searchQuery.toLowerCase());
     
-    const matchesCategory = activeTab === 'all' || product.category === activeTab;
+    const categoryName = typeof product.category === 'string' ? product.category : product.category.name;
+    const matchesCategory = activeTab === 'all' || categoryName === activeTab;
     
     return matchesSearch && matchesCategory;
   });

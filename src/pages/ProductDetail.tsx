@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from '@/hooks/use-toast';
@@ -54,6 +53,11 @@ const ProductDetail = () => {
 
     loadProduct();
   }, [id]);
+
+  // Helper function to get category name
+  const getCategoryName = (category: string | Category) => {
+    return typeof category === 'string' ? category : category.name;
+  };
 
   const handleAddToCart = () => {
     if (product) {
@@ -142,7 +146,7 @@ const ProductDetail = () => {
                 <h1 className="text-3xl font-bold mb-2">{product.name}</h1>
                 <div className="flex flex-wrap items-center gap-2 mb-2">
                   <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                    {product.category}
+                    {getCategoryName(product.category)}
                   </Badge>
                   {product.requiresPrescription && (
                     <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
@@ -196,7 +200,7 @@ const ProductDetail = () => {
 
               <Separator />
 
-              <div className="flex flex-col sm:flex-row sm:items-center space-y-4 sm:space-y-0 sm:space-x-4">
+              <div className="flex flex-col sm:flex-row sm:items-center space-x-2">
                 <div className="flex items-center border rounded-md overflow-hidden w-32">
                   <button 
                     className="px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-600 text-lg font-medium"
@@ -284,7 +288,7 @@ const ProductDetail = () => {
                     <div>
                       <h4 className="text-sm font-medium text-gray-500 mb-2">Características</h4>
                       <ul className="list-disc list-inside space-y-1 text-gray-700">
-                        <li>Categoria: {product.category}</li>
+                        <li>Categoria: {getCategoryName(product.category)}</li>
                         <li>Fabricante: {product.manufacturer}</li>
                         {product.active_ingredient && (
                           <li>Princípio Ativo: {product.active_ingredient}</li>

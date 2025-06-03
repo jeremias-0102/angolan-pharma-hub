@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -20,7 +19,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Search, Plus, MoreHorizontal, Edit2, Trash2, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { Product } from "@/types/models";
+import { Product, Category } from "@/types/models";
 import ProductFormModal from "@/components/admin/ProductFormModal";
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -68,10 +67,12 @@ const ProductsManagement: React.FC = () => {
 
   const filteredProducts = products.filter((product) => {
     const searchLower = searchQuery.toLowerCase();
+    const categoryName = typeof product.category === 'string' ? product.category : product.category.name;
+    
     return (
       product.name.toLowerCase().includes(searchLower) ||
       product.code.toLowerCase().includes(searchLower) ||
-      product.category.toLowerCase().includes(searchLower) ||
+      categoryName.toLowerCase().includes(searchLower) ||
       product.manufacturer.toLowerCase().includes(searchLower)
     );
   });
@@ -179,6 +180,11 @@ const ProductsManagement: React.FC = () => {
     }
   };
 
+  // Helper function to get category name
+  const getCategoryName = (category: string | Category) => {
+    return typeof category === 'string' ? category : category.name;
+  };
+
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
@@ -244,7 +250,7 @@ const ProductsManagement: React.FC = () => {
                       </TableCell>
                       <TableCell className="font-medium">{product.code}</TableCell>
                       <TableCell>{product.name}</TableCell>
-                      <TableCell className="capitalize">{product.category}</TableCell>
+                      <TableCell className="capitalize">{getCategoryName(product.category)}</TableCell>
                       <TableCell>{product.manufacturer}</TableCell>
                       <TableCell>{formatPrice(product.price_sale)}</TableCell>
                       <TableCell>
