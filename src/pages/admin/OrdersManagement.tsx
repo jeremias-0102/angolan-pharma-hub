@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -145,7 +144,7 @@ const OrdersManagement: React.FC = () => {
   const translateStatus = (status: OrderStatus): string => {
     const statusMap: Record<OrderStatus, string> = {
       pending: "Pendente",
-      paid: "Pago",
+      confirmed: "Confirmado",
       processing: "Em processamento",
       ready: "Pronto para entrega",
       shipping: "Em transporte",
@@ -160,7 +159,7 @@ const OrdersManagement: React.FC = () => {
     switch (status) {
       case "pending":
         return "bg-amber-100 text-amber-800 border-amber-200";
-      case "paid":
+      case "confirmed":
         return "bg-blue-100 text-blue-800 border-blue-200";
       case "processing":
         return "bg-purple-100 text-purple-800 border-purple-200";
@@ -181,8 +180,8 @@ const OrdersManagement: React.FC = () => {
   const getNextStatusOptions = (currentStatus: OrderStatus): OrderStatus[] => {
     switch (currentStatus) {
       case "pending":
-        return ["paid", "cancelled"];
-      case "paid":
+        return ["confirmed", "cancelled"];
+      case "confirmed":
         return ["processing", "cancelled"];
       case "processing":
         return ["ready", "cancelled"];
@@ -231,7 +230,7 @@ const OrdersManagement: React.FC = () => {
               <SelectContent>
                 <SelectItem value="all">Todos os status</SelectItem>
                 <SelectItem value="pending">Pendente</SelectItem>
-                <SelectItem value="paid">Pago</SelectItem>
+                <SelectItem value="confirmed">Confirmado</SelectItem>
                 <SelectItem value="processing">Em processamento</SelectItem>
                 <SelectItem value="ready">Pronto para entrega</SelectItem>
                 <SelectItem value="shipping">Em transporte</SelectItem>

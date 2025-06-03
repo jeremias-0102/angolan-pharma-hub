@@ -44,7 +44,8 @@ const mockUsers: User[] = [
     avatar: "", 
     created_at: "2023-01-15T10:30:00Z", 
     updated_at: "2023-01-15T10:30:00Z",
-    password: "senha123" // Adicionar senha aos usuários mock
+    password: "senha123",
+    is_active: true
   },
   { 
     id: "2", 
@@ -55,7 +56,8 @@ const mockUsers: User[] = [
     avatar: "", 
     created_at: "2023-02-10T14:20:00Z", 
     updated_at: "2023-02-10T14:20:00Z",
-    password: "senha123"
+    password: "senha123",
+    is_active: true
   },
   { 
     id: "3", 
@@ -66,7 +68,8 @@ const mockUsers: User[] = [
     avatar: "", 
     created_at: "2023-03-05T09:15:00Z", 
     updated_at: "2023-03-05T09:15:00Z",
-    password: "senha123"
+    password: "senha123",
+    is_active: true
   },
   { 
     id: "4", 
@@ -77,7 +80,8 @@ const mockUsers: User[] = [
     avatar: "", 
     created_at: "2023-04-20T16:45:00Z", 
     updated_at: "2023-04-20T16:45:00Z",
-    password: "senha123"
+    password: "senha123",
+    is_active: true
   },
   { 
     id: "5", 
@@ -88,7 +92,8 @@ const mockUsers: User[] = [
     avatar: "", 
     created_at: "2023-05-11T11:10:00Z", 
     updated_at: "2023-05-11T11:10:00Z",
-    password: "senha123"
+    password: "senha123",
+    is_active: true
   }
 ];
 

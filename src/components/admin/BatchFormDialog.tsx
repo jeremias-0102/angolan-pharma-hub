@@ -70,9 +70,11 @@ const BatchFormDialog: React.FC<BatchFormDialogProps> = ({ isOpen, onClose, onSa
       product_id: productId,
       batch_number: values.batch_number,
       quantity: values.quantity,
+      cost_price: 0, // Default cost price
       manufacture_date: new Date(values.manufacture_date).toISOString(),
       expiry_date: new Date(values.expiry_date).toISOString(),
       created_at: batch?.created_at || new Date().toISOString(),
+      updated_at: new Date().toISOString(),
     };
     
     onSave(batchData);

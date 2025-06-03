@@ -25,7 +25,8 @@ const productSchema = z.object({
   description: z.string().min(10, 'Descrição deve ter pelo menos 10 caracteres'),
   price_cost: z.coerce.number().positive('Preço de custo deve ser positivo'),
   price_sale: z.coerce.number().positive('Preço de venda deve ser positivo'),
-  category: z.string().min(3, 'Categoria deve ter pelo menos 3 caracteres'),
+  category_id: z.string().min(1, 'Categoria é obrigatória'),
+  supplier_id: z.string().min(1, 'Fornecedor é obrigatório'),
   manufacturer: z.string().min(3, 'Fabricante deve ter pelo menos 3 caracteres'),
   requiresPrescription: z.boolean().default(false),
 });
@@ -49,7 +50,8 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
       description: product?.description || '',
       price_cost: product?.price_cost || 0,
       price_sale: product?.price_sale || 0,
-      category: product?.category || '',
+      category_id: product?.category_id || '',
+      supplier_id: product?.supplier_id || '',
       manufacturer: product?.manufacturer || '',
       requiresPrescription: product?.requiresPrescription || false,
     }
@@ -77,14 +79,15 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
         description: values.description,
         price_cost: values.price_cost,
         price_sale: values.price_sale,
-        category: values.category,
+        category_id: values.category_id,
+        supplier_id: values.supplier_id,
         manufacturer: values.manufacturer,
         requiresPrescription: values.requiresPrescription,
         image: imageUrl,
         created_at: product?.created_at || new Date().toISOString(),
         updated_at: new Date().toISOString(),
         batches: product?.batches || [],
-        stock: product?.stock || 0,  // Add default stock value
+        stock: product?.stock || 0,
       };
       
       onSave(productData);
@@ -170,12 +173,26 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
                   
                   <FormField
                     control={form.control}
-                    name="category"
+                    name="category_id"
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Categoria</FormLabel>
                         <FormControl>
-                          <Input placeholder="Analgésicos" {...field} />
+                          <Input placeholder="ID da Categoria" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="supplier_id"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Fornecedor</FormLabel>
+                        <FormControl>
+                          <Input placeholder="ID do Fornecedor" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>

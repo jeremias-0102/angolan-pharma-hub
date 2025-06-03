@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -60,7 +59,7 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({ isOpen, onClose, or
   const translateStatus = (status: OrderStatus): string => {
     const statusMap: Record<OrderStatus, string> = {
       pending: "Pendente",
-      paid: "Pago",
+      confirmed: "Confirmado",
       processing: "Em processamento",
       ready: "Pronto para entrega",
       shipping: "Em transporte",
@@ -72,7 +71,7 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({ isOpen, onClose, or
 
   // Get status options
   const getStatusOptions = (): OrderStatus[] => {
-    const allStatuses: OrderStatus[] = ["pending", "paid", "processing", "ready", "shipping", "delivered", "cancelled"];
+    const allStatuses: OrderStatus[] = ["pending", "confirmed", "processing", "ready", "shipping", "delivered", "cancelled"];
     return allStatuses;
   };
   
@@ -81,7 +80,7 @@ const OrderDetailModal: React.FC<OrderDetailModalProps> = ({ isOpen, onClose, or
     switch (status) {
       case "pending":
         return "bg-amber-100 text-amber-800 border-amber-200";
-      case "paid":
+      case "confirmed":
         return "bg-blue-100 text-blue-800 border-blue-200";
       case "processing":
         return "bg-purple-100 text-purple-800 border-purple-200";

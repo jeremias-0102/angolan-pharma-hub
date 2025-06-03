@@ -121,7 +121,8 @@ export const initializeSampleProducts = async (): Promise<void> => {
         description: 'Analgésico e antipirético para alívio de dores leves e moderadas.',
         price_cost: 200,
         price_sale: 350,
-        category: 'analgésicos',
+        category_id: 'cat-001',
+        supplier_id: 'sup-001',
         manufacturer: 'Pharma Inc.',
         requiresPrescription: false,
         image: 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8cGFyYWNldGFtb2x8ZW58MHx8MHx8fDA%3D&auto=format&fit=crop&w=500&q=60',
@@ -137,7 +138,8 @@ export const initializeSampleProducts = async (): Promise<void> => {
         description: 'Antibiótico para tratamento de infecções bacterianas.',
         price_cost: 400,
         price_sale: 650,
-        category: 'antibióticos',
+        category_id: 'cat-002',
+        supplier_id: 'sup-001',
         manufacturer: 'MedLab Angola',
         requiresPrescription: true,
         image: 'https://images.unsplash.com/photo-1471864190281-a93a3070b6de?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTd8fG1lZGljaW5lfGVufDB8fDB8fHww&auto=format&fit=crop&w=500&q=60',
@@ -153,7 +155,8 @@ export const initializeSampleProducts = async (): Promise<void> => {
         description: 'Anti-inflamatório não esteroidal para dor e inflamação.',
         price_cost: 250,
         price_sale: 420,
-        category: 'anti-inflamatórios',
+        category_id: 'cat-003',
+        supplier_id: 'sup-002',
         manufacturer: 'Pharma Angola',
         requiresPrescription: false,
         image: 'https://images.unsplash.com/photo-1550572017-26b5655c6527?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8OHx8bWVkaWNpbmV8ZW58MHx8MHx8fDA%3D&auto=format&fit=crop&w=500&q=60',
@@ -170,9 +173,11 @@ export const initializeSampleProducts = async (): Promise<void> => {
       product_id: sampleProducts[0].id,
       batch_number: 'B2023-001',
       quantity: 150,
+      cost_price: 200,
       manufacture_date: '2022-12-01T00:00:00Z',
       expiry_date: '2024-12-01T00:00:00Z',
       created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
     };
     
     const batch2: Batch = {
@@ -180,9 +185,11 @@ export const initializeSampleProducts = async (): Promise<void> => {
       product_id: sampleProducts[1].id,
       batch_number: 'B2023-002',
       quantity: 80,
+      cost_price: 400,
       manufacture_date: '2022-11-15T00:00:00Z',
       expiry_date: '2024-11-15T00:00:00Z',
       created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
     };
     
     const batch3: Batch = {
@@ -190,9 +197,11 @@ export const initializeSampleProducts = async (): Promise<void> => {
       product_id: sampleProducts[2].id,
       batch_number: 'B2023-003',
       quantity: 120,
+      cost_price: 250,
       manufacture_date: '2022-12-20T00:00:00Z',
       expiry_date: '2024-12-20T00:00:00Z',
       created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
     };
     
     sampleProducts[0].batches = [batch1];
