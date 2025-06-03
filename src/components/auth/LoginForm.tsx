@@ -15,7 +15,7 @@ const LoginForm: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, user } = useAuth();
   const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -23,8 +23,9 @@ const LoginForm: React.FC = () => {
     setIsLoading(true);
 
     try {
-      const user = await login(email, password);
+      await login(email, password);
       
+      // Get user from context after login
       if (user) {
         toast({
           title: "Login realizado com sucesso!",

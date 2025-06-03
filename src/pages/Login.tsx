@@ -89,6 +89,7 @@ const Login = () => {
         password: userData.password,
         phone: userData.phone || '',
         role: 'client', // Sempre será cliente quando registrado direto no site
+        is_active: true, // Add missing is_active property
       });
       
       toast({

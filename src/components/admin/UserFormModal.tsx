@@ -56,7 +56,8 @@ const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, onSave, 
       avatar: values.avatar || '',
       created_at: user?.created_at || new Date().toISOString(),
       updated_at: new Date().toISOString(),
-      password: values.password || undefined, // Adicionar senha ao objeto de usuário
+      password: values.password || undefined,
+      is_active: user?.is_active ?? true, // Add missing is_active property
     };
     
     onSave(userData);
