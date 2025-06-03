@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from '@/hooks/use-toast';
@@ -20,7 +21,7 @@ import {
 } from 'lucide-react';
 import MainLayout from '@/components/layout/MainLayout';
 import { useCart } from '@/contexts/CartContext';
-import { Product } from '@/types/models';
+import { Product, Category } from '@/types/models';
 import { getProductById } from '@/services/productService';
 
 const ProductDetail = () => {
