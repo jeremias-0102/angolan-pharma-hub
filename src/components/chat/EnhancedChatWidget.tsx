@@ -1,28 +1,29 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar } from '@/components/ui/avatar';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { MessageSquare, X, Send, Mic, Volume2, PlusCircle, ArrowRightCircle } from 'lucide-react';
+import { MessageSquare, X, Send, Mic, Volume2, PlusCircle, ArrowRightCircle, Upload, FileText } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '@/contexts/CartContext';
+import { aiAssistant } from '@/services/aiAssistantService';
 
 interface Message {
   id: string;
   type: 'user' | 'bot';
   text: string;
   timestamp: Date;
+  data?: any;
 }
 
 const INITIAL_MESSAGES: Message[] = [
   {
     id: '1',
     type: 'bot',
-    text: 'Olá! Sou a assistente virtual da BegjnpPharma. Como posso ajudá-lo hoje?',
+    text: 'Olá! Sou seu assistente farmacêutico virtual. Posso ajudar com: análise de receitas, sugestões de medicamentos, informações sobre produtos, orientações de uso e muito mais. Como posso ajudá-lo hoje?',
     timestamp: new Date(),
   },
 ];
@@ -100,8 +101,10 @@ const EnhancedChatWidget: React.FC = () => {
   const [isTyping, setIsTyping] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
+  const [userAllergies, setUserAllergies] = useState<string[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const isMobile = useIsMobile();
   const navigate = useNavigate();
@@ -132,6 +135,31 @@ const EnhancedChatWidget: React.FC = () => {
 
   const detectIntent = (message: string): string => {
     const lowercaseMsg = message.toLowerCase();
+    
+    // Medical consultation patterns
+    if (lowercaseMsg.includes('dor') || lowercaseMsg.includes('sintoma') || 
+        lowercaseMsg.includes('sinto') || lowercaseMsg.includes('tenho')) {
+      return 'medical_consultation';
+    }
+    
+    if (lowercaseMsg.includes('receita') || lowercaseMsg.includes('prescrição') ||
+        lowercaseMsg.includes('médico receitou')) {
+      return 'prescription_help';
+    }
+    
+    if (lowercaseMsg.includes('alergia') || lowercaseMsg.includes('alérgico')) {
+      return 'allergy_check';
+    }
+    
+    if (lowercaseMsg.includes('como tomar') || lowercaseMsg.includes('dosagem') ||
+        lowercaseMsg.includes('quantas vezes')) {
+      return 'medication_instructions';
+    }
+    
+    if (lowercaseMsg.includes('informação') || lowercaseMsg.includes('composição') ||
+        lowercaseMsg.includes('fabricante') || lowercaseMsg.includes('validade')) {
+      return 'product_info';
+    }
     
     // Verificar se a mensagem contém palavras-chave relacionadas a compras
     if (lowercaseMsg.includes('comprar') || 
@@ -198,12 +226,13 @@ const EnhancedChatWidget: React.FC = () => {
     return false;
   };
 
-  const addBotMessage = (text: string) => {
+  const addBotMessage = (text: string, data?: any) => {
     setMessages(prev => [...prev, {
       id: Date.now().toString(),
       type: 'bot',
       text,
-      timestamp: new Date()
+      timestamp: new Date(),
+      data
     }]);
   };
 
@@ -215,7 +244,7 @@ const EnhancedChatWidget: React.FC = () => {
     }, 1000 + Math.random() * 1500);
   };
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (newMessage.trim() === '') return;
     
     const userMessage = {
@@ -226,27 +255,127 @@ const EnhancedChatWidget: React.FC = () => {
     };
     
     setMessages(prev => [...prev, userMessage]);
+    const messageText = newMessage;
     setNewMessage('');
     
-    // Processar mensagem do usuário
-    if (!handleSpecialCommands(userMessage.text)) {
-      const intent = detectIntent(userMessage.text);
+    if (!handleSpecialCommands(messageText)) {
+      const intent = detectIntent(messageText);
       
-      simulateTyping(() => {
-        const response = getResponse(intent);
-        addBotMessage(response);
-        
-        // Para intenção de compra, oferecer navegação adicional
-        if (intent === 'help_purchase') {
-          simulateTyping(() => {
-            addBotMessage('Posso mostrar nossa página de produtos ou você prefere me dizer especificamente o que está procurando?');
-            
-            simulateTyping(() => {
-              addBotMessage('Você pode dizer "mostrar produtos" para ver todos os produtos disponíveis.');
-            });
-          });
+      simulateTyping(async () => {
+        switch (intent) {
+          case 'medical_consultation':
+            await handleMedicalConsultation(messageText);
+            break;
+          case 'prescription_help':
+            addBotMessage('Posso ajudar com sua receita! Você pode:\n\n1. Digitar os medicamentos da receita\n2. Usar o botão 📎 para enviar uma foto da receita\n3. Descrever o que está prescrito\n\nComo prefere proceder?');
+            break;
+          case 'allergy_check':
+            addBotMessage('É muito importante verificar alergias! Você pode me informar a quais medicamentos é alérgico? Dessa forma posso sugerir alternativas seguras.');
+            // Extract allergies from message
+            const allergies = messageText.match(/alérgico?\s+a?\s*([^.!?]+)/i);
+            if (allergies) {
+              setUserAllergies(prev => [...prev, allergies[1].trim()]);
+            }
+            break;
+          case 'product_info':
+            addBotMessage('Posso fornecer informações detalhadas sobre nossos produtos! Me diga o nome do medicamento que você gostaria de saber mais informações (composição, fabricante, validade, como usar, etc.).');
+            break;
+          default:
+            addBotMessage('Como seu assistente farmacêutico, posso ajudar com:\n\n• 💊 Análise de receitas médicas\n• 🔍 Sugestões de medicamentos para sintomas\n• ℹ️ Informações detalhadas sobre produtos\n• ⚠️ Verificação de alergias e contraindicações\n• 📋 Orientações de uso e dosagem\n• 🛒 Ajuda com compras\n\nO que você gostaria de saber?');
         }
       });
+    }
+  };
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      addBotMessage('📄 Receita recebida! Analisando...');
+      
+      // Simulate OCR processing
+      simulateTyping(async () => {
+        // In a real app, you would use OCR service here
+        const mockPrescriptionText = `Paracetamol 500mg - 1 comprimido a cada 6 horas por 3 dias
+Amoxicilina 875mg - 1 comprimido a cada 12 horas por 7 dias
+Omeprazol 20mg - 1 cápsula em jejum por 14 dias`;
+        
+        await handlePrescriptionAnalysis(mockPrescriptionText);
+      });
+    }
+  };
+
+  const handleMedicalConsultation = async (message: string) => {
+    try {
+      const suggestions = await aiAssistant.suggestTreatment(message, userAllergies);
+      
+      let response = `Com base nos sintomas que você descreveu, aqui estão algumas sugestões:\n\n`;
+      
+      if (suggestions.length > 0) {
+        suggestions.forEach((suggestion, index) => {
+          response += `${index + 1}. **${suggestion.name}**\n`;
+          response += `   • Dosagem: ${suggestion.dosage}\n`;
+          response += `   • Frequência: ${suggestion.frequency}\n`;
+          response += `   • Instruções: ${suggestion.instructions}\n`;
+          if (suggestion.warnings.length > 0) {
+            response += `   • Atenção: ${suggestion.warnings.join(', ')}\n`;
+          }
+          response += `\n`;
+        });
+        
+        response += `⚠️ **IMPORTANTE**: Estas são apenas sugestões baseadas em sintomas comuns. Consulte sempre um médico ou farmacêutico para diagnóstico e tratamento adequados.`;
+      } else {
+        response = `Para os sintomas que você descreveu, recomendo que consulte um médico ou farmacêutico para uma avaliação adequada. Posso ajudar com informações sobre produtos específicos se você tiver uma receita médica.`;
+      }
+      
+      addBotMessage(response);
+    } catch (error) {
+      console.error('Error in medical consultation:', error);
+      addBotMessage('Desculpe, ocorreu um erro ao processar sua consulta. Por favor, tente novamente ou consulte diretamente um farmacêutico.');
+    }
+  };
+
+  const handlePrescriptionAnalysis = async (prescriptionText: string) => {
+    try {
+      const analysis = await aiAssistant.analyzePrescription(prescriptionText);
+      
+      let response = `📋 **Análise da Receita:**\n\n`;
+      
+      if (analysis.medications.length > 0) {
+        response += `**Medicamentos identificados:**\n`;
+        analysis.medications.forEach((med, index) => {
+          response += `${index + 1}. ${med.name} - ${med.dosage} ${med.frequency}`;
+          if (med.duration) response += ` por ${med.duration}`;
+          response += `\n`;
+        });
+        
+        if (analysis.recommendations.length > 0) {
+          response += `\n**Produtos disponíveis em nossa farmácia:**\n`;
+          analysis.recommendations.forEach((rec, index) => {
+            response += `${index + 1}. ${rec.name}\n`;
+            response += `   • ${rec.instructions}\n`;
+          });
+        }
+        
+        if (analysis.allergiesCheck.length > 0) {
+          response += `\n⚠️ **Verificação de Alergias:**\n`;
+          response += `Os medicamentos podem conter: ${analysis.allergiesCheck.join(', ')}\n`;
+          response += `Informe se você tem alergia a alguma dessas substâncias.\n`;
+        }
+        
+        if (analysis.warnings.length > 0) {
+          response += `\n💡 **Orientações importantes:**\n`;
+          analysis.warnings.forEach(warning => {
+            response += `• ${warning}\n`;
+          });
+        }
+      } else {
+        response = `Não consegui identificar medicamentos claramente nesta receita. Você pode me dizer quais medicamentos estão prescritos ou enviar uma imagem mais clara?`;
+      }
+      
+      addBotMessage(response);
+    } catch (error) {
+      console.error('Error analyzing prescription:', error);
+      addBotMessage('Desculpe, ocorreu um erro ao analisar a receita. Por favor, tente novamente ou consulte diretamente um farmacêutico.');
     }
   };
 
@@ -282,13 +411,13 @@ const EnhancedChatWidget: React.FC = () => {
       setIsRecording(true);
       toast({
         title: "Reconhecimento de voz",
-        description: "Ouvindo... Diga 'mostrar produtos' para ver os produtos disponíveis.",
+        description: "Ouvindo... Descreva seus sintomas ou pergunte sobre medicamentos.",
       });
       
       // Simulação de reconhecimento de voz - em um app real usaríamos a Web Speech API
       setTimeout(() => {
         setIsRecording(false);
-        setNewMessage("mostrar produtos");
+        setNewMessage("Tenho dor de cabeça e febre");
         setTimeout(handleSendMessage, 500);
       }, 3000);
     } else {
@@ -319,22 +448,22 @@ const EnhancedChatWidget: React.FC = () => {
       <Button
         onClick={toggleChat}
         className={`rounded-full fixed ${isMobile ? 'bottom-4 right-4' : 'bottom-8 right-8'} z-50 shadow-lg bg-pharma-primary hover:bg-pharma-primary/90 h-14 w-14 p-0 flex items-center justify-center`}
-        aria-label="Suporte ao cliente"
+        aria-label="Assistente farmacêutico"
       >
         {isOpen ? <X size={24} /> : <MessageSquare size={24} />}
       </Button>
       
       {isOpen && (
-        <Card className={`fixed ${isMobile ? 'bottom-20 right-4 left-4' : 'bottom-24 right-8'} z-50 shadow-xl w-80 sm:w-96 h-[30rem] flex flex-col`}>
+        <Card className={`fixed ${isMobile ? 'bottom-20 right-4 left-4' : 'bottom-24 right-8'} z-50 shadow-xl w-80 sm:w-96 h-[35rem] flex flex-col`}>
           <CardHeader className="bg-pharma-primary text-white py-3 px-4 rounded-t-lg">
             <div className="flex justify-between items-center">
               <div className="flex items-center">
                 <Avatar className="h-8 w-8 mr-2 bg-white">
-                  <img src="/placeholder.svg" alt="BegjnpPharma Assistant" />
+                  <img src="/placeholder.svg" alt="Assistente Farmacêutico" />
                 </Avatar>
                 <div>
-                  <h3 className="font-medium text-sm">Assistente BEGJNP</h3>
-                  <p className="text-xs opacity-80">Sempre online</p>
+                  <h3 className="font-medium text-sm">Assistente Farmacêutico</h3>
+                  <p className="text-xs opacity-80">Sempre disponível</p>
                 </div>
               </div>
               <Button variant="ghost" size="icon" onClick={toggleChat} className="text-white hover:bg-pharma-primary/90">
@@ -352,13 +481,13 @@ const EnhancedChatWidget: React.FC = () => {
                     className={`flex ${msg.type === 'user' ? 'justify-end' : 'justify-start'}`}
                   >
                     <div
-                      className={`max-w-[80%] rounded-lg px-3 py-2 ${
+                      className={`max-w-[85%] rounded-lg px-3 py-2 ${
                         msg.type === 'user'
                           ? 'bg-pharma-primary text-white'
                           : 'bg-gray-100 text-gray-800'
                       }`}
                     >
-                      <p className="text-sm">{msg.text}</p>
+                      <div className="text-sm whitespace-pre-line">{msg.text}</div>
                       <p className="text-xs mt-1 opacity-70">
                         {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </p>
@@ -396,10 +525,10 @@ const EnhancedChatWidget: React.FC = () => {
                 variant="outline"
                 size="sm"
                 className="text-xs flex items-center"
-                onClick={handleNavigateToCart}
+                onClick={() => fileInputRef.current?.click()}
               >
-                <ArrowRightCircle className="h-3 w-3 mr-1" />
-                Ver carrinho
+                <FileText className="h-3 w-3 mr-1" />
+                Receita
               </Button>
               <Button
                 variant="outline"
@@ -428,7 +557,7 @@ const EnhancedChatWidget: React.FC = () => {
                 </Button>
                 <Input
                   ref={inputRef}
-                  placeholder="Escreva sua mensagem..."
+                  placeholder="Descreva seus sintomas ou perguntas..."
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
                   onKeyPress={handleKeyPress}
@@ -445,6 +574,14 @@ const EnhancedChatWidget: React.FC = () => {
                 </Button>
               </div>
             </CardFooter>
+            
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*,.pdf"
+              onChange={handleFileUpload}
+              className="hidden"
+            />
           </div>
         </Card>
       )}
