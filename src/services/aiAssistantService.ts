@@ -1,4 +1,3 @@
-
 import { getAllProducts } from './productService';
 import { Product } from '@/types/models';
 
@@ -24,39 +23,46 @@ interface PrescriptionAnalysis {
   allergiesCheck: string[];
 }
 
-// Knowledge base for medical conditions and treatments
+// Base de conhecimento médico adaptada para Angola
 const MEDICAL_CONDITIONS = {
   'dor de cabeça': {
     medications: ['paracetamol', 'ibuprofeno'],
     dosage: '500mg',
-    frequency: 'a cada 6-8 horas',
+    frequency: 'de 6 em 6 horas',
     maxDaily: '3-4 doses',
-    warnings: ['Não exceder a dose recomendada', 'Consulte médico se persistir por mais de 3 dias']
+    warnings: ['Não exceder a dose recomendada, meu irmão', 'Se a dor persistir mais de 3 dias, procura um médico']
   },
   'febre': {
     medications: ['paracetamol', 'dipirona'],
     dosage: '500mg',
-    frequency: 'a cada 6 horas',
+    frequency: 'de 6 em 6 horas',
     maxDaily: '4 doses',
-    warnings: ['Beber bastante líquido', 'Consulte médico se febre persistir']
+    warnings: ['Bebe bastante água, é importante', 'Se a febre não baixar, vai ao hospital']
   },
   'gripe': {
     medications: ['paracetamol', 'vitamina c'],
     dosage: '500mg paracetamol, 1g vitamina C',
-    frequency: 'paracetamol a cada 6h, vitamina C 1x ao dia',
+    frequency: 'paracetamol de 6h em 6h, vitamina C uma vez por dia',
     maxDaily: '4 doses paracetamol, 1 dose vitamina C',
-    warnings: ['Repouso', 'Hidratação', 'Consulte médico se sintomas piorarem']
+    warnings: ['Descansa bem, mano', 'Bebe muita água e sumos naturais', 'Se piorar, não hesites em ir ao médico']
   },
   'dor muscular': {
     medications: ['ibuprofeno', 'diclofenaco'],
     dosage: '400mg',
-    frequency: 'a cada 8 horas',
+    frequency: 'de 8 em 8 horas',
     maxDaily: '3 doses',
-    warnings: ['Tomar com alimento', 'Evitar se tem problemas estomacais']
+    warnings: ['Toma com comida para proteger o estômago', 'Se tens problemas de estômago, não uses']
+  },
+  'malária': {
+    medications: ['artesunato', 'coartem'],
+    dosage: 'Conforme prescrição médica',
+    frequency: 'Seguir estritamente o protocolo médico',
+    maxDaily: 'Conforme prescrição',
+    warnings: ['URGENTE: Vai ao hospital imediatamente', 'Malária é grave, não brinques com isso', 'Completa todo o tratamento mesmo que te sintas melhor']
   }
 };
 
-// Allergy database
+// Base de alergias comum em Angola
 const ALLERGIES_DATABASE = {
   'aspirina': ['ácido acetilsalicílico', 'salicilatos'],
   'penicilina': ['amoxicilina', 'ampicilina', 'penicilina G'],
@@ -66,6 +72,7 @@ const ALLERGIES_DATABASE = {
 
 export class AIAssistantService {
   private products: Product[] = [];
+  private conversationContext: string[] = [];
 
   constructor() {
     this.loadProducts();
@@ -75,16 +82,21 @@ export class AIAssistantService {
     try {
       this.products = await getAllProducts();
     } catch (error) {
-      console.error('Error loading products:', error);
+      console.error('Erro ao carregar produtos:', error);
     }
   }
 
-  // Analyze prescription image/text
+  // Analisar receita médica com melhor IA
   async analyzePrescription(prescriptionText: string): Promise<PrescriptionAnalysis> {
+    console.log('Analisando receita médica...');
+    
     const medications = this.extractMedicationsFromText(prescriptionText);
     const recommendations = await this.getProductRecommendations(medications);
     const warnings = this.generateWarnings(medications);
     const allergiesCheck = this.checkForCommonAllergies(medications);
+
+    // Adicionar ao contexto da conversa
+    this.conversationContext.push(`Analisou receita com medicamentos: ${medications.map(m => m.name).join(', ')}`);
 
     return {
       medications,
@@ -94,21 +106,30 @@ export class AIAssistantService {
     };
   }
 
-  // Extract medications from prescription text
+  // Extrair medicamentos do texto com melhor precisão
   private extractMedicationsFromText(text: string): PrescriptionAnalysis['medications'] {
     const medications: PrescriptionAnalysis['medications'] = [];
     const lines = text.split('\n');
 
     lines.forEach(line => {
-      const medicationMatch = line.match(/([A-Za-z\s]+)\s+(\d+\s*mg|mg)\s*[,-]?\s*([\d\sx]+(?:ao dia|vez|vezes|horas?))/i);
-      
-      if (medicationMatch) {
-        medications.push({
-          name: medicationMatch[1].trim(),
-          dosage: medicationMatch[2],
-          frequency: medicationMatch[3],
-          duration: this.extractDuration(line)
-        });
+      // Padrões mais robustos para reconhecer medicamentos
+      const patterns = [
+        /([A-Za-zÀ-ÿ\s]+)\s+(\d+\s*mg|mg)\s*[,-]?\s*([\d\sx]+(?:ao dia|vez|vezes|horas?|manhã|tarde|noite))/i,
+        /([A-Za-zÀ-ÿ\s]+)\s+(\d+\s*ml|ml)\s*[,-]?\s*([\d\sx]+(?:ao dia|vez|vezes|horas?|manhã|tarde|noite))/i,
+        /([A-Za-zÀ-ÿ\s]+)\s+(\d+\s*comprimidos?|comp\.?)\s*[,-]?\s*([\d\sx]+(?:ao dia|vez|vezes|horas?|manhã|tarde|noite))/i
+      ];
+
+      for (const pattern of patterns) {
+        const match = line.match(pattern);
+        if (match) {
+          medications.push({
+            name: match[1].trim(),
+            dosage: match[2],
+            frequency: match[3],
+            duration: this.extractDuration(line)
+          });
+          break;
+        }
       }
     });
 
@@ -151,12 +172,20 @@ export class AIAssistantService {
     const suggestions: MedicationSuggestion[] = [];
     const symptomsLower = symptoms.toLowerCase();
 
-    // Check against medical conditions database
+    // Adicionar ao contexto
+    this.conversationContext.push(`Consultou sobre sintomas: ${symptoms}`);
+
+    console.log(`Analisando sintomas: ${symptoms}`);
+
+    // Verificar condições médicas
     for (const [condition, treatment] of Object.entries(MEDICAL_CONDITIONS)) {
       if (symptomsLower.includes(condition)) {
+        console.log(`Condição identificada: ${condition}`);
+        
         for (const medication of treatment.medications) {
-          // Check for allergies
+          // Verificar alergias
           if (this.hasAllergy(medication, allergies)) {
+            console.log(`Medicamento ${medication} evitado devido a alergias`);
             continue;
           }
 
@@ -171,7 +200,7 @@ export class AIAssistantService {
               dosage: treatment.dosage,
               frequency: treatment.frequency,
               duration: treatment.maxDaily,
-              instructions: `Para ${condition}: ${treatment.frequency}. ${treatment.maxDaily} por dia.`,
+              instructions: this.generateAngolanInstructions(condition, treatment, medication),
               warnings: treatment.warnings
             });
           });
@@ -179,7 +208,44 @@ export class AIAssistantService {
       }
     }
 
+    // Se não encontrou nada específico, dar sugestões gerais
+    if (suggestions.length === 0) {
+      suggestions.push({
+        productId: '',
+        name: 'Consulta Médica',
+        dosage: 'Não aplicável',
+        frequency: 'O mais rápido possível',
+        duration: 'Conforme necessário',
+        instructions: 'Mano, esses sintomas que me contaste não consigo identificar bem. É melhor ires ao médico para uma consulta adequada. A saúde não é brincadeira!',
+        warnings: ['Não te automediques', 'Procura ajuda médica profissional', 'Se for urgente, vai ao hospital']
+      });
+    }
+
     return suggestions;
+  }
+
+  // Gerar instruções em português angolano
+  private generateAngolanInstructions(condition: string, treatment: any, medication: string): string {
+    let instructions = `Para ${condition}: toma ${treatment.dosage} ${treatment.frequency}`;
+    
+    if (treatment.maxDaily) {
+      instructions += `, máximo ${treatment.maxDaily} por dia`;
+    }
+
+    // Instruções específicas em linguagem angolana
+    if (medication.includes('antibiótico') || medication.includes('amoxicilina')) {
+      instructions += '. ATENÇÃO meu irmão: completa todo o tratamento mesmo que te sintas melhor, senão a doença pode voltar mais forte!';
+    }
+
+    if (medication.includes('paracetamol')) {
+      instructions += '. Podes tomar com ou sem comida, não há problema.';
+    }
+
+    if (medication.includes('ibuprofeno')) {
+      instructions += '. É melhor tomares com comida para proteger o estômago, está bem?';
+    }
+
+    return instructions;
   }
 
   // Check for medication allergies
@@ -236,16 +302,16 @@ export class AIAssistantService {
     return warnings;
   }
 
-  // Generate general warnings
+  // Gerar avisos em português angolano
   private generateWarnings(medications: PrescriptionAnalysis['medications']): string[] {
     const warnings = [
-      'Sempre siga as instruções do seu médico ou farmacêutico',
-      'Não altere as doses sem orientação profissional',
-      'Informe seu médico sobre outros medicamentos que esteja tomando'
+      'Segue sempre as instruções do médico ou farmacêutico, mano',
+      'Não alteres as doses por tua conta',
+      'Informa o médico sobre outros medicamentos que estás a tomar'
     ];
 
     if (medications.some(med => med.name.toLowerCase().includes('antibiótico'))) {
-      warnings.push('Complete todo o curso de antibióticos mesmo que se sinta melhor');
+      warnings.push('Completa todo o curso de antibióticos mesmo que te sintas melhor - é muito importante!');
     }
 
     return warnings;
@@ -357,7 +423,48 @@ export class AIAssistantService {
 
     return sideEffects.length > 0 ? sideEffects : ['Consulte a bula para efeitos adversos'];
   }
+
+  // Chat conversacional melhorado
+  async chatResponse(message: string): Promise<string> {
+    const messageLower = message.toLowerCase();
+    
+    // Adicionar mensagem ao contexto
+    this.conversationContext.push(`Utilizador: ${message}`);
+    
+    // Manter apenas as últimas 10 interações para não sobrecarregar
+    if (this.conversationContext.length > 10) {
+      this.conversationContext = this.conversationContext.slice(-10);
+    }
+
+    // Respostas contextuais em português angolano
+    if (messageLower.includes('olá') || messageLower.includes('oi') || messageLower.includes('bom dia')) {
+      return 'Olá meu irmão! Tudo bem? Sou o teu assistente farmacêutico. Como posso ajudar-te hoje?';
+    }
+
+    if (messageLower.includes('dor') && messageLower.includes('cabeça')) {
+      return 'Eish, dor de cabeça é chato mesmo! Posso sugerir paracetamol 500mg, tomas de 6 em 6 horas. Mas se a dor persistir mais de 3 dias, é melhor ires ao médico, está bem?';
+    }
+
+    if (messageLower.includes('febre')) {
+      return 'Febre pode ser sinal de várias coisas. Paracetamol ou dipirona podem ajudar a baixar. Importante: bebe muita água e descansa. Se a febre não baixar ou subir muito, vai ao hospital urgente!';
+    }
+
+    if (messageLower.includes('gripe') || messageLower.includes('constipação')) {
+      return 'Gripe é comum, mano. Recomendo paracetamol para a dor e febre, vitamina C para fortalecer as defesas. Descansa bem, bebe muita água e sumos naturais. Se piorar, não hesites em procurar o médico.';
+    }
+
+    if (messageLower.includes('malária')) {
+      return 'ATENÇÃO! Malária é muito séria em Angola. Se suspeitás que é malária, vai ao hospital IMEDIATAMENTE para fazer o teste. Não brinques com isso, pode ser fatal se não for tratada a tempo!';
+    }
+
+    if (messageLower.includes('obrigado') || messageLower.includes('obrigada')) {
+      return 'De nada, meu irmão! Estou aqui para ajudar sempre que precisares. Cuida-te bem e não hesites em voltar se tiveres dúvidas!';
+    }
+
+    // Resposta padrão mais humanizada
+    return 'Desculpa, não entendi bem a tua pergunta. Podes ser mais específico sobre os sintomas ou medicamento que procuras? Estou aqui para ajudar com informações sobre saúde e medicamentos. Se for urgente, procura um médico imediatamente!';
+  }
 }
 
-// Export singleton instance
+// Exportar instância singleton
 export const aiAssistant = new AIAssistantService();

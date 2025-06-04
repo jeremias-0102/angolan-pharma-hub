@@ -15,6 +15,7 @@ import Contact from '@/pages/Contact';
 import Cart from '@/pages/Cart';
 import Checkout from '@/pages/Checkout';
 import Login from '@/pages/Login';
+import RecuperarSenha from '@/pages/RecuperarSenha';
 import NotFound from '@/pages/NotFound';
 
 // Admin pages
@@ -62,6 +63,7 @@ function App() {
                 <Route path="/carrinho" element={<Cart />} />
                 <Route path="/checkout" element={<Checkout />} />
                 <Route path="/login" element={<Login />} />
+                <Route path="/recuperar-senha" element={<RecuperarSenha />} />
 
                 {/* Admin routes */}
                 <Route path="/admin" element={<PrivateRoute allowedRoles={['admin']}><AdminOverview /></PrivateRoute>} />
