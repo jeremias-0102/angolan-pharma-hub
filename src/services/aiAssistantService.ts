@@ -128,7 +128,7 @@ export class AIAssistantService {
         return this.handleDetailsCollection(userMessage, session);
       
       case 'recommendations':
-        return this.handleRecommendations(userMessage, session);
+        return this.generateRecommendations(userMessage, session);
       
       case 'pharmacy_search':
         return this.handlePharmacySearch(userMessage, session);
@@ -231,7 +231,7 @@ export class AIAssistantService {
     if (session.symptoms.length > 0 && (updatedSession.age || session.age)) {
       updatedSession.consultationStage = 'recommendations';
       
-      const recommendations = await this.generateRecommendations(updatedSession);
+      const recommendations = await this.generateRecommendations(userMessage, updatedSession);
       return {
         message: recommendations.message,
         sessionUpdate: updatedSession,
@@ -254,7 +254,7 @@ export class AIAssistantService {
     };
   }
 
-  private async generateRecommendations(session: UserSession): Promise<MedicalConsultationResult> {
+  private async generateRecommendations(userMessage: string, session: UserSession): Promise<MedicalConsultationResult> {
     const suggestions = await this.suggestTreatment(
       session.symptoms.join(', '),
       session.allergies

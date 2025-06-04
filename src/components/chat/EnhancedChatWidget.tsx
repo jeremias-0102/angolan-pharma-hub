@@ -35,6 +35,21 @@ interface Window {
   webkitSpeechRecognition: new () => SpeechRecognition;
 }
 
+// Local UserSession interface that matches the service
+interface LocalUserSession {
+  symptoms: string[];
+  allergies: string[];
+  currentMedications: string[];
+  age: number | null;
+  consultationStage: 'initial' | 'symptoms' | 'details' | 'recommendations' | 'pharmacy_search';
+  patientInfo: {
+    gender?: 'M' | 'F';
+    weight?: number;
+    chronicConditions?: string[];
+    lastSymptomOnset?: string;
+  };
+}
+
 const INITIAL_MESSAGES: Message[] = [
   {
     id: '1',
@@ -52,12 +67,13 @@ const EnhancedChatWidget: React.FC = () => {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [recognition, setRecognition] = useState<SpeechRecognition | null>(null);
-  const [userSession, setUserSession] = useState({
+  const [userSession, setUserSession] = useState<LocalUserSession>({
     symptoms: [] as string[],
     allergies: [] as string[],
     currentMedications: [] as string[],
     age: null as number | null,
-    consultationStage: 'initial' as 'initial' | 'symptoms' | 'details' | 'recommendations'
+    consultationStage: 'initial' as const,
+    patientInfo: {}
   });
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -406,7 +422,7 @@ Omeprazol 20mg - 1 cápsula em jejum por 14 dias`;
               ref={fileInputRef}
               type="file"
               accept="image/*,.pdf"
-              onChange={() => {}} // Will be implemented
+              onChange={handleFileUpload}
               className="hidden"
             />
           </div>
