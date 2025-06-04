@@ -28,6 +28,7 @@ interface SpeechRecognition {
   onresult: (event: any) => void;
   onerror: (event: any) => void;
   onend: () => void;
+  onstart?: () => void;
 }
 
 interface Window {
@@ -67,6 +68,7 @@ const EnhancedChatWidget: React.FC = () => {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
   const [recognition, setRecognition] = useState<SpeechRecognition | null>(null);
+  const [speechSupported, setSpeechSupported] = useState(false);
   const [userSession, setUserSession] = useState<LocalUserSession>({
     symptoms: [] as string[],
     allergies: [] as string[],
@@ -86,55 +88,112 @@ const EnhancedChatWidget: React.FC = () => {
 
   // Initialize speech recognition
   useEffect(() => {
-    if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
-      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-      const recognitionInstance = new SpeechRecognition();
-      
-      recognitionInstance.continuous = false;
-      recognitionInstance.interimResults = true;
-      recognitionInstance.lang = 'pt-PT'; // Portuguese from Portugal/Angola
-      
-      recognitionInstance.onresult = (event: any) => {
-        let interimTranscript = '';
-        let finalTranscript = '';
+    const initializeSpeechRecognition = async () => {
+      // Check if speech recognition is supported
+      if (!('SpeechRecognition' in window) && !('webkitSpeechRecognition' in window)) {
+        console.log('Speech recognition not supported');
+        setSpeechSupported(false);
+        return;
+      }
+
+      try {
+        // Request microphone permission
+        await navigator.mediaDevices.getUserMedia({ audio: true });
         
-        for (let i = event.resultIndex; i < event.results.length; i++) {
-          const transcript = event.results[i][0].transcript;
-          if (event.results[i].isFinal) {
-            finalTranscript += transcript;
-          } else {
-            interimTranscript += transcript;
+        const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+        const recognitionInstance = new SpeechRecognition();
+        
+        recognitionInstance.continuous = false;
+        recognitionInstance.interimResults = true;
+        recognitionInstance.lang = 'pt-PT'; // Portuguese from Portugal/Angola
+        
+        recognitionInstance.onstart = () => {
+          console.log('Speech recognition started');
+          setIsRecording(true);
+        };
+        
+        recognitionInstance.onresult = (event: any) => {
+          let interimTranscript = '';
+          let finalTranscript = '';
+          
+          for (let i = event.resultIndex; i < event.results.length; i++) {
+            const transcript = event.results[i][0].transcript;
+            if (event.results[i].isFinal) {
+              finalTranscript += transcript;
+            } else {
+              interimTranscript += transcript;
+            }
           }
-        }
+          
+          if (finalTranscript) {
+            console.log('Final transcript:', finalTranscript);
+            setNewMessage(finalTranscript);
+            setIsRecording(false);
+            // Auto-send the message after speech recognition
+            setTimeout(() => {
+              handleSendMessage(finalTranscript);
+            }, 500);
+          } else if (interimTranscript) {
+            setNewMessage(interimTranscript);
+          }
+        };
         
-        if (finalTranscript) {
-          setNewMessage(finalTranscript);
+        recognitionInstance.onerror = (event: any) => {
+          console.error('Speech recognition error:', event.error);
           setIsRecording(false);
-          // Auto-send the message after speech recognition
-          setTimeout(() => {
-            handleSendMessage(finalTranscript);
-          }, 500);
-        } else if (interimTranscript) {
-          setNewMessage(interimTranscript);
-        }
-      };
-      
-      recognitionInstance.onerror = (event: any) => {
-        console.error('Speech recognition error:', event.error);
-        setIsRecording(false);
+          
+          let errorMessage = "Erro no reconhecimento de voz";
+          let description = "Tenta novamente";
+          
+          switch (event.error) {
+            case 'not-allowed':
+              errorMessage = "Permissão negada";
+              description = "Permite o acesso ao microfone nas configurações do navegador e recarrega a página";
+              break;
+            case 'no-speech':
+              errorMessage = "Nenhuma fala detectada";
+              description = "Tenta falar mais alto ou verifica se o microfone está funcionando";
+              break;
+            case 'audio-capture':
+              errorMessage = "Microfone não encontrado";
+              description = "Verifica se o microfone está conectado e funcionando";
+              break;
+            case 'network':
+              errorMessage = "Erro de rede";
+              description = "Verifica a tua conexão à internet";
+              break;
+            default:
+              description = "Tenta falar mais alto ou usar o teclado";
+          }
+          
+          toast({
+            title: errorMessage,
+            description: description,
+            variant: "destructive"
+          });
+        };
+        
+        recognitionInstance.onend = () => {
+          console.log('Speech recognition ended');
+          setIsRecording(false);
+        };
+        
+        setRecognition(recognitionInstance);
+        setSpeechSupported(true);
+        console.log('Speech recognition initialized successfully');
+        
+      } catch (error) {
+        console.error('Failed to get microphone permission:', error);
+        setSpeechSupported(false);
         toast({
-          title: "Erro no reconhecimento de voz",
-          description: "Não consegui ouvir bem. Tenta falar mais alto ou usar o teclado.",
+          title: "Microfone não disponível",
+          description: "Permite o acesso ao microfone para usar o reconhecimento de voz",
           variant: "destructive"
         });
-      };
-      
-      recognitionInstance.onend = () => {
-        setIsRecording(false);
-      };
-      
-      setRecognition(recognitionInstance);
-    }
+      }
+    };
+
+    initializeSpeechRecognition();
   }, []);
 
   // Rolar para a mensagem mais recente
@@ -221,27 +280,49 @@ const EnhancedChatWidget: React.FC = () => {
     });
   };
 
-  const toggleRecording = () => {
-    if (!recognition) {
+  const toggleRecording = async () => {
+    if (!speechSupported) {
       toast({
         title: "Reconhecimento de voz não suportado",
-        description: "O teu navegador não suporta reconhecimento de voz. Usa o teclado para escrever.",
+        description: "O teu navegador não suporta reconhecimento de voz ou não tens microfone. Usa o teclado para escrever.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!recognition) {
+      toast({
+        title: "Reconhecimento de voz não inicializado",
+        description: "Recarrega a página e permite o acesso ao microfone.",
         variant: "destructive"
       });
       return;
     }
 
     if (isRecording) {
-      recognition.stop();
-      setIsRecording(false);
+      try {
+        recognition.stop();
+        setIsRecording(false);
+      } catch (error) {
+        console.error('Error stopping recognition:', error);
+        setIsRecording(false);
+      }
     } else {
-      setNewMessage('');
-      recognition.start();
-      setIsRecording(true);
-      toast({
-        title: "A ouvir...",
-        description: "Fala agora! Descreve os teus sintomas ou o que precisas.",
-      });
+      try {
+        setNewMessage('');
+        recognition.start();
+        toast({
+          title: "A ouvir...",
+          description: "Fala agora! Descreve os teus sintomas ou o que precisas.",
+        });
+      } catch (error) {
+        console.error('Error starting recognition:', error);
+        toast({
+          title: "Erro ao iniciar gravação",
+          description: "Tenta novamente ou verifica as permissões do microfone.",
+          variant: "destructive"
+        });
+      }
     }
   };
 
@@ -381,7 +462,7 @@ Omeprazol 20mg - 1 cápsula em jejum por 14 dias`;
                 variant="outline"
                 size="sm"
                 className="text-xs"
-                onClick={isSpeaking ? () => speechSynthesis.cancel() : () => {}}
+                onClick={isSpeaking ? stopSpeaking : speakLastMessage}
               >
                 <Volume2 className="h-3 w-3" />
               </Button>
@@ -392,9 +473,10 @@ Omeprazol 20mg - 1 cápsula em jejum por 14 dias`;
                 <Button
                   variant="ghost"
                   size="icon"
-                  disabled={isTyping}
+                  disabled={isTyping || !speechSupported}
                   onClick={toggleRecording}
-                  className={`${isRecording ? 'text-red-500 animate-pulse bg-red-50' : 'text-gray-600'} hover:bg-gray-100`}
+                  className={`${isRecording ? 'text-red-500 animate-pulse bg-red-50' : 'text-gray-600'} hover:bg-gray-100 ${!speechSupported ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  title={speechSupported ? (isRecording ? "Parar gravação" : "Começar gravação") : "Reconhecimento de voz não disponível"}
                 >
                   {isRecording ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
                 </Button>
@@ -403,7 +485,7 @@ Omeprazol 20mg - 1 cápsula em jejum por 14 dias`;
                   placeholder={isRecording ? "A ouvir..." : "Fala ou escreve os teus sintomas..."}
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+                  onKeyPress={handleKeyPress}
                   disabled={isTyping || isRecording}
                   className="flex-grow"
                 />
