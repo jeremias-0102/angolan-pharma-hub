@@ -47,42 +47,47 @@ interface UserSession {
   };
 }
 
-// Base de conhecimento médico adaptada para Angola
+// Base de conhecimento médico adaptada para Angola com respostas mais naturais
 const MEDICAL_CONDITIONS = {
   'dor de cabeça': {
     medications: ['paracetamol', 'ibuprofeno'],
     dosage: '500mg',
     frequency: 'de 6 em 6 horas',
     maxDaily: '3-4 doses',
-    warnings: ['Não exceder a dose recomendada, meu irmão', 'Se a dor persistir mais de 3 dias, procura um médico']
+    warnings: ['Não exceder a dose recomendada, meu irmão', 'Se a dor persistir mais de 3 dias, procura um médico'],
+    response: 'Ya mano, dor de cabeça é chato mesmo! Recomendo paracetamol 500mg de 6 em 6 horas. Mas se não melhorar em 3 dias, vai ao médico, tá?'
   },
   'febre': {
     medications: ['paracetamol', 'dipirona'],
     dosage: '500mg',
     frequency: 'de 6 em 6 horas',
     maxDaily: '4 doses',
-    warnings: ['Bebe bastante água, é importante', 'Se a febre não baixar, vai ao hospital']
+    warnings: ['Bebe bastante água, é importante', 'Se a febre não baixar, vai ao hospital'],
+    response: 'Eish, febre não é brincadeira não! Toma paracetamol 500mg de 6 em 6 horas e bebe muita água. Se não baixar, corre pro hospital, irmão!'
   },
   'gripe': {
     medications: ['paracetamol', 'vitamina c'],
     dosage: '500mg paracetamol, 1g vitamina C',
     frequency: 'paracetamol de 6h em 6h, vitamina C uma vez por dia',
     maxDaily: '4 doses paracetamol, 1 dose vitamina C',
-    warnings: ['Descansa bem, mano', 'Bebe muita água e sumos naturais', 'Se piorar, não hesites em ir ao médico']
+    warnings: ['Descansa bem, mano', 'Bebe muita água e sumos naturais', 'Se piorar, não hesites em ir ao médico'],
+    response: 'Gripe tá pegando mesmo! Toma paracetamol pro mal-estar e vitamina C pra fortalecer. Descansa bem e bebe muito líquido, ya?'
   },
   'dor muscular': {
     medications: ['ibuprofeno', 'diclofenaco'],
     dosage: '400mg',
     frequency: 'de 8 em 8 horas',
     maxDaily: '3 doses',
-    warnings: ['Toma com comida para proteger o estômago', 'Se tens problemas de estômago, não uses']
+    warnings: ['Toma com comida para proteger o estômago', 'Se tens problemas de estômago, não uses'],
+    response: 'Dor muscular é osso! Ibuprofeno 400mg de 8 em 8 horas resolve. Mas toma com comida pra não agredir o estômago, tranquilo?'
   },
   'malária': {
     medications: ['artesunato', 'coartem'],
     dosage: 'Conforme prescrição médica',
     frequency: 'Seguir estritamente o protocolo médico',
     maxDaily: 'Conforme prescrição',
-    warnings: ['URGENTE: Vai ao hospital imediatamente', 'Malária é grave, não brinques com isso', 'Completa todo o tratamento mesmo que te sintas melhor']
+    warnings: ['URGENTE: Vai ao hospital imediatamente', 'Malária é grave, não brinques com isso', 'Completa todo o tratamento mesmo que te sintas melhor'],
+    response: 'MANO! Malária é muito sério aqui em Angola! Vai URGENTE ao hospital fazer o teste. Não brinques com isso, pode ser fatal!'
   }
 };
 
@@ -151,13 +156,13 @@ export class AIAssistantService {
         consultationStage: 'details' as const
       };
       
-      let response = `Entendi meu irmão, tens ${symptomsDetected.join(', ')}. `;
-      response += `Para te ajudar melhor, preciso de mais algumas informações:\n\n`;
-      response += `1. Há quanto tempo sentes esses sintomas?\n`;
-      response += `2. Qual é a tua idade aproximada?\n`;
-      response += `3. Tens alguma alergia a medicamentos?\n`;
-      response += `4. Estás a tomar algum medicamento actualmente?\n\n`;
-      response += `Podes responder uma de cada vez ou tudo junto.`;
+      let response = `Ya mano, entendi que tens ${symptomsDetected.join(', ')}. `;
+      response += `Pra te ajudar melhor, preciso saber mais algumas coisas:\n\n`;
+      response += `📋 Há quanto tempo sentes isso?\n`;
+      response += `🎂 Qual é a tua idade?\n`;
+      response += `⚠️ Tens alguma alergia a medicamentos?\n`;
+      response += `💊 Tás a tomar algum medicamento?\n\n`;
+      response += `Podes responder tudo junto ou uma de cada vez, tranquilo!`;
       
       return {
         message: response,
@@ -165,16 +170,17 @@ export class AIAssistantService {
       };
     }
     
-    // Cumprimentos gerais
-    if (messageLower.includes('olá') || messageLower.includes('oi') || messageLower.includes('bom dia')) {
+    // Cumprimentos gerais com sotaque angolano
+    if (messageLower.includes('olá') || messageLower.includes('oi') || messageLower.includes('bom dia') || 
+        messageLower.includes('ei') || messageLower.includes('salve')) {
       return {
-        message: `Olá meu irmão! Como farmacêutico, posso ajudar-te com várias coisas:\n\n💊 Identificar medicamentos para sintomas\n🔍 Procurar preços em farmácias\n📋 Analisar receitas médicas\n⚠️ Verificar interações e alergias\n\nComo te sentes hoje? Tens algum sintoma ou precisas de algum medicamento específico?`,
+        message: `Ei irmão! Tudo na boa? Como farmacêutico virtual aqui em Angola, posso ajudar-te com:\n\n💊 Identificar medicamentos para os teus sintomas\n💰 Encontrar os melhores preços nas farmácias de Luanda\n📋 Analisar receitas médicas\n⚠️ Verificar alergias e interações\n\nConta-me - como te sentes hoje? Que problema te trouxe aqui, mano?`,
         sessionUpdate: { consultationStage: 'symptoms' }
       };
     }
     
     return {
-      message: `Olá! Sou o teu farmacêutico virtual. Podes contar-me:\n- Que sintomas sentes\n- Que medicamento procuras\n- Mostrar-me uma receita médica\n\nComo posso ajudar-te hoje?`,
+      message: `Salve meu bró! Sou o teu farmacêutico virtual aqui em Angola. Pode contar-me:\n- 🤒 Que sintomas sentes\n- 💊 Que medicamento procuras\n- 📄 Mostrar uma receita médica\n\nFala aí, como posso dar-te uma força hoje?`,
       sessionUpdate: { consultationStage: 'symptoms' }
     };
   }
@@ -185,7 +191,18 @@ export class AIAssistantService {
     if (symptoms.length > 0) {
       const updatedSymptoms = [...new Set([...session.symptoms, ...symptoms])];
       
-      const response = `Anotei que tens: ${updatedSymptoms.join(', ')}.\n\nPara te dar o melhor conselho, preciso saber:\n1. Há quanto tempo começaram esses sintomas?\n2. Qual é a tua idade?\n3. Tens alergias a medicamentos?\n\nPodes responder?`;
+      // Resposta natural específica para os sintomas detectados
+      const firstSymptom = symptoms[0];
+      const condition = MEDICAL_CONDITIONS[firstSymptom as keyof typeof MEDICAL_CONDITIONS];
+      
+      let response = '';
+      if (condition && condition.response) {
+        response = condition.response + '\n\n';
+      } else {
+        response = `Anotei que tens: ${updatedSymptoms.join(', ')}, mano.\n\n`;
+      }
+      
+      response += `Pra te dar o melhor conselho, preciso saber:\n🕐 Há quanto tempo começaram esses sintomas?\n🎂 Qual é a tua idade?\n⚠️ Tens alergias a medicamentos?\n\nFala aí!`;
       
       return {
         message: response,
@@ -197,7 +214,7 @@ export class AIAssistantService {
     }
     
     return {
-      message: `Não consegui identificar sintomas específicos. Podes descrever melhor como te sentes? Por exemplo:\n- "Tenho dor de cabeça"\n- "Estou com febre"\n- "Sinto dores no estômago"\n\nOu podes dizer-me que medicamento procuras.`,
+      message: `Epa, não consegui identificar sintomas específicos. Explica melhor como te sentes, mano:\n- "Tenho dor de cabeça"\n- "Estou com febre"\n- "Dói-me o estômago"\n\nOu diz-me que medicamento andas a procurar, tranquilo?`,
     };
   }
 
@@ -260,21 +277,21 @@ export class AIAssistantService {
       session.allergies
     );
     
-    let response = `Com base nos sintomas que descreveste (${session.symptoms.join(', ')}), `;
+    let response = `Ya mano, baseado nos sintomas que me contaste (${session.symptoms.join(', ')})`;
     
     if (session.age) {
-      response += `e na tua idade (${session.age} anos), `;
+      response += ` e na tua idade (${session.age} anos)`;
     }
     
-    response += `recomendo:\n\n`;
+    response += `, vou recomendar-te:\n\n`;
     
     if (suggestions.length > 0) {
       suggestions.forEach((suggestion, index) => {
         response += `${index + 1}. **${suggestion.name}**\n`;
-        response += `   • Dosagem: ${suggestion.dosage}\n`;
-        response += `   • Como tomar: ${suggestion.frequency}\n`;
-        response += `   • Duração: ${suggestion.duration}\n`;
-        response += `   • Instruções: ${suggestion.instructions}\n`;
+        response += `   💊 Dosagem: ${suggestion.dosage}\n`;
+        response += `   ⏰ Como tomar: ${suggestion.frequency}\n`;
+        response += `   📅 Duração: ${suggestion.duration}\n`;
+        response += `   📝 Instruções: ${suggestion.instructions}\n`;
         
         if (suggestion.warnings.length > 0) {
           response += `   ⚠️ Atenção: ${suggestion.warnings.join(', ')}\n`;
@@ -282,7 +299,7 @@ export class AIAssistantService {
         response += `\n`;
       });
       
-      response += `Queres que eu procure esses medicamentos nas farmácias de Luanda e te diga os preços? Posso também ajudar-te a fazer o pedido.`;
+      response += `Queres que procure esses medicamentos nas farmácias de Luanda e te diga os preços, mano? Posso ajudar-te a fazer o pedido também!`;
       
       return {
         message: response,
@@ -290,7 +307,7 @@ export class AIAssistantService {
         data: { medications: suggestions }
       };
     } else {
-      response += `Para os sintomas que descreveste, recomendo que consultes um médico pessoalmente. `;
+      response += `Para os sintomas que me descreveste, recomendo que vás ao médico pessoalmente, irmão. `;
       response += `Entretanto, posso procurar medicamentos básicos como paracetamol para alívio temporário.\n\n`;
       response += `Queres que procure nas farmácias de Luanda?`;
       
@@ -349,28 +366,40 @@ export class AIAssistantService {
     const messageLower = message.toLowerCase();
     const symptoms: string[] = [];
     
-    // Dores
-    if (messageLower.includes('dor de cabeça') || messageLower.includes('cefaleia')) symptoms.push('dor de cabeça');
-    if (messageLower.includes('dor de estômago') || messageLower.includes('dor abdominal')) symptoms.push('dor de estômago');
-    if (messageLower.includes('dor muscular') || messageLower.includes('dores no corpo')) symptoms.push('dor muscular');
-    if (messageLower.includes('dor de garganta')) symptoms.push('dor de garganta');
-    if (messageLower.includes('dor nas costas')) symptoms.push('dor nas costas');
+    // Dores com expressões angolanas
+    if (messageLower.includes('dor de cabeça') || messageLower.includes('cefaleia') || 
+        messageLower.includes('cabeça doi') || messageLower.includes('dor na cabeça')) symptoms.push('dor de cabeça');
+    if (messageLower.includes('dor de estômago') || messageLower.includes('dor abdominal') || 
+        messageLower.includes('estômago doi') || messageLower.includes('barriga doi')) symptoms.push('dor de estômago');
+    if (messageLower.includes('dor muscular') || messageLower.includes('dores no corpo') || 
+        messageLower.includes('corpo doi') || messageLower.includes('músculos doem')) symptoms.push('dor muscular');
+    if (messageLower.includes('dor de garganta') || messageLower.includes('garganta doi')) symptoms.push('dor de garganta');
+    if (messageLower.includes('dor nas costas') || messageLower.includes('costas doem')) symptoms.push('dor nas costas');
     
-    // Sintomas gerais
-    if (messageLower.includes('febre') || messageLower.includes('febril')) symptoms.push('febre');
-    if (messageLower.includes('tosse')) symptoms.push('tosse');
-    if (messageLower.includes('gripe') || messageLower.includes('constipação')) symptoms.push('gripe');
-    if (messageLower.includes('náusea') || messageLower.includes('enjoo')) symptoms.push('náusea');
-    if (messageLower.includes('diarreia')) symptoms.push('diarreia');
-    if (messageLower.includes('vómito') || messageLower.includes('vomito')) symptoms.push('vómito');
-    if (messageLower.includes('tontura') || messageLower.includes('vertigem')) symptoms.push('tontura');
-    if (messageLower.includes('cansaço') || messageLower.includes('fadiga')) symptoms.push('cansaço');
+    // Sintomas gerais com variações angolanas
+    if (messageLower.includes('febre') || messageLower.includes('febril') || 
+        messageLower.includes('tô quente') || messageLower.includes('corpo quente')) symptoms.push('febre');
+    if (messageLower.includes('tosse') || messageLower.includes('tossir')) symptoms.push('tosse');
+    if (messageLower.includes('gripe') || messageLower.includes('constipação') || 
+        messageLower.includes('gripado') || messageLower.includes('resfriado')) symptoms.push('gripe');
+    if (messageLower.includes('náusea') || messageLower.includes('enjoo') || 
+        messageLower.includes('vontade de vomitar')) symptoms.push('náusea');
+    if (messageLower.includes('diarreia') || messageLower.includes('diarréia') || 
+        messageLower.includes('soltura de ventre')) symptoms.push('diarreia');
+    if (messageLower.includes('vómito') || messageLower.includes('vomito') || 
+        messageLower.includes('vomitar')) symptoms.push('vómito');
+    if (messageLower.includes('tontura') || messageLower.includes('vertigem') || 
+        messageLower.includes('cabeça roda')) symptoms.push('tontura');
+    if (messageLower.includes('cansaço') || messageLower.includes('fadiga') || 
+        messageLower.includes('cansado') || messageLower.includes('sem energia')) symptoms.push('cansaço');
     
-    // Condições específicas
-    if (messageLower.includes('malária') || messageLower.includes('paludismo')) symptoms.push('malária');
-    if (messageLower.includes('hipertensão') || messageLower.includes('pressão alta')) symptoms.push('hipertensão');
-    if (messageLower.includes('diabetes')) symptoms.push('diabetes');
-    if (messageLower.includes('asma')) symptoms.push('asma');
+    // Condições específicas comuns em Angola
+    if (messageLower.includes('malária') || messageLower.includes('paludismo') || 
+        messageLower.includes('sezões')) symptoms.push('malária');
+    if (messageLower.includes('hipertensão') || messageLower.includes('pressão alta') || 
+        messageLower.includes('tensão alta')) symptoms.push('hipertensão');
+    if (messageLower.includes('diabetes') || messageLower.includes('diabético')) symptoms.push('diabetes');
+    if (messageLower.includes('asma') || messageLower.includes('falta de ar')) symptoms.push('asma');
     
     return symptoms;
   }
@@ -521,17 +550,17 @@ export class AIAssistantService {
       instructions += `, máximo ${treatment.maxDaily} por dia`;
     }
 
-    // Instruções específicas em linguagem angolana
+    // Instruções específicas em linguagem angolana natural
     if (medication.includes('antibiótico') || medication.includes('amoxicilina')) {
-      instructions += '. ATENÇÃO meu irmão: completa todo o tratamento mesmo que te sintas melhor, senão a doença pode voltar mais forte!';
+      instructions += '. ATENÇÃO meu irmão: completa todo o tratamento mesmo que te sintas melhor, senão a doença pode voltar mais forte! Não brinques com antibiótico não.';
     }
 
     if (medication.includes('paracetamol')) {
-      instructions += '. Podes tomar com ou sem comida, não há problema.';
+      instructions += '. Pode ser tomado com ou sem alimentos, não há stress. Mas não passes da dose, ya?';
     }
 
     if (medication.includes('ibuprofeno')) {
-      instructions += '. É melhor tomares com comida para proteger o estômago, está bem?';
+      instructions += '. É melhor tomares com comida pra proteger o estômago, tá bom mano?';
     }
 
     return instructions;
@@ -555,7 +584,7 @@ export class AIAssistantService {
 
     // Add specific instructions based on medication type
     if (productName.toLowerCase().includes('antibiótico') || productName.toLowerCase().includes('amoxicilina')) {
-      instructions += '. IMPORTANTE: Complete todo o tratamento mesmo que se sinta melhor.';
+      instructions += '. IMPORTANTE: Complete todo o tratamento mesmo que se sinta melhor - é muito importante!';
     }
 
     if (productName.toLowerCase().includes('paracetamol')) {
@@ -726,7 +755,8 @@ export class AIAssistantService {
     }
 
     // Respostas contextuais em português angolano
-    if (messageLower.includes('olá') || messageLower.includes('oi') || messageLower.includes('bom dia')) {
+    if (messageLower.includes('olá') || messageLower.includes('oi') || messageLower.includes('bom dia') || 
+        messageLower.includes('ei') || messageLower.includes('salve')) {
       return 'Olá meu irmão! Tudo bem? Sou o teu assistente farmacêutico. Como posso ajudar-te hoje?';
     }
 

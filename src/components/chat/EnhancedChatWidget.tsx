@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -51,11 +52,38 @@ interface LocalUserSession {
   };
 }
 
+// Respostas naturais angolanas
+const ANGOLAN_RESPONSES = {
+  greetings: [
+    'Ei chefe! Tá tudo nice? Bem-vindo à farmácia Lovable. Em que posso ajudar hoje, mano?',
+    'Olá irmão! Tudo fixe? Sou o teu farmacêutico virtual. Diz-me como te sentes.',
+    'Bom dia meu bró! Tranquilo? Como posso dar-te uma força hoje?',
+    'Epa, salve salve! Tá na boa? Conta-me o que se passa contigo.'
+  ],
+  pain: [
+    'Eish, isso não tá bom não... Diz-me onde dói exactamente pra te ajudar, ya?',
+    'Ah mano, dor é chato mesmo. Conta-me mais sobre essa dor - onde é e há quanto tempo?',
+    'Ya, entendo... A dor incomoda muito. Explica-me melhor pra ver como te posso ajudar.',
+    'Tranquilo irmão, vamos resolver isso. Onde exactamente sentes essa dor?'
+  ],
+  fever: [
+    'Febre não é brincadeira, meu bró. Há quanto tempo tens febre? Tás a medir a temperatura?',
+    'Epa, febre... isso pode ser várias coisas. Conta-me - tens mais algum sintoma além da febre?',
+    'Ya, febre é sinal que o corpo tá a lutar contra algo. Diz-me, tens dores no corpo também?'
+  ],
+  confusion: [
+    'Desculpa mano, não entendi bem. Podes explicar melhor o que se passa contigo?',
+    'Hum... fala-me mais devagar, irmão. Qual é exactamente o problema?',
+    'Epa, não percebi bem. Conta-me outra vez - que sintomas tens?',
+    'Ya, explica melhor isso. Qual é o teu problema hoje?'
+  ]
+};
+
 const INITIAL_MESSAGES: Message[] = [
   {
     id: '1',
     type: 'bot',
-    text: 'Olá meu irmão! Sou o teu farmacêutico virtual. Posso ajudar-te com sintomas, receitas médicas e encontrar medicamentos. Podes falar comigo usando o botão do microfone ou escrever. Como te sentes hoje?',
+    text: 'Ei mano! Tudo bem? Sou o Dr. BejanPharma, o teu farmacêutico virtual aqui em Angola. Posso ajudar-te com sintomas, medicamentos e até encontrar os melhores preços nas farmácias. Podes falar comigo usando o microfone ou escrever. Como te sentes hoje, irmão?',
     timestamp: new Date(),
   },
 ];
@@ -86,7 +114,31 @@ const EnhancedChatWidget: React.FC = () => {
   const navigate = useNavigate();
   const { addToCart } = useCart();
 
-  // Initialize speech recognition
+  // Função para obter resposta natural angolana
+  const getAngolanResponse = (userMessage: string): string | null => {
+    const message = userMessage.toLowerCase();
+    
+    // Saudações
+    if (message.includes('olá') || message.includes('oi') || message.includes('bom dia') || 
+        message.includes('boa tarde') || message.includes('ei') || message.includes('salve') ||
+        message.includes('tá fixe') || message.includes('como vai')) {
+      return ANGOLAN_RESPONSES.greetings[Math.floor(Math.random() * ANGOLAN_RESPONSES.greetings.length)];
+    }
+    
+    // Dores
+    if (message.includes('dor') || message.includes('doi') || message.includes('doendo')) {
+      return ANGOLAN_RESPONSES.pain[Math.floor(Math.random() * ANGOLAN_RESPONSES.pain.length)];
+    }
+    
+    // Febre
+    if (message.includes('febre') || message.includes('febril') || message.includes('temperatura')) {
+      return ANGOLAN_RESPONSES.fever[Math.floor(Math.random() * ANGOLAN_RESPONSES.fever.length)];
+    }
+    
+    return null;
+  };
+
+  // Initialize speech recognition with Portuguese (Angola)
   useEffect(() => {
     const initializeSpeechRecognition = async () => {
       // Check if speech recognition is supported
@@ -104,37 +156,25 @@ const EnhancedChatWidget: React.FC = () => {
         const recognitionInstance = new SpeechRecognition();
         
         recognitionInstance.continuous = false;
-        recognitionInstance.interimResults = true;
-        recognitionInstance.lang = 'pt-PT'; // Portuguese from Portugal/Angola
+        recognitionInstance.interimResults = false; // Mudei para false para melhor precisão
+        recognitionInstance.lang = 'pt-AO'; // Português de Angola
         
         recognitionInstance.onstart = () => {
-          console.log('Speech recognition started');
+          console.log('Speech recognition started - Português de Angola');
           setIsRecording(true);
         };
         
         recognitionInstance.onresult = (event: any) => {
-          let interimTranscript = '';
-          let finalTranscript = '';
-          
-          for (let i = event.resultIndex; i < event.results.length; i++) {
-            const transcript = event.results[i][0].transcript;
-            if (event.results[i].isFinal) {
-              finalTranscript += transcript;
-            } else {
-              interimTranscript += transcript;
-            }
-          }
-          
-          if (finalTranscript) {
-            console.log('Final transcript:', finalTranscript);
-            setNewMessage(finalTranscript);
+          if (event.results.length > 0) {
+            const transcript = event.results[0][0].transcript;
+            console.log('Reconheceu:', transcript);
+            setNewMessage(transcript);
             setIsRecording(false);
+            
             // Auto-send the message after speech recognition
             setTimeout(() => {
-              handleSendMessage(finalTranscript);
-            }, 500);
-          } else if (interimTranscript) {
-            setNewMessage(interimTranscript);
+              handleSendMessage(transcript);
+            }, 300);
           }
         };
         
@@ -143,27 +183,27 @@ const EnhancedChatWidget: React.FC = () => {
           setIsRecording(false);
           
           let errorMessage = "Erro no reconhecimento de voz";
-          let description = "Tenta novamente";
+          let description = "Tenta novamente, mano";
           
           switch (event.error) {
             case 'not-allowed':
               errorMessage = "Permissão negada";
-              description = "Permite o acesso ao microfone nas configurações do navegador e recarrega a página";
+              description = "Permite o acesso ao microfone e recarrega a página, irmão";
               break;
             case 'no-speech':
-              errorMessage = "Nenhuma fala detectada";
-              description = "Tenta falar mais alto ou verifica se o microfone está funcionando";
+              errorMessage = "Não ouvi nada";
+              description = "Fala mais alto ou mais perto do microfone, ya";
               break;
             case 'audio-capture':
               errorMessage = "Microfone não encontrado";
-              description = "Verifica se o microfone está conectado e funcionando";
+              description = "Verifica se o microfone tá conectado, mano";
               break;
             case 'network':
-              errorMessage = "Erro de rede";
-              description = "Verifica a tua conexão à internet";
+              errorMessage = "Problema de rede";
+              description = "Verifica a tua internet, irmão";
               break;
             default:
-              description = "Tenta falar mais alto ou usar o teclado";
+              description = "Tenta falar mais devagar ou usar o teclado";
           }
           
           toast({
@@ -180,14 +220,14 @@ const EnhancedChatWidget: React.FC = () => {
         
         setRecognition(recognitionInstance);
         setSpeechSupported(true);
-        console.log('Speech recognition initialized successfully');
+        console.log('Speech recognition initialized successfully for Portuguese Angola');
         
       } catch (error) {
         console.error('Failed to get microphone permission:', error);
         setSpeechSupported(false);
         toast({
           title: "Microfone não disponível",
-          description: "Permite o acesso ao microfone para usar o reconhecimento de voz",
+          description: "Permite o acesso ao microfone para usar o reconhecimento de voz, mano",
           variant: "destructive"
         });
       }
@@ -196,14 +236,14 @@ const EnhancedChatWidget: React.FC = () => {
     initializeSpeechRecognition();
   }, []);
 
-  // Rolar para a mensagem mais recente
+  // Scroll to latest message
   useEffect(() => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [messages]);
 
-  // Focar no input quando o chat é aberto
+  // Focus on input when chat opens
   useEffect(() => {
     if (isOpen && inputRef.current) {
       inputRef.current.focus();
@@ -234,12 +274,24 @@ const EnhancedChatWidget: React.FC = () => {
     setTimeout(() => {
       setIsTyping(false);
       callback();
-    }, 1000 + Math.random() * 1500);
+    }, 800 + Math.random() * 1000); // Mais rápido e natural
   };
 
   const handleMedicalConsultation = async (message: string) => {
     try {
-      // Update user session based on conversation stage
+      // Primeiro, tentar resposta natural angolana
+      const angolanResponse = getAngolanResponse(message);
+      
+      if (angolanResponse) {
+        addBotMessage(angolanResponse);
+        // Atualizar o estágio para sintomas se foi uma saudação
+        if (userSession.consultationStage === 'initial') {
+          setUserSession(prev => ({ ...prev, consultationStage: 'symptoms' }));
+        }
+        return;
+      }
+      
+      // Se não encontrou resposta natural, usar a IA médica
       const updatedSession = { ...userSession };
       
       if (userSession.consultationStage === 'initial') {
@@ -257,7 +309,7 @@ const EnhancedChatWidget: React.FC = () => {
       }
     } catch (error) {
       console.error('Error in medical consultation:', error);
-      addBotMessage('Desculpa meu irmão, tive um problema técnico. Podes repetir o que disseste?');
+      addBotMessage('Epa, tive um problema técnico agora. Podes repetir o que disseste, mano?');
     }
   };
 
@@ -284,7 +336,7 @@ const EnhancedChatWidget: React.FC = () => {
     if (!speechSupported) {
       toast({
         title: "Reconhecimento de voz não suportado",
-        description: "O teu navegador não suporta reconhecimento de voz ou não tens microfone. Usa o teclado para escrever.",
+        description: "O teu navegador não suporta reconhecimento de voz ou não tens microfone, mano. Usa o teclado para escrever.",
         variant: "destructive"
       });
       return;
@@ -293,7 +345,7 @@ const EnhancedChatWidget: React.FC = () => {
     if (!recognition) {
       toast({
         title: "Reconhecimento de voz não inicializado",
-        description: "Recarrega a página e permite o acesso ao microfone.",
+        description: "Recarrega a página e permite o acesso ao microfone, irmão.",
         variant: "destructive"
       });
       return;
@@ -313,32 +365,34 @@ const EnhancedChatWidget: React.FC = () => {
         recognition.start();
         toast({
           title: "A ouvir...",
-          description: "Fala agora! Descreve os teus sintomas ou o que precisas.",
+          description: "Fala agora, mano! Conta-me como te sentes.",
         });
       } catch (error) {
         console.error('Error starting recognition:', error);
         toast({
           title: "Erro ao iniciar gravação",
-          description: "Tenta novamente ou verifica as permissões do microfone.",
+          description: "Tenta novamente ou verifica as permissões do microfone, irmão.",
           variant: "destructive"
         });
       }
     }
   };
 
-  // Síntese de voz para ler a última mensagem do bot
+  // Text-to-speech para ler a última mensagem do bot com sotaque angolano
   const speakLastMessage = () => {
     const lastBotMessage = [...messages].reverse().find(msg => msg.type === 'bot');
     if (lastBotMessage && 'speechSynthesis' in window) {
       setIsSpeaking(true);
       const utterance = new SpeechSynthesisUtterance(lastBotMessage.text);
-      utterance.lang = 'pt-BR';
+      utterance.lang = 'pt-BR'; // Mais próximo do sotaque angolano
+      utterance.rate = 0.9; // Um pouco mais devagar para sotaque natural
+      utterance.pitch = 1.1; // Tom um pouco mais alto
       utterance.onend = () => setIsSpeaking(false);
       speechSynthesis.speak(utterance);
     }
   };
 
-  // Parar síntese de voz
+  // Stop text-to-speech
   const stopSpeaking = () => {
     if ('speechSynthesis' in window) {
       speechSynthesis.cancel();
@@ -349,7 +403,7 @@ const EnhancedChatWidget: React.FC = () => {
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      addBotMessage('📄 Receita recebida! Analisando...');
+      addBotMessage('📄 Receita recebida, mano! Deixa-me analisar isso...');
       
       // Simulate OCR processing
       simulateTyping(async () => {
@@ -358,7 +412,7 @@ const EnhancedChatWidget: React.FC = () => {
 Amoxicilina 875mg - 1 comprimido a cada 12 horas por 7 dias
 Omeprazol 20mg - 1 cápsula em jejum por 14 dias`;
         
-        //await handlePrescriptionAnalysis(mockPrescriptionText);
+        addBotMessage('Ya, analisei a tua receita. Tens aqui alguns medicamentos importantes. Posso ajudar-te a encontrar nas farmácias de Luanda com os melhores preços, irmão!');
       });
     }
   };
@@ -390,7 +444,7 @@ Omeprazol 20mg - 1 cápsula em jejum por 14 dias`;
                   </div>
                 </Avatar>
                 <div>
-                  <h3 className="font-medium text-sm">Dr. BegjnpPharma</h3>
+                  <h3 className="font-medium text-sm">Dr. BejanPharma</h3>
                   <p className="text-xs opacity-80">Farmacêutico Virtual</p>
                 </div>
               </div>
@@ -482,7 +536,7 @@ Omeprazol 20mg - 1 cápsula em jejum por 14 dias`;
                 </Button>
                 <Input
                   ref={inputRef}
-                  placeholder={isRecording ? "A ouvir..." : "Fala ou escreve os teus sintomas..."}
+                  placeholder={isRecording ? "A ouvir..." : "Fala ou escreve como te sentes, mano..."}
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
                   onKeyPress={handleKeyPress}
