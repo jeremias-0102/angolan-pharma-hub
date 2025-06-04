@@ -23,6 +23,30 @@ interface PrescriptionAnalysis {
   allergiesCheck: string[];
 }
 
+interface MedicalConsultationResult {
+  message: string;
+  sessionUpdate?: Partial<UserSession>;
+  data?: {
+    medications?: MedicationSuggestion[];
+    searchResults?: any;
+    nextQuestions?: string[];
+  };
+}
+
+interface UserSession {
+  symptoms: string[];
+  allergies: string[];
+  currentMedications: string[];
+  age: number | null;
+  consultationStage: 'initial' | 'symptoms' | 'details' | 'recommendations' | 'pharmacy_search';
+  patientInfo: {
+    gender?: 'M' | 'F';
+    weight?: number;
+    chronicConditions?: string[];
+    lastSymptomOnset?: string;
+  };
+}
+
 // Base de conhecimento médico adaptada para Angola
 const MEDICAL_CONDITIONS = {
   'dor de cabeça': {
@@ -84,6 +108,271 @@ export class AIAssistantService {
     } catch (error) {
       console.error('Erro ao carregar produtos:', error);
     }
+  }
+
+  // Nova função principal para consulta médica estruturada
+  async conductMedicalConsultation(userMessage: string, session: UserSession): Promise<MedicalConsultationResult> {
+    const messageLower = userMessage.toLowerCase();
+    
+    console.log(`Consulta médica - Estágio: ${session.consultationStage}`);
+    console.log(`Mensagem: ${userMessage}`);
+    
+    switch (session.consultationStage) {
+      case 'initial':
+        return this.handleInitialContact(userMessage, session);
+      
+      case 'symptoms':
+        return this.handleSymptomsCollection(userMessage, session);
+      
+      case 'details':
+        return this.handleDetailsCollection(userMessage, session);
+      
+      case 'recommendations':
+        return this.handleRecommendations(userMessage, session);
+      
+      case 'pharmacy_search':
+        return this.handlePharmacySearch(userMessage, session);
+      
+      default:
+        return this.handleGeneralQuery(userMessage, session);
+    }
+  }
+
+  private async handleInitialContact(userMessage: string, session: UserSession): Promise<MedicalConsultationResult> {
+    const messageLower = userMessage.toLowerCase();
+    
+    // Detectar se já mencionou sintomas
+    const symptomsDetected = this.detectSymptoms(userMessage);
+    
+    if (symptomsDetected.length > 0) {
+      const updatedSession = {
+        ...session,
+        symptoms: [...session.symptoms, ...symptomsDetected],
+        consultationStage: 'details' as const
+      };
+      
+      let response = `Entendi meu irmão, tens ${symptomsDetected.join(', ')}. `;
+      response += `Para te ajudar melhor, preciso de mais algumas informações:\n\n`;
+      response += `1. Há quanto tempo sentes esses sintomas?\n`;
+      response += `2. Qual é a tua idade aproximada?\n`;
+      response += `3. Tens alguma alergia a medicamentos?\n`;
+      response += `4. Estás a tomar algum medicamento actualmente?\n\n`;
+      response += `Podes responder uma de cada vez ou tudo junto.`;
+      
+      return {
+        message: response,
+        sessionUpdate: updatedSession
+      };
+    }
+    
+    // Cumprimentos gerais
+    if (messageLower.includes('olá') || messageLower.includes('oi') || messageLower.includes('bom dia')) {
+      return {
+        message: `Olá meu irmão! Como farmacêutico, posso ajudar-te com várias coisas:\n\n💊 Identificar medicamentos para sintomas\n🔍 Procurar preços em farmácias\n📋 Analisar receitas médicas\n⚠️ Verificar interações e alergias\n\nComo te sentes hoje? Tens algum sintoma ou precisas de algum medicamento específico?`,
+        sessionUpdate: { consultationStage: 'symptoms' }
+      };
+    }
+    
+    return {
+      message: `Olá! Sou o teu farmacêutico virtual. Podes contar-me:\n- Que sintomas sentes\n- Que medicamento procuras\n- Mostrar-me uma receita médica\n\nComo posso ajudar-te hoje?`,
+      sessionUpdate: { consultationStage: 'symptoms' }
+    };
+  }
+
+  private async handleSymptomsCollection(userMessage: string, session: UserSession): Promise<MedicalConsultationResult> {
+    const symptoms = this.detectSymptoms(userMessage);
+    
+    if (symptoms.length > 0) {
+      const updatedSymptoms = [...new Set([...session.symptoms, ...symptoms])];
+      
+      const response = `Anotei que tens: ${updatedSymptoms.join(', ')}.\n\nPara te dar o melhor conselho, preciso saber:\n1. Há quanto tempo começaram esses sintomas?\n2. Qual é a tua idade?\n3. Tens alergias a medicamentos?\n\nPodes responder?`;
+      
+      return {
+        message: response,
+        sessionUpdate: {
+          symptoms: updatedSymptoms,
+          consultationStage: 'details'
+        }
+      };
+    }
+    
+    return {
+      message: `Não consegui identificar sintomas específicos. Podes descrever melhor como te sentes? Por exemplo:\n- "Tenho dor de cabeça"\n- "Estou com febre"\n- "Sinto dores no estômago"\n\nOu podes dizer-me que medicamento procuras.`,
+    };
+  }
+
+  private async handleDetailsCollection(userMessage: string, session: UserSession): Promise<MedicalConsultationResult> {
+    const messageLower = userMessage.toLowerCase();
+    const updatedSession = { ...session };
+    
+    // Extrair idade
+    const ageMatch = userMessage.match(/(\d+)\s*anos?/i);
+    if (ageMatch) {
+      updatedSession.age = parseInt(ageMatch[1]);
+    }
+    
+    // Extrair alergias
+    if (messageLower.includes('alérgico') || messageLower.includes('alergia')) {
+      const allergyMatch = userMessage.match(/alérgico?\s+a?\s*([^.!?]+)/i);
+      if (allergyMatch) {
+        updatedSession.allergies = [...session.allergies, allergyMatch[1].trim()];
+      }
+    }
+    
+    // Extrair duração dos sintomas
+    if (messageLower.includes('dia') || messageLower.includes('semana') || messageLower.includes('hora')) {
+      updatedSession.patientInfo = {
+        ...session.patientInfo,
+        lastSymptomOnset: userMessage
+      };
+    }
+    
+    // Se temos informação suficiente, passar para recomendações
+    if (session.symptoms.length > 0 && (updatedSession.age || session.age)) {
+      updatedSession.consultationStage = 'recommendations';
+      
+      const recommendations = await this.generateRecommendations(updatedSession);
+      return {
+        message: recommendations.message,
+        sessionUpdate: updatedSession,
+        data: recommendations.data
+      };
+    }
+    
+    // Ainda precisamos de mais informações
+    let response = `Obrigado pelas informações! `;
+    if (!updatedSession.age && !session.age) {
+      response += `Ainda preciso saber a tua idade. `;
+    }
+    if (session.symptoms.length === 0) {
+      response += `Podes descrever melhor os sintomas? `;
+    }
+    
+    return {
+      message: response + `Estas informações ajudam-me a sugerir o tratamento mais seguro para ti.`,
+      sessionUpdate: updatedSession
+    };
+  }
+
+  private async generateRecommendations(session: UserSession): Promise<MedicalConsultationResult> {
+    const suggestions = await this.suggestTreatment(
+      session.symptoms.join(', '),
+      session.allergies
+    );
+    
+    let response = `Com base nos sintomas que descreveste (${session.symptoms.join(', ')}), `;
+    
+    if (session.age) {
+      response += `e na tua idade (${session.age} anos), `;
+    }
+    
+    response += `recomendo:\n\n`;
+    
+    if (suggestions.length > 0) {
+      suggestions.forEach((suggestion, index) => {
+        response += `${index + 1}. **${suggestion.name}**\n`;
+        response += `   • Dosagem: ${suggestion.dosage}\n`;
+        response += `   • Como tomar: ${suggestion.frequency}\n`;
+        response += `   • Duração: ${suggestion.duration}\n`;
+        response += `   • Instruções: ${suggestion.instructions}\n`;
+        
+        if (suggestion.warnings.length > 0) {
+          response += `   ⚠️ Atenção: ${suggestion.warnings.join(', ')}\n`;
+        }
+        response += `\n`;
+      });
+      
+      response += `Queres que eu procure esses medicamentos nas farmácias de Luanda e te diga os preços? Posso também ajudar-te a fazer o pedido.`;
+      
+      return {
+        message: response,
+        sessionUpdate: { consultationStage: 'pharmacy_search' },
+        data: { medications: suggestions }
+      };
+    } else {
+      response += `Para os sintomas que descreveste, recomendo que consultes um médico pessoalmente. `;
+      response += `Entretanto, posso procurar medicamentos básicos como paracetamol para alívio temporário.\n\n`;
+      response += `Queres que procure nas farmácias de Luanda?`;
+      
+      return {
+        message: response,
+        sessionUpdate: { consultationStage: 'pharmacy_search' }
+      };
+    }
+  }
+
+  private async handlePharmacySearch(userMessage: string, session: UserSession): Promise<MedicalConsultationResult> {
+    const { pharmacySearchService } = await import('./pharmacySearchService');
+    
+    const messageLower = userMessage.toLowerCase();
+    
+    if (messageLower.includes('sim') || messageLower.includes('procura') || messageLower.includes('preço')) {
+      // Procurar o primeiro medicamento das recomendações
+      const medicationToSearch = session.symptoms.includes('dor de cabeça') ? 'Paracetamol' :
+                                session.symptoms.includes('febre') ? 'Paracetamol' :
+                                session.symptoms.includes('gripe') ? 'Paracetamol' : 'Paracetamol';
+      
+      const searchResults = await pharmacySearchService.searchMedication(medicationToSearch);
+      const formattedResults = pharmacySearchService.formatSearchResults(searchResults, medicationToSearch);
+      
+      return {
+        message: `🔍 Procurei ${medicationToSearch} nas farmácias de Luanda...\n\n${formattedResults}`,
+        data: { searchResults }
+      };
+    }
+    
+    // Procura por medicamento específico
+    const medicationMatch = userMessage.match(/(?:procura|quero|preciso)\s+(?:de\s+)?([a-záéíóúâêîôûãõç\s]+)/i);
+    if (medicationMatch) {
+      const medicationName = medicationMatch[1].trim();
+      const searchResults = await pharmacySearchService.searchMedication(medicationName);
+      const formattedResults = pharmacySearchService.formatSearchResults(searchResults, medicationName);
+      
+      return {
+        message: formattedResults,
+        data: { searchResults }
+      };
+    }
+    
+    return {
+      message: `Que medicamento queres que procure nas farmácias? Ou preferes que procure os medicamentos que recomendei baseado nos teus sintomas?`
+    };
+  }
+
+  private handleGeneralQuery(userMessage: string, session: UserSession): Promise<MedicalConsultationResult> {
+    return Promise.resolve({
+      message: `Como farmacêutico, posso ajudar-te com medicamentos e sintomas. Queres fazer uma consulta sobre como te sentes ou procurar um medicamento específico?`
+    });
+  }
+
+  private detectSymptoms(message: string): string[] {
+    const messageLower = message.toLowerCase();
+    const symptoms: string[] = [];
+    
+    // Dores
+    if (messageLower.includes('dor de cabeça') || messageLower.includes('cefaleia')) symptoms.push('dor de cabeça');
+    if (messageLower.includes('dor de estômago') || messageLower.includes('dor abdominal')) symptoms.push('dor de estômago');
+    if (messageLower.includes('dor muscular') || messageLower.includes('dores no corpo')) symptoms.push('dor muscular');
+    if (messageLower.includes('dor de garganta')) symptoms.push('dor de garganta');
+    if (messageLower.includes('dor nas costas')) symptoms.push('dor nas costas');
+    
+    // Sintomas gerais
+    if (messageLower.includes('febre') || messageLower.includes('febril')) symptoms.push('febre');
+    if (messageLower.includes('tosse')) symptoms.push('tosse');
+    if (messageLower.includes('gripe') || messageLower.includes('constipação')) symptoms.push('gripe');
+    if (messageLower.includes('náusea') || messageLower.includes('enjoo')) symptoms.push('náusea');
+    if (messageLower.includes('diarreia')) symptoms.push('diarreia');
+    if (messageLower.includes('vómito') || messageLower.includes('vomito')) symptoms.push('vómito');
+    if (messageLower.includes('tontura') || messageLower.includes('vertigem')) symptoms.push('tontura');
+    if (messageLower.includes('cansaço') || messageLower.includes('fadiga')) symptoms.push('cansaço');
+    
+    // Condições específicas
+    if (messageLower.includes('malária') || messageLower.includes('paludismo')) symptoms.push('malária');
+    if (messageLower.includes('hipertensão') || messageLower.includes('pressão alta')) symptoms.push('hipertensão');
+    if (messageLower.includes('diabetes')) symptoms.push('diabetes');
+    if (messageLower.includes('asma')) symptoms.push('asma');
+    
+    return symptoms;
   }
 
   // Analisar receita médica com melhor IA
@@ -446,7 +735,7 @@ export class AIAssistantService {
     }
 
     if (messageLower.includes('febre')) {
-      return 'Febre pode ser sinal de várias coisas. Paracetamol ou dipirona podem ajudar a baixar. Importante: bebe muita água e descansa. Se a febre não baixar ou subir muito, vai ao hospital urgente!';
+      return 'Febre pode ser sinal de várias coisas. Paracetamol ou dipirona podem ajudar a baixar. Importante: bebe bastante água e descansa. Se a febre não baixar ou subir muito, vai ao hospital urgente!';
     }
 
     if (messageLower.includes('gripe') || messageLower.includes('constipação')) {
