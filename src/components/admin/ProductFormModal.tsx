@@ -10,8 +10,6 @@ import { Switch } from '@/components/ui/switch';
 import { Product, Category, Supplier } from '@/types/models';
 import { getAllCategories } from '@/services/categoryService';
 import { getAllSuppliers } from '@/services/supplierService';
-import { saveImage } from '@/services/productService';
-import { Upload } from 'lucide-react';
 
 interface ProductFormModalProps {
   isOpen: boolean;
@@ -41,8 +39,6 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string>('');
 
   useEffect(() => {
     const loadData = async () => {
@@ -71,13 +67,12 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
         description: product.description,
         price_cost: product.price_cost,
         price_sale: product.price_sale,
-        category_id: typeof product.category === 'string' ? product.category : product.category_id || '',
+        category_id: product.category_id || '',
         supplier_id: product.supplier_id || '',
         manufacturer: product.manufacturer,
         requiresPrescription: product.requiresPrescription,
         image: product.image || ''
       });
-      setImagePreview(product.image || '');
     } else {
       setFormData({
         code: '',
@@ -91,23 +86,11 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
         requiresPrescription: false,
         image: ''
       });
-      setImagePreview('');
     }
-    setImageFile(null);
   }, [product]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    let imageUrl = formData.image;
-    
-    if (imageFile) {
-      try {
-        imageUrl = await saveImage(imageFile);
-      } catch (error) {
-        console.error('Error saving image:', error);
-      }
-    }
 
     const productData: Product = {
       id: product?.id || '',
@@ -117,11 +100,10 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
       price_cost: Number(formData.price_cost),
       price_sale: Number(formData.price_sale),
       category_id: formData.category_id,
-      category: formData.category_id,
       supplier_id: formData.supplier_id,
       manufacturer: formData.manufacturer,
       requiresPrescription: formData.requiresPrescription,
-      image: imageUrl,
+      image: formData.image,
       created_at: product?.created_at || new Date().toISOString(),
       updated_at: new Date().toISOString(),
       batches: product?.batches || [],
@@ -132,31 +114,21 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value, type } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'number' ? Number(value) : value
-    }));
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSelectChange = (name: string, value: string) => {
+  const handleNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: Number(value) }));
+  };
+
+  const handleSelectChange = (name: string) => (value: string) => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleSwitchChange = (checked: boolean) => {
     setFormData(prev => ({ ...prev, requiresPrescription: checked }));
-  };
-
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setImageFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
   };
 
   return (
@@ -169,16 +141,16 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="code">Código do Produto *</Label>
+              <Label htmlFor="code">Código *</Label>
               <Input
                 id="code"
                 name="code"
                 value={formData.code}
                 onChange={handleInputChange}
                 required
-                placeholder="Ex: MED-001"
+                placeholder="Digite o código do produto"
               />
             </div>
 
@@ -190,7 +162,7 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
                 value={formData.name}
                 onChange={handleInputChange}
                 required
-                placeholder="Ex: Paracetamol 500mg"
+                placeholder="Digite o nome do produto"
               />
             </div>
           </div>
@@ -202,47 +174,47 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
               name="description"
               value={formData.description}
               onChange={handleInputChange}
-              placeholder="Descrição detalhada do produto..."
+              placeholder="Descrição do produto"
               rows={3}
             />
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="price_cost">Preço de Custo (AOA) *</Label>
+              <Label htmlFor="price_cost">Preço de Custo *</Label>
               <Input
                 id="price_cost"
                 name="price_cost"
                 type="number"
-                min="0"
                 step="0.01"
                 value={formData.price_cost}
-                onChange={handleInputChange}
+                onChange={handleNumberChange}
                 required
+                placeholder="0.00"
               />
             </div>
 
             <div>
-              <Label htmlFor="price_sale">Preço de Venda (AOA) *</Label>
+              <Label htmlFor="price_sale">Preço de Venda *</Label>
               <Input
                 id="price_sale"
                 name="price_sale"
                 type="number"
-                min="0"
                 step="0.01"
                 value={formData.price_sale}
-                onChange={handleInputChange}
+                onChange={handleNumberChange}
                 required
+                placeholder="0.00"
               />
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="category_id">Categoria *</Label>
-              <Select value={formData.category_id} onValueChange={(value) => handleSelectChange('category_id', value)}>
+              <Label htmlFor="category_id">Categoria</Label>
+              <Select value={formData.category_id} onValueChange={handleSelectChange('category_id')}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecionar categoria" />
+                  <SelectValue placeholder="Selecione uma categoria" />
                 </SelectTrigger>
                 <SelectContent>
                   {categories.map((category) => (
@@ -256,9 +228,9 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
 
             <div>
               <Label htmlFor="supplier_id">Fornecedor</Label>
-              <Select value={formData.supplier_id} onValueChange={(value) => handleSelectChange('supplier_id', value)}>
+              <Select value={formData.supplier_id} onValueChange={handleSelectChange('supplier_id')}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecionar fornecedor" />
+                  <SelectValue placeholder="Selecione um fornecedor" />
                 </SelectTrigger>
                 <SelectContent>
                   {suppliers.map((supplier) => (
@@ -272,14 +244,24 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
           </div>
 
           <div>
-            <Label htmlFor="manufacturer">Fabricante *</Label>
+            <Label htmlFor="manufacturer">Fabricante</Label>
             <Input
               id="manufacturer"
               name="manufacturer"
               value={formData.manufacturer}
               onChange={handleInputChange}
-              required
-              placeholder="Ex: Pharma Inc."
+              placeholder="Nome do fabricante"
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="image">URL da Imagem</Label>
+            <Input
+              id="image"
+              name="image"
+              value={formData.image}
+              onChange={handleInputChange}
+              placeholder="URL da imagem do produto"
             />
           </div>
 
@@ -289,38 +271,7 @@ const ProductFormModal: React.FC<ProductFormModalProps> = ({
               checked={formData.requiresPrescription}
               onCheckedChange={handleSwitchChange}
             />
-            <Label htmlFor="requiresPrescription">Requer receita médica</Label>
-          </div>
-
-          <div>
-            <Label htmlFor="image">Imagem do Produto</Label>
-            <div className="mt-2">
-              <input
-                id="image"
-                type="file"
-                accept="image/*"
-                onChange={handleImageChange}
-                className="hidden"
-              />
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => document.getElementById('image')?.click()}
-                className="w-full"
-              >
-                <Upload className="mr-2 h-4 w-4" />
-                {imagePreview ? 'Alterar Imagem' : 'Fazer Upload da Imagem'}
-              </Button>
-              {imagePreview && (
-                <div className="mt-2">
-                  <img
-                    src={imagePreview}
-                    alt="Preview"
-                    className="w-32 h-32 object-cover rounded border"
-                  />
-                </div>
-              )}
-            </div>
+            <Label htmlFor="requiresPrescription">Requer Prescrição Médica</Label>
           </div>
 
           <div className="flex justify-end space-x-2 pt-4">

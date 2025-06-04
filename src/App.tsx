@@ -1,11 +1,10 @@
-
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { CartProvider } from '@/contexts/CartContext';
 import { NotificationsProvider } from '@/contexts/NotificationsContext';
 import { Toaster } from '@/components/ui/toaster';
-import PrivateRoute from '@/components/PrivateRoute';
+import { PrivateRoute } from '@/components/PrivateRoute';
 
 // Public pages
 import Home from '@/pages/Home';

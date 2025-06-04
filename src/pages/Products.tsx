@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import MainLayout from '@/components/layout/MainLayout';
 import ProductCard from '@/components/products/ProductCard';
@@ -43,12 +44,16 @@ const Products = () => {
     fetchProducts();
   }, []);
   
-  // Get unique categories - handle both string and Category object types
+  // Get unique categories - handle both string and Category object types safely
   const categories = Array.from(
-    new Set(products.map(product => {
-      const category = product.category;
-      return typeof category === 'string' ? category : category.name;
-    }))
+    new Set(products
+      .map(product => {
+        const category = product.category;
+        if (!category) return null;
+        return typeof category === 'string' ? category : category?.name;
+      })
+      .filter(Boolean) // Remove null/undefined values
+    )
   );
   
   // Filter products based on search query and active tab
@@ -56,8 +61,13 @@ const Products = () => {
     const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
                          product.description.toLowerCase().includes(searchQuery.toLowerCase());
     
-    const categoryName = typeof product.category === 'string' ? product.category : product.category.name;
-    const matchesCategory = activeTab === 'all' || categoryName === activeTab;
+    if (activeTab === 'all') return matchesSearch;
+    
+    const category = product.category;
+    if (!category) return false;
+    
+    const categoryName = typeof category === 'string' ? category : category?.name;
+    const matchesCategory = categoryName === activeTab;
     
     return matchesSearch && matchesCategory;
   });
