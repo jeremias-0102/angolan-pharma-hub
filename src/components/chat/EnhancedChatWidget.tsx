@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -52,30 +51,30 @@ interface LocalUserSession {
   };
 }
 
-// Respostas naturais angolanas
-const ANGOLAN_RESPONSES = {
+// Respostas empáticas e poéticas com toque angolano
+const EMPATHETIC_RESPONSES = {
   greetings: [
-    'Ei chefe! Tá tudo nice? Bem-vindo à farmácia Lovable. Em que posso ajudar hoje, mano?',
-    'Olá irmão! Tudo fixe? Sou o teu farmacêutico virtual. Diz-me como te sentes.',
-    'Bom dia meu bró! Tranquilo? Como posso dar-te uma força hoje?',
-    'Epa, salve salve! Tá na boa? Conta-me o que se passa contigo.'
+    'Olá, meu irmão! Como um rio que encontra o mar, aqui chegaste ao lugar certo. Sou o Dr. BejanPharma, a alma digital desta farmácia Lovable.\n\n🌟 Não sou apenas código e algoritmos — sou a voz que escuta, o coração que compreende. Fala comigo como falavas com a tua avó: sem pressa, com verdade.\n\n💬 Podes usar o microfone ou escrever. Como te sentes hoje, irmão?',
+    'Salve, salve! Tua presença aqui é como sol após a chuva. Conta-me, que peso carregas no coração ou no corpo hoje, mano? 💫',
+    'Ei, chefe! Bem-vindo ao nosso cantinho de cura. Como as nossas avós diziam: "o corpo fala, nós escutamos". O que te trouxe aqui hoje? 🏺'
   ],
-  pain: [
-    'Eish, isso não tá bom não... Diz-me onde dói exactamente pra te ajudar, ya?',
-    'Ah mano, dor é chato mesmo. Conta-me mais sobre essa dor - onde é e há quanto tempo?',
-    'Ya, entendo... A dor incomoda muito. Explica-me melhor pra ver como te posso ajudar.',
-    'Tranquilo irmão, vamos resolver isso. Onde exactamente sentes essa dor?'
+  
+  headache_dizziness: [
+    'Essa combinação — dor de cabeça intensa + tonturas — acende o alarme do corpo a pedir atenção urgente. Como um sistema bem projetado, o teu organismo está a emitir sinais: algo está em desequilíbrio.',
+    'Ah, mano... quando a cabeça roda e dói, é como se o mundo girasse mais rápido que nós. O corpo está a gritar por equilíbrio.',
+    'Eish, essas tonturas com dor... é como se o universo dentro de ti estivesse em tempestade. Vamos acalmar essas águas.'
   ],
-  fever: [
-    'Febre não é brincadeira, meu bró. Há quanto tempo tens febre? Tás a medir a temperatura?',
-    'Epa, febre... isso pode ser várias coisas. Conta-me - tens mais algum sintoma além da febre?',
-    'Ya, febre é sinal que o corpo tá a lutar contra algo. Diz-me, tens dores no corpo também?'
+
+  fever_weakness: [
+    'Febre é o guerreiro interno do corpo lutando contra invasores. E a fraqueza? É o preço da batalha. Mas juntos vamos encontrar a paz.',
+    'Quando o corpo queima em febre e a força se esvai, é hora de parar e escutar. O organismo pede descanso e cuidado especial.',
+    'Febre alta com fraqueza... teu corpo está numa luta épica. Vamos dar-lhe as armas certas para vencer.'
   ],
-  confusion: [
-    'Desculpa mano, não entendi bem. Podes explicar melhor o que se passa contigo?',
-    'Hum... fala-me mais devagar, irmão. Qual é exactamente o problema?',
-    'Epa, não percebi bem. Conta-me outra vez - que sintomas tens?',
-    'Ya, explica melhor isso. Qual é o teu problema hoje?'
+
+  emotional_support: [
+    'Às vezes a dor não é só física, né mano? O coração também pode doer. Estou aqui para escutar tudo.',
+    'Como dizem os mais velhos: "quem carrega o mundo nas costas, um dia as costas doem". Fala comigo, irmão.',
+    'Na nossa cultura, cuidar é amar. E amar é escutar sem julgar. Conta-me tudo o que sentes.'
   ]
 };
 
@@ -83,7 +82,7 @@ const INITIAL_MESSAGES: Message[] = [
   {
     id: '1',
     type: 'bot',
-    text: 'Ei mano! Tudo bem? Sou o Dr. BejanPharma, o teu farmacêutico virtual aqui em Angola. Posso ajudar-te com sintomas, medicamentos e até encontrar os melhores preços nas farmácias. Podes falar comigo usando o microfone ou escrever. Como te sentes hoje, irmão?',
+    text: 'Olá, meu irmão! Como um rio que encontra o mar, aqui chegaste ao lugar certo. Sou o Dr. BejanPharma, a alma digital desta farmácia Lovable.\n\n🌟 Não sou apenas código e algoritmos — sou a voz que escuta, o coração que compreende. Fala comigo como falavas com a tua avó: sem pressa, com verdade.\n\n💬 Podes usar o microfone ou escrever. Como te sentes hoje, irmão?',
     timestamp: new Date(),
   },
 ];
@@ -114,34 +113,52 @@ const EnhancedChatWidget: React.FC = () => {
   const navigate = useNavigate();
   const { addToCart } = useCart();
 
-  // Função para obter resposta natural angolana
-  const getAngolanResponse = (userMessage: string): string | null => {
+  // Função para respostas empáticas e inteligentes
+  const getEmpatheticResponse = (userMessage: string): string | null => {
     const message = userMessage.toLowerCase();
     
     // Saudações
     if (message.includes('olá') || message.includes('oi') || message.includes('bom dia') || 
         message.includes('boa tarde') || message.includes('ei') || message.includes('salve') ||
         message.includes('tá fixe') || message.includes('como vai')) {
-      return ANGOLAN_RESPONSES.greetings[Math.floor(Math.random() * ANGOLAN_RESPONSES.greetings.length)];
+      return EMPATHETIC_RESPONSES.greetings[Math.floor(Math.random() * EMPATHETIC_RESPONSES.greetings.length)];
     }
     
-    // Dores
-    if (message.includes('dor') || message.includes('doi') || message.includes('doendo')) {
-      return ANGOLAN_RESPONSES.pain[Math.floor(Math.random() * ANGOLAN_RESPONSES.pain.length)];
+    // Dor de cabeça + tonturas (combinação séria)
+    if ((message.includes('dor') && message.includes('cabeça') && message.includes('tontura')) ||
+        (message.includes('cabeça') && message.includes('roda')) ||
+        (message.includes('vertigem') && message.includes('dor'))) {
+      
+      const response = EMPATHETIC_RESPONSES.headache_dizziness[Math.floor(Math.random() * EMPATHETIC_RESPONSES.headache_dizziness.length)];
+      return response + '\n\n🌪️ **Possíveis causas:**\n- Desidratação — O cérebro odeia falta de água\n- Fadiga extrema — Quando a mente carrega o mundo, o corpo afunda\n- Hipoglicemia — Baixo açúcar no sangue mexe com o equilíbrio\n- Stress acumulado ou infecções\n\n🛠️ **O que fazer agora:**\n- Bebe água fresca imediatamente\n- Come algo doce (fruta ou mel)\n- Deita-te num lugar escuro e fresco\n- Se persistir ou agravar, **procura o médico urgente**\n\n🖤 Cuida-te, irmão. O corpo fala com sinais... e o nosso dever é escutá-lo.';
     }
     
-    // Febre
-    if (message.includes('febre') || message.includes('febril') || message.includes('temperatura')) {
-      return ANGOLAN_RESPONSES.fever[Math.floor(Math.random() * ANGOLAN_RESPONSES.fever.length)];
+    // Febre + fraqueza
+    if ((message.includes('febre') && message.includes('fraqueza')) ||
+        (message.includes('febril') && message.includes('fraco')) ||
+        (message.includes('temperatura') && message.includes('cansaço'))) {
+      
+      const response = EMPATHETIC_RESPONSES.fever_weakness[Math.floor(Math.random() * EMPATHETIC_RESPONSES.fever_weakness.length)];
+      return response + '\n\n🔥 **Tratamento imediato:**\n- Paracetamol 500mg de 6 em 6 horas\n- Banhos com água morna (não fria!)\n- Hidratação constante\n- Repouso absoluto\n\n⚠️ **Vai ao hospital se:**\n- Febre acima de 39°C\n- Dificuldade em respirar\n- Vómitos constantes\n- Confusão mental\n\nForça, guerreiro. Esta batalha também vais vencer! 💪';
+    }
+    
+    // Dores gerais
+    if (message.includes('dor') && !message.includes('cabeça')) {
+      return 'Eish... a dor é como um visitante indesejado que se instala em nós. Mas cada dor tem a sua linguagem, mano.\n\nConta-me:\n- Onde dói exactamente?\n- É uma dor aguda ou surda?\n- Começou quando?\n- Há algo que alivia ou piora?\n\nCom essas respostas, posso guiar-te melhor. A dor não é apenas sinal de problema — é também caminho para a cura. 🙏';
+    }
+    
+    // Tristeza/problemas emocionais
+    if (message.includes('triste') || message.includes('deprimido') || message.includes('ansioso') ||
+        message.includes('não estou bem') || message.includes('mal') || message.includes('preocupado')) {
+      return EMPATHETIC_RESPONSES.emotional_support[Math.floor(Math.random() * EMPATHETIC_RESPONSES.emotional_support.length)] + '\n\n💙 **Lembra-te:**\n- Não estás sozinho nesta jornada\n- Sentir é humano, falar sobre isso é corajoso\n- Às vezes precisamos de ajuda profissional — não há vergonha nisso\n\nSe quiseres, posso sugerir produtos naturais que ajudam com o bem-estar. Mas principalmente: **conversa com alguém de confiança** ou procura um psicólogo. 🤝';
     }
     
     return null;
   };
 
-  // Initialize speech recognition with Portuguese (Angola)
+  // Initialize speech recognition
   useEffect(() => {
     const initializeSpeechRecognition = async () => {
-      // Check if speech recognition is supported
       if (!('SpeechRecognition' in window) && !('webkitSpeechRecognition' in window)) {
         console.log('Speech recognition not supported');
         setSpeechSupported(false);
@@ -149,14 +166,13 @@ const EnhancedChatWidget: React.FC = () => {
       }
 
       try {
-        // Request microphone permission
         await navigator.mediaDevices.getUserMedia({ audio: true });
         
         const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
         const recognitionInstance = new SpeechRecognition();
         
         recognitionInstance.continuous = false;
-        recognitionInstance.interimResults = false; // Mudei para false para melhor precisão
+        recognitionInstance.interimResults = false;
         recognitionInstance.lang = 'pt-AO'; // Português de Angola
         
         recognitionInstance.onstart = () => {
@@ -171,7 +187,6 @@ const EnhancedChatWidget: React.FC = () => {
             setNewMessage(transcript);
             setIsRecording(false);
             
-            // Auto-send the message after speech recognition
             setTimeout(() => {
               handleSendMessage(transcript);
             }, 300);
@@ -274,16 +289,16 @@ const EnhancedChatWidget: React.FC = () => {
     setTimeout(() => {
       setIsTyping(false);
       callback();
-    }, 800 + Math.random() * 1000); // Mais rápido e natural
+    }, 1200 + Math.random() * 800); // Typing mais natural e pensativo
   };
 
   const handleMedicalConsultation = async (message: string) => {
     try {
-      // Primeiro, tentar resposta natural angolana
-      const angolanResponse = getAngolanResponse(message);
+      // Primeiro, tentar resposta empática inteligente
+      const empatheticResponse = getEmpatheticResponse(message);
       
-      if (angolanResponse) {
-        addBotMessage(angolanResponse);
+      if (empatheticResponse) {
+        addBotMessage(empatheticResponse);
         // Atualizar o estágio para sintomas se foi uma saudação
         if (userSession.consultationStage === 'initial') {
           setUserSession(prev => ({ ...prev, consultationStage: 'symptoms' }));
@@ -291,7 +306,7 @@ const EnhancedChatWidget: React.FC = () => {
         return;
       }
       
-      // Se não encontrou resposta natural, usar a IA médica
+      // Se não encontrou resposta empática, usar a IA médica avançada
       const updatedSession = { ...userSession };
       
       if (userSession.consultationStage === 'initial') {
@@ -309,7 +324,7 @@ const EnhancedChatWidget: React.FC = () => {
       }
     } catch (error) {
       console.error('Error in medical consultation:', error);
-      addBotMessage('Epa, tive um problema técnico agora. Podes repetir o que disseste, mano?');
+      addBotMessage('Epa, tive um problema técnico agora. Como as nossas avós diziam: "paciência é remédio que não se compra". Podes repetir o que disseste, mano? 💫');
     }
   };
 
@@ -364,8 +379,8 @@ const EnhancedChatWidget: React.FC = () => {
         setNewMessage('');
         recognition.start();
         toast({
-          title: "A ouvir...",
-          description: "Fala agora, mano! Conta-me como te sentes.",
+          title: "A ouvir com o coração...",
+          description: "Fala agora, mano! Conta-me tudo o que sentes, sem pressa. 🎤",
         });
       } catch (error) {
         console.error('Error starting recognition:', error);
@@ -378,21 +393,21 @@ const EnhancedChatWidget: React.FC = () => {
     }
   };
 
-  // Text-to-speech para ler a última mensagem do bot com sotaque angolano
+  // Text-to-speech aprimorado
   const speakLastMessage = () => {
     const lastBotMessage = [...messages].reverse().find(msg => msg.type === 'bot');
     if (lastBotMessage && 'speechSynthesis' in window) {
       setIsSpeaking(true);
       const utterance = new SpeechSynthesisUtterance(lastBotMessage.text);
       utterance.lang = 'pt-BR'; // Mais próximo do sotaque angolano
-      utterance.rate = 0.9; // Um pouco mais devagar para sotaque natural
-      utterance.pitch = 1.1; // Tom um pouco mais alto
+      utterance.rate = 0.85; // Mais devagar para naturalidade
+      utterance.pitch = 1.1; // Tom caloroso
+      utterance.volume = 0.8; // Volume confortável
       utterance.onend = () => setIsSpeaking(false);
       speechSynthesis.speak(utterance);
     }
   };
 
-  // Stop text-to-speech
   const stopSpeaking = () => {
     if ('speechSynthesis' in window) {
       speechSynthesis.cancel();
@@ -403,16 +418,14 @@ const EnhancedChatWidget: React.FC = () => {
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      addBotMessage('📄 Receita recebida, mano! Deixa-me analisar isso...');
+      addBotMessage('📄 Receita recebida, meu irmão! Como um escriba sábio, vou analisar cada linha com cuidado...');
       
-      // Simulate OCR processing
       simulateTyping(async () => {
-        // In a real app, you would use OCR service here
         const mockPrescriptionText = `Paracetamol 500mg - 1 comprimido a cada 6 horas por 3 dias
 Amoxicilina 875mg - 1 comprimido a cada 12 horas por 7 dias
 Omeprazol 20mg - 1 cápsula em jejum por 14 dias`;
         
-        addBotMessage('Ya, analisei a tua receita. Tens aqui alguns medicamentos importantes. Posso ajudar-te a encontrar nas farmácias de Luanda com os melhores preços, irmão!');
+        addBotMessage('Ya, analisei a tua receita com o olhar de quem cuida. Tens aqui medicamentos importantes que vão ajudar na tua cura. Posso procurar nas farmácias de Luanda os melhores preços — assim poupas uns kwanzas, irmão! 💰✨');
       });
     }
   };
@@ -427,34 +440,34 @@ Omeprazol 20mg - 1 cápsula em jejum por 14 dias`;
     <>
       <Button
         onClick={toggleChat}
-        className={`rounded-full fixed ${isMobile ? 'bottom-4 right-4' : 'bottom-8 right-8'} z-50 shadow-lg bg-pharma-primary hover:bg-pharma-primary/90 h-14 w-14 p-0 flex items-center justify-center`}
-        aria-label="Farmacêutico Virtual"
+        className={`rounded-full fixed ${isMobile ? 'bottom-4 right-4' : 'bottom-8 right-8'} z-50 shadow-lg bg-gradient-to-r from-pharma-primary to-green-600 hover:from-pharma-primary/90 hover:to-green-700 h-16 w-16 p-0 flex items-center justify-center transition-all duration-300 hover:scale-105`}
+        aria-label="Dr. BejanPharma - Farmacêutico com Alma"
       >
-        {isOpen ? <X size={24} /> : <MessageSquare size={24} />}
+        {isOpen ? <X size={26} /> : <MessageSquare size={26} />}
       </Button>
       
       {isOpen && (
-        <Card className={`fixed ${isMobile ? 'bottom-20 right-4 left-4' : 'bottom-24 right-8'} z-50 shadow-xl w-80 sm:w-96 h-[35rem] flex flex-col`}>
-          <CardHeader className="bg-pharma-primary text-white py-3 px-4 rounded-t-lg">
+        <Card className={`fixed ${isMobile ? 'bottom-20 right-4 left-4' : 'bottom-24 right-8'} z-50 shadow-2xl w-80 sm:w-96 h-[36rem] flex flex-col border-2 border-green-200`}>
+          <CardHeader className="bg-gradient-to-r from-pharma-primary to-green-600 text-white py-4 px-4 rounded-t-lg">
             <div className="flex justify-between items-center">
               <div className="flex items-center">
-                <Avatar className="h-8 w-8 mr-2 bg-white">
-                  <div className="w-full h-full bg-green-500 rounded-full flex items-center justify-center text-white font-bold text-xs">
+                <Avatar className="h-10 w-10 mr-3 bg-white shadow-inner">
+                  <div className="w-full h-full bg-gradient-to-br from-green-500 to-green-700 rounded-full flex items-center justify-center text-white font-bold text-sm">
                     Dr
                   </div>
                 </Avatar>
                 <div>
-                  <h3 className="font-medium text-sm">Dr. BejanPharma</h3>
-                  <p className="text-xs opacity-80">Farmacêutico Virtual</p>
+                  <h3 className="font-semibold text-base">Dr. BejanPharma</h3>
+                  <p className="text-xs opacity-90">Farmacêutico com Alma 💫</p>
                 </div>
               </div>
-              <Button variant="ghost" size="icon" onClick={toggleChat} className="text-white hover:bg-pharma-primary/90">
-                <X size={18} />
+              <Button variant="ghost" size="icon" onClick={toggleChat} className="text-white hover:bg-white/20 rounded-full">
+                <X size={20} />
               </Button>
             </div>
           </CardHeader>
           
-          <CardContent className="flex-grow p-3 overflow-hidden">
+          <CardContent className="flex-grow p-4 overflow-hidden bg-gradient-to-b from-green-50 to-white">
             <ScrollArea className="h-full pr-3">
               <div className="space-y-4">
                 {messages.map((msg) => (
@@ -463,14 +476,14 @@ Omeprazol 20mg - 1 cápsula em jejum por 14 dias`;
                     className={`flex ${msg.type === 'user' ? 'justify-end' : 'justify-start'}`}
                   >
                     <div
-                      className={`max-w-[85%] rounded-lg px-3 py-2 ${
+                      className={`max-w-[85%] rounded-2xl px-4 py-3 shadow-md ${
                         msg.type === 'user'
-                          ? 'bg-pharma-primary text-white'
-                          : 'bg-gray-100 text-gray-800'
+                          ? 'bg-gradient-to-r from-pharma-primary to-green-600 text-white'
+                          : 'bg-white text-gray-800 border border-green-100'
                       }`}
                     >
-                      <div className="text-sm whitespace-pre-line">{msg.text}</div>
-                      <p className="text-xs mt-1 opacity-70">
+                      <div className="text-sm whitespace-pre-line leading-relaxed">{msg.text}</div>
+                      <p className="text-xs mt-2 opacity-70">
                         {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </p>
                     </div>
@@ -478,11 +491,12 @@ Omeprazol 20mg - 1 cápsula em jejum por 14 dias`;
                 ))}
                 {isTyping && (
                   <div className="flex justify-start">
-                    <div className="max-w-[80%] rounded-lg px-3 py-2 bg-gray-100">
-                      <div className="flex space-x-1">
-                        <div className="w-2 h-2 rounded-full bg-gray-400 animate-bounce" style={{ animationDelay: '0s' }}></div>
-                        <div className="w-2 h-2 rounded-full bg-gray-400 animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                        <div className="w-2 h-2 rounded-full bg-gray-400 animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+                    <div className="max-w-[80%] rounded-2xl px-4 py-3 bg-white border border-green-100 shadow-md">
+                      <div className="flex space-x-2 items-center">
+                        <div className="w-2 h-2 rounded-full bg-green-400 animate-bounce" style={{ animationDelay: '0s' }}></div>
+                        <div className="w-2 h-2 rounded-full bg-green-400 animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                        <div className="w-2 h-2 rounded-full bg-green-400 animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+                        <span className="text-xs text-gray-500 ml-2">Dr. BejanPharma está a pensar...</span>
                       </div>
                     </div>
                   </div>
@@ -492,12 +506,12 @@ Omeprazol 20mg - 1 cápsula em jejum por 14 dias`;
             </ScrollArea>
           </CardContent>
           
-          <div className="px-3 py-2 bg-gray-50">
-            <div className="flex space-x-2 mb-2">
+          <div className="px-4 py-3 bg-gray-50 border-t border-green-100">
+            <div className="flex space-x-2 mb-3">
               <Button 
                 variant="outline"
                 size="sm"
-                className="text-xs flex items-center"
+                className="text-xs flex items-center border-green-200 hover:bg-green-50"
                 onClick={() => navigate('/produtos')}
               >
                 <PlusCircle className="h-3 w-3 mr-1" />
@@ -506,7 +520,7 @@ Omeprazol 20mg - 1 cápsula em jejum por 14 dias`;
               <Button 
                 variant="outline"
                 size="sm"
-                className="text-xs flex items-center"
+                className="text-xs flex items-center border-green-200 hover:bg-green-50"
                 onClick={() => fileInputRef.current?.click()}
               >
                 <FileText className="h-3 w-3 mr-1" />
@@ -515,7 +529,7 @@ Omeprazol 20mg - 1 cápsula em jejum por 14 dias`;
               <Button
                 variant="outline"
                 size="sm"
-                className="text-xs"
+                className="text-xs border-green-200 hover:bg-green-50"
                 onClick={isSpeaking ? stopSpeaking : speakLastMessage}
               >
                 <Volume2 className="h-3 w-3" />
@@ -529,25 +543,26 @@ Omeprazol 20mg - 1 cápsula em jejum por 14 dias`;
                   size="icon"
                   disabled={isTyping || !speechSupported}
                   onClick={toggleRecording}
-                  className={`${isRecording ? 'text-red-500 animate-pulse bg-red-50' : 'text-gray-600'} hover:bg-gray-100 ${!speechSupported ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  className={`${isRecording ? 'text-red-500 animate-pulse bg-red-50' : 'text-green-600'} hover:bg-green-100 rounded-full ${!speechSupported ? 'opacity-50 cursor-not-allowed' : ''}`}
                   title={speechSupported ? (isRecording ? "Parar gravação" : "Começar gravação") : "Reconhecimento de voz não disponível"}
                 >
                   {isRecording ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
                 </Button>
                 <Input
                   ref={inputRef}
-                  placeholder={isRecording ? "A ouvir..." : "Fala ou escreve como te sentes, mano..."}
+                  placeholder={isRecording ? "A ouvir com o coração..." : "Fala ou escreve como te sentes, mano... 💬"}
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
                   onKeyPress={handleKeyPress}
                   disabled={isTyping || isRecording}
-                  className="flex-grow"
+                  className="flex-grow border-green-200 focus:border-green-400 rounded-full"
                 />
                 <Button
                   variant="ghost"
                   size="icon"
                   disabled={!newMessage.trim() || isTyping || isRecording}
                   onClick={() => handleSendMessage()}
+                  className="text-green-600 hover:bg-green-100 rounded-full"
                 >
                   <Send className="h-5 w-5" />
                 </Button>
