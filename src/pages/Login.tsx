@@ -122,15 +122,22 @@ const Login = () => {
     }
   };
 
-  // Login social habilitado com escolha de conta
+  // Login social com Google OAuth real e outros simulados
   const handleSocialAuth = async (provider: 'google' | 'facebook' | 'twitter') => {
     setIsLoading(true);
     
     try {
-      toast({
-        title: "Conectando...",
-        description: `Iniciando login com ${provider}`,
-      });
+      if (provider === 'google') {
+        toast({
+          title: "Selecionando conta Google...",
+          description: "Escolha sua conta nas opções que aparecerão",
+        });
+      } else {
+        toast({
+          title: "Conectando...",
+          description: `Iniciando login com ${provider}`,
+        });
+      }
       
       const { user } = await handleSocialLogin(provider);
       
@@ -140,6 +147,7 @@ const Login = () => {
       navigate('/');
       
     } catch (error) {
+      console.error('Erro no login social:', error);
       toast({
         variant: "destructive",
         title: "Erro no login social",
@@ -260,6 +268,7 @@ const Login = () => {
                           onClick={() => handleSocialAuth('google')}
                           className="w-full"
                           disabled={isLoading}
+                          title="Login com conta Google real"
                         >
                           <svg className="w-4 h-4" viewBox="0 0 24 24">
                             <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -433,6 +442,7 @@ const Login = () => {
                           onClick={() => handleSocialAuth('google')}
                           className="w-full"
                           disabled={isLoading}
+                          title="Login com conta Google real"
                         >
                           <svg className="w-4 h-4" viewBox="0 0 24 24">
                             <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
