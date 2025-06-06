@@ -90,7 +90,7 @@ const Checkout = () => {
       case 2:
         return !!(formData.name && formData.email && formData.phone && formData.address && formData.city && formData.province);
       case 3:
-        return !!paymentMethod && (!hasPrescriptionItems || prescriptionFile);
+        return !!paymentMethod && (!hasPrescriptionItems || !!prescriptionFile);
       default:
         return true;
     }
