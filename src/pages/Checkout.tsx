@@ -74,7 +74,7 @@ const Checkout = () => {
   // Verificar se há itens que precisam de receita
   useEffect(() => {
     const requiresPrescription = items.some(item => item.product.needsPrescription);
-    setHasPrescriptionItems(requiresPrescription);
+    setHasPrescriptionItems(Boolean(requiresPrescription));
   }, [items]);
 
   // Atualizar dados do formulário
