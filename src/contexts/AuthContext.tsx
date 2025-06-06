@@ -37,19 +37,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Initialize the database with sample users if needed
     const initializeUsers = async () => {
       try {
-        // Clear any existing database issues
+        // Force clear and recreate the database to fix version issues
         if ('indexedDB' in window) {
-          // Force clear the database if there are version issues
           try {
             const deleteReq = indexedDB.deleteDatabase('pharmaDB');
-            deleteReq.onsuccess = () => console.log('Database cleared for fresh start');
+            deleteReq.onsuccess = () => {
+              console.log('✅ Database cleared successfully');
+            };
+            deleteReq.onerror = () => {
+              console.log('Database was already cleared');
+            };
           } catch (e) {
             console.log('Database clear not needed');
           }
         }
 
-        // Wait a bit for database cleanup
-        await new Promise(resolve => setTimeout(resolve, 100));
+        // Wait for database cleanup
+        await new Promise(resolve => setTimeout(resolve, 500));
 
         const existingUsers = await getAll<User>(STORES.USERS);
         
@@ -57,8 +61,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           // Add sample users if no users exist
           const sampleUsers = [
             {
-              id: uuidv4(),
-              name: 'Admin User',
+              id: 'admin-001',
+              name: 'Administrador Pharma',
               email: 'admin@pharma.com',
               password: 'admin123',
               role: 'admin' as UserRole,
@@ -69,7 +73,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               updated_at: new Date().toISOString()
             },
             {
-              id: uuidv4(),
+              id: 'pharm-001',
               name: 'Farmacêutico Demo',
               email: 'farmaceutico@pharma.com',
               password: 'farm123',
@@ -81,7 +85,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               updated_at: new Date().toISOString()
             },
             {
-              id: uuidv4(),
+              id: 'deliv-001',
               name: 'Entregador Demo',
               email: 'entregador@pharma.com',
               password: 'deliv123',
@@ -93,7 +97,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               updated_at: new Date().toISOString()
             },
             {
-              id: uuidv4(),
+              id: 'client-001',
               name: 'Cliente Demo',
               email: 'cliente@pharma.com',
               password: 'client123',
@@ -115,25 +119,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           console.log('📧 Email: admin@pharma.com');
           console.log('🔒 Senha: admin123');
         } else {
-          // Check if admin user exists
-          const adminUser = existingUsers.find(u => u.role === 'admin');
-          if (adminUser) {
-            console.log('✅ CREDENCIAIS DE ADMINISTRADOR:');
-            console.log('📧 Email: admin@pharma.com');
-            console.log('🔒 Senha: admin123');
-          }
+          console.log('✅ CREDENCIAIS DE ADMINISTRADOR:');
+          console.log('📧 Email: admin@pharma.com');
+          console.log('🔒 Senha: admin123');
         }
       } catch (error) {
         console.error('❌ Erro ao inicializar usuários:', error);
-        // Try to recover by clearing localStorage and database
-        localStorage.clear();
-        if ('indexedDB' in window) {
-          try {
-            indexedDB.deleteDatabase('pharmaDB');
-          } catch (e) {
-            console.log('Could not clear database');
-          }
-        }
       }
     };
     
@@ -165,15 +156,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         });
       } else {
         console.log('❌ Email ou senha inválidos');
+        toast({
+          variant: "destructive",
+          title: "Falha no login",
+          description: "Email ou senha inválidos. Tente: admin@pharma.com / admin123",
+        });
         throw new Error('Email ou senha inválidos');
       }
     } catch (error) {
       console.error('❌ Erro no login:', error);
-      toast({
-        variant: "destructive",
-        title: "Falha no login",
-        description: "Email ou senha inválidos. Tente: admin@pharma.com / admin123",
-      });
       throw error;
     } finally {
       setIsLoading(false);

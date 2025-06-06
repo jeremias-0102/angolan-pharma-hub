@@ -23,20 +23,33 @@ export const socialProviders: SocialAuthProvider[] = [
   }
 ];
 
-// Função simplificada para demo - não tenta fazer login real
-export const handleSocialLogin = async (provider: string): Promise<void> => {
-  console.log(`🔄 Login com ${provider} solicitado...`);
+// Função para simular login social - cria usuário automaticamente
+export const handleSocialLogin = async (provider: string): Promise<{ user: any; token: string }> => {
+  console.log(`🔄 Iniciando login com ${provider}...`);
   
-  // Para demo, apenas simula o processo
-  return new Promise((resolve, reject) => {
-    // Simula um delay
+  return new Promise((resolve) => {
+    // Simula um delay de autenticação
     setTimeout(() => {
-      console.log(`ℹ️ Login social com ${provider} não está configurado`);
-      console.log(`ℹ️ Use as credenciais demo: admin@pharma.com / admin123`);
+      // Simula dados do usuário retornados pelo provedor social
+      const socialUser = {
+        id: `${provider}-${Date.now()}`,
+        name: `Usuário ${provider.charAt(0).toUpperCase() + provider.slice(1)}`,
+        email: `usuario.${provider}@exemplo.com`,
+        avatar: '',
+        provider: provider,
+        role: 'client',
+        is_active: true,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+
+      const token = `fake-jwt-token-${provider}-${Date.now()}`;
+
+      console.log(`✅ Login com ${provider} bem-sucedido!`);
+      console.log('👤 Usuário:', socialUser);
       
-      // Rejeita com mensagem informativa
-      reject(new Error(`Login com ${provider} não está disponível na versão demo. Use as credenciais: admin@pharma.com / admin123`));
-    }, 1000);
+      resolve({ user: socialUser, token });
+    }, 1500);
   });
 };
 
@@ -46,6 +59,6 @@ export const handleAuthCallback = async (
   code: string, 
   state: string
 ): Promise<any> => {
-  console.log(`ℹ️ Callback de ${provider} não implementado na versão demo`);
-  throw new Error('Autenticação social não disponível na versão demo');
+  console.log(`✅ Processando callback de ${provider}`);
+  return handleSocialLogin(provider);
 };
