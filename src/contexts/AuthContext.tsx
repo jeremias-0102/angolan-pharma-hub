@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, UserRole } from '@/types/models';
 import { getAll, update, add, getByIndex, STORES } from '@/lib/database';
@@ -45,44 +46,48 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             {
               id: uuidv4(),
               name: 'Admin User',
-              email: 'admin@example.com',
+              email: 'admin@pharma.com',
               password: 'admin123',
               role: 'admin' as UserRole,
               phone: '+244 923 456 789',
               avatar: '',
+              is_active: true,
               created_at: new Date().toISOString(),
               updated_at: new Date().toISOString()
             },
             {
               id: uuidv4(),
-              name: 'Pharmacist User',
-              email: 'pharmacist@example.com',
-              password: 'pharm123',
+              name: 'Farmacêutico Demo',
+              email: 'farmaceutico@pharma.com',
+              password: 'farm123',
               role: 'pharmacist' as UserRole,
               phone: '+244 912 345 678',
               avatar: '',
+              is_active: true,
               created_at: new Date().toISOString(),
               updated_at: new Date().toISOString()
             },
             {
               id: uuidv4(),
-              name: 'Delivery User',
-              email: 'delivery@example.com',
+              name: 'Entregador Demo',
+              email: 'entregador@pharma.com',
               password: 'deliv123',
               role: 'delivery' as UserRole,
               phone: '+244 934 567 890',
               avatar: '',
+              is_active: true,
               created_at: new Date().toISOString(),
               updated_at: new Date().toISOString()
             },
             {
               id: uuidv4(),
-              name: 'Client User',
-              email: 'client@example.com',
+              name: 'Cliente Demo',
+              email: 'cliente@pharma.com',
               password: 'client123',
               role: 'client' as UserRole,
               phone: '+244 956 789 123',
               avatar: '',
+              is_active: true,
               created_at: new Date().toISOString(),
               updated_at: new Date().toISOString()
             }
@@ -93,6 +98,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
           
           console.log('Sample users created successfully');
+          console.log('CREDENCIAIS DE ADMINISTRADOR:');
+          console.log('Email: admin@pharma.com');
+          console.log('Senha: admin123');
+        } else {
+          // Check if admin user exists
+          const adminUser = existingUsers.find(u => u.role === 'admin');
+          if (adminUser) {
+            console.log('CREDENCIAIS DE ADMINISTRADOR ENCONTRADAS:');
+            console.log('Email:', adminUser.email);
+            console.log('Senha: (use a senha original ou admin123)');
+          }
         }
       } catch (error) {
         console.error('Error initializing users:', error);
