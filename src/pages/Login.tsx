@@ -15,6 +15,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { handleSocialLogin } from '@/services/socialAuthService';
+import { initializeDemoUsers } from '@/services/demoUserService';
 
 // Login schema
 const loginSchema = z.object({
