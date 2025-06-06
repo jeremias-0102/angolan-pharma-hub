@@ -22,7 +22,7 @@ const loginSchema = z.object({
   password: z.string().min(6, "A senha deve ter pelo menos 6 caracteres")
 });
 
-// Registration schema - Removendo o campo de role
+// Registration schema
 const registerSchema = z.object({
   name: z.string().min(3, "O nome deve ter pelo menos 3 caracteres"),
   email: z.string().email("Email inválido"),
@@ -97,14 +97,13 @@ const Login = () => {
     const { confirmPassword, ...userData } = values;
     
     try {
-      // Definir role como 'client' automaticamente
       await register({
         email: userData.email,
         name: userData.name,
         password: userData.password,
         phone: userData.phone || '',
-        role: 'client', // Sempre será cliente quando registrado direto no site
-        is_active: true, // Add missing is_active property
+        role: 'client',
+        is_active: true,
         avatar: '',
       });
       
@@ -120,21 +119,29 @@ const Login = () => {
     }
   };
 
-  // Simular login social (em produção seria integrado com APIs reais)
-  const handleSocialAuth = (provider: 'google' | 'facebook' | 'twitter') => {
+  // Mostrar aviso sobre login social
+  const handleSocialAuth = async (provider: 'google' | 'facebook' | 'twitter') => {
     toast({
-      title: "Redirecionando...",
-      description: `Iniciando login com ${provider}`,
+      title: "Login Social Indisponível",
+      description: "Use as credenciais demo: admin@pharma.com / admin123",
+      variant: "destructive",
     });
-    
-    // Call the actual social login function
-    handleSocialLogin(provider);
   };
 
   return (
     <MainLayout>
       <div className="container mx-auto px-4 py-12">
         <div className="max-w-md mx-auto">
+          {/* Demo credentials info */}
+          <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <h3 className="font-semibold text-blue-800 mb-2">🔑 Credenciais Demo</h3>
+            <div className="text-sm text-blue-700 space-y-1">
+              <p><strong>Admin:</strong> admin@pharma.com / admin123</p>
+              <p><strong>Farmacêutico:</strong> farmaceutico@pharma.com / farm123</p>
+              <p><strong>Cliente:</strong> cliente@pharma.com / client123</p>
+            </div>
+          </div>
+
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="login">Login</TabsTrigger>
@@ -160,7 +167,7 @@ const Login = () => {
                             <FormLabel>Email</FormLabel>
                             <FormControl>
                               <Input
-                                placeholder="seu@email.com"
+                                placeholder="admin@pharma.com"
                                 {...field}
                               />
                             </FormControl>
@@ -186,6 +193,7 @@ const Login = () => {
                             <FormControl>
                               <Input
                                 type="password"
+                                placeholder="admin123"
                                 {...field}
                               />
                             </FormControl>
@@ -205,7 +213,7 @@ const Login = () => {
                         </div>
                         <div className="relative flex justify-center text-xs uppercase">
                           <span className="bg-background px-2 text-muted-foreground">
-                            Ou continue com
+                            Login Social (Demo)
                           </span>
                         </div>
                       </div>
@@ -216,6 +224,7 @@ const Login = () => {
                           variant="outline"
                           onClick={() => handleSocialAuth('google')}
                           className="w-full"
+                          disabled
                         >
                           <svg className="w-4 h-4" viewBox="0 0 24 24">
                             <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -229,6 +238,7 @@ const Login = () => {
                           variant="outline"
                           onClick={() => handleSocialAuth('facebook')}
                           className="w-full"
+                          disabled
                         >
                           <svg className="w-4 h-4" viewBox="0 0 24 24">
                             <path fill="currentColor" d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
@@ -239,6 +249,7 @@ const Login = () => {
                           variant="outline"
                           onClick={() => handleSocialAuth('twitter')}
                           className="w-full"
+                          disabled
                         >
                           <svg className="w-4 h-4" viewBox="0 0 24 24">
                             <path fill="currentColor" d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.80l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
@@ -354,6 +365,7 @@ const Login = () => {
                           variant="outline"
                           onClick={() => handleSocialAuth('google')}
                           className="w-full"
+                          disabled
                         >
                           <svg className="w-4 h-4" viewBox="0 0 24 24">
                             <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -367,6 +379,7 @@ const Login = () => {
                           variant="outline"
                           onClick={() => handleSocialAuth('facebook')}
                           className="w-full"
+                          disabled
                         >
                           <svg className="w-4 h-4" viewBox="0 0 24 24">
                             <path fill="currentColor" d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
@@ -377,6 +390,7 @@ const Login = () => {
                           variant="outline"
                           onClick={() => handleSocialAuth('twitter')}
                           className="w-full"
+                          disabled
                         >
                           <svg className="w-4 h-4" viewBox="0 0 24 24">
                             <path fill="currentColor" d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.80l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>

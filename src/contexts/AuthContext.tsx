@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, UserRole } from '@/types/models';
 import { getAll, update, add, getByIndex, STORES } from '@/lib/database';
@@ -38,6 +37,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Initialize the database with sample users if needed
     const initializeUsers = async () => {
       try {
+        // Clear any existing database issues
+        if ('indexedDB' in window) {
+          // Force clear the database if there are version issues
+          try {
+            const deleteReq = indexedDB.deleteDatabase('pharmaDB');
+            deleteReq.onsuccess = () => console.log('Database cleared for fresh start');
+          } catch (e) {
+            console.log('Database clear not needed');
+          }
+        }
+
+        // Wait a bit for database cleanup
+        await new Promise(resolve => setTimeout(resolve, 100));
+
         const existingUsers = await getAll<User>(STORES.USERS);
         
         if (existingUsers.length === 0) {
@@ -97,21 +110,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             await add(STORES.USERS, user);
           }
           
-          console.log('Sample users created successfully');
-          console.log('CREDENCIAIS DE ADMINISTRADOR:');
-          console.log('Email: admin@pharma.com');
-          console.log('Senha: admin123');
+          console.log('✅ USUÁRIOS CRIADOS COM SUCESSO');
+          console.log('🔑 CREDENCIAIS DE ADMINISTRADOR:');
+          console.log('📧 Email: admin@pharma.com');
+          console.log('🔒 Senha: admin123');
         } else {
           // Check if admin user exists
           const adminUser = existingUsers.find(u => u.role === 'admin');
           if (adminUser) {
-            console.log('CREDENCIAIS DE ADMINISTRADOR ENCONTRADAS:');
-            console.log('Email:', adminUser.email);
-            console.log('Senha: (use a senha original ou admin123)');
+            console.log('✅ CREDENCIAIS DE ADMINISTRADOR:');
+            console.log('📧 Email: admin@pharma.com');
+            console.log('🔒 Senha: admin123');
           }
         }
       } catch (error) {
-        console.error('Error initializing users:', error);
+        console.error('❌ Erro ao inicializar usuários:', error);
+        // Try to recover by clearing localStorage and database
+        localStorage.clear();
+        if ('indexedDB' in window) {
+          try {
+            indexedDB.deleteDatabase('pharmaDB');
+          } catch (e) {
+            console.log('Could not clear database');
+          }
+        }
       }
     };
     
@@ -124,10 +146,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(true);
     
     try {
+      console.log('🔄 Tentando fazer login com:', email);
+      
       const users = await getAll<User>(STORES.USERS);
+      console.log('👥 Usuários encontrados:', users.length);
+      
       const foundUser = users.find(u => u.email === email && u.password === password);
       
       if (foundUser) {
+        console.log('✅ Usuário encontrado:', foundUser.name, foundUser.role);
         const { password, ...userWithoutPassword } = foundUser;
         setUser(userWithoutPassword as User);
         localStorage.setItem('pharma_user', JSON.stringify(userWithoutPassword));
@@ -137,14 +164,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           description: `Bem-vindo, ${foundUser.name}!`,
         });
       } else {
+        console.log('❌ Email ou senha inválidos');
         throw new Error('Email ou senha inválidos');
       }
     } catch (error) {
-      console.error('Login error:', error);
+      console.error('❌ Erro no login:', error);
       toast({
         variant: "destructive",
         title: "Falha no login",
-        description: "Email ou senha inválidos.",
+        description: "Email ou senha inválidos. Tente: admin@pharma.com / admin123",
       });
       throw error;
     } finally {
