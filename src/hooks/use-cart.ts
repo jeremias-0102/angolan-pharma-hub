@@ -27,6 +27,11 @@ export const useCart = () => {
     context.addItem(cartProduct, quantity);
   };
   
+  // Add removeFromCart function
+  const removeFromCart = (productId: string) => {
+    context.removeItem(productId);
+  };
+  
   // Add calculateTotal function to the cart context
   const calculateTotal = () => {
     return context.items.reduce(
@@ -38,6 +43,7 @@ export const useCart = () => {
   return {
     ...context,
     addToCart,
+    removeFromCart,
     calculateTotal
   };
 };

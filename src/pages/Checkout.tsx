@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
@@ -68,7 +67,7 @@ const Checkout = () => {
 
   const [paymentMethod, setPaymentMethod] = useState('multicaixa');
   const [prescriptionFile, setPrescriptionFile] = useState<File | null>(null);
-  const [hasPrescriptionItems, setHasPrescriptionItems] = useState(false);
+  const [hasPrescriptionItems, setHasPrescriptionItems] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
 
@@ -218,7 +217,7 @@ const Checkout = () => {
                   />
                   <div>
                     <h4 className="font-medium">{item.product.name}</h4>
-                    <p className="text-sm text-gray-600">{item.product.manufacturer}</p>
+                    <p className="text-sm text-gray-600">{item.product.description}</p>
                     {item.product.needsPrescription && (
                       <Badge variant="outline" className="mt-1 text-xs">
                         <FileText className="w-3 h-3 mr-1" />
