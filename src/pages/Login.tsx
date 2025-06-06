@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -15,7 +14,6 @@ import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { initializeDemoUsers } from '@/services/demoUserService';
 import { handleSocialLogin } from '@/services/socialAuthService';
 
 // Login schema
@@ -43,7 +41,7 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const { login, register } = useAuth();
+  const { login, register, loginWithSocial } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("login");
@@ -123,7 +121,7 @@ const Login = () => {
     }
   };
 
-  // Login social habilitado
+  // Login social habilitado com escolha de conta
   const handleSocialAuth = async (provider: 'google' | 'facebook' | 'twitter') => {
     setIsLoading(true);
     
@@ -135,17 +133,10 @@ const Login = () => {
       
       const { user } = await handleSocialLogin(provider);
       
-      // Simula login automático com usuário social
-      const { password, ...userWithoutPassword } = user;
-      localStorage.setItem('pharma_user', JSON.stringify(userWithoutPassword));
-      
-      toast({
-        title: "Login social bem-sucedido",
-        description: `Conectado via ${provider}!`,
-      });
+      // Usa o método loginWithSocial do contexto
+      await loginWithSocial(user);
       
       navigate('/');
-      window.location.reload(); // Força reload para atualizar estado
       
     } catch (error) {
       toast({
@@ -440,7 +431,7 @@ const Login = () => {
                           variant="outline"
                           onClick={() => handleSocialAuth('google')}
                           className="w-full"
-                          disabled
+                          disabled={isLoading}
                         >
                           <svg className="w-4 h-4" viewBox="0 0 24 24">
                             <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -454,7 +445,7 @@ const Login = () => {
                           variant="outline"
                           onClick={() => handleSocialAuth('facebook')}
                           className="w-full"
-                          disabled
+                          disabled={isLoading}
                         >
                           <svg className="w-4 h-4" viewBox="0 0 24 24">
                             <path fill="currentColor" d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
@@ -465,7 +456,7 @@ const Login = () => {
                           variant="outline"
                           onClick={() => handleSocialAuth('twitter')}
                           className="w-full"
-                          disabled
+                          disabled={isLoading}
                         >
                           <svg className="w-4 h-4" viewBox="0 0 24 24">
                             <path fill="currentColor" d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.80l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>

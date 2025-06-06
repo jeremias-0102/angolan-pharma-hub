@@ -1,6 +1,6 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, UserRole } from '@/types/models';
-import { getAll, update, add, getByIndex, STORES } from '@/lib/database';
 import { v4 as uuidv4 } from 'uuid';
 import { useToast } from '@/components/ui/use-toast';
 
@@ -11,10 +11,50 @@ interface AuthContextType {
   logout: () => void;
   isAuthenticated: boolean;
   register: (userData: Omit<User, 'id' | 'created_at' | 'updated_at'>) => Promise<void>;
+  loginWithSocial: (userData: any) => Promise<void>;
 }
 
-// Export the context so it can be imported in other files
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+// Usuários demo salvos em memória para evitar problemas de versão do banco
+const DEMO_USERS = [
+  {
+    id: 'admin-001',
+    name: 'Administrador Pharma',
+    email: 'admin@pharma.com',
+    password: 'admin123',
+    role: 'admin' as UserRole,
+    phone: '+244 923 456 789',
+    avatar: '',
+    is_active: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  },
+  {
+    id: 'pharm-001',
+    name: 'Farmacêutico Demo',
+    email: 'farmaceutico@pharma.com',
+    password: 'farm123',
+    role: 'pharmacist' as UserRole,
+    phone: '+244 912 345 678',
+    avatar: '',
+    is_active: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  },
+  {
+    id: 'client-001',
+    name: 'Cliente Demo',
+    email: 'cliente@pharma.com',
+    password: 'client123',
+    role: 'client' as UserRole,
+    phone: '+244 956 789 123',
+    avatar: '',
+    is_active: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  }
+];
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -28,109 +68,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       try {
         const savedUser = JSON.parse(savedUserJson);
         setUser(savedUser);
+        console.log('✅ Usuário carregado do localStorage:', savedUser.name, savedUser.role);
       } catch (error) {
         console.error('Failed to parse saved user');
         localStorage.removeItem('pharma_user');
       }
     }
     
-    // Initialize the database with sample users if needed
-    const initializeUsers = async () => {
-      try {
-        // Force clear and recreate the database to fix version issues
-        if ('indexedDB' in window) {
-          try {
-            const deleteReq = indexedDB.deleteDatabase('pharmaDB');
-            deleteReq.onsuccess = () => {
-              console.log('✅ Database cleared successfully');
-            };
-            deleteReq.onerror = () => {
-              console.log('Database was already cleared');
-            };
-          } catch (e) {
-            console.log('Database clear not needed');
-          }
-        }
-
-        // Wait for database cleanup
-        await new Promise(resolve => setTimeout(resolve, 500));
-
-        const existingUsers = await getAll<User>(STORES.USERS);
-        
-        if (existingUsers.length === 0) {
-          // Add sample users if no users exist
-          const sampleUsers = [
-            {
-              id: 'admin-001',
-              name: 'Administrador Pharma',
-              email: 'admin@pharma.com',
-              password: 'admin123',
-              role: 'admin' as UserRole,
-              phone: '+244 923 456 789',
-              avatar: '',
-              is_active: true,
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString()
-            },
-            {
-              id: 'pharm-001',
-              name: 'Farmacêutico Demo',
-              email: 'farmaceutico@pharma.com',
-              password: 'farm123',
-              role: 'pharmacist' as UserRole,
-              phone: '+244 912 345 678',
-              avatar: '',
-              is_active: true,
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString()
-            },
-            {
-              id: 'deliv-001',
-              name: 'Entregador Demo',
-              email: 'entregador@pharma.com',
-              password: 'deliv123',
-              role: 'delivery' as UserRole,
-              phone: '+244 934 567 890',
-              avatar: '',
-              is_active: true,
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString()
-            },
-            {
-              id: 'client-001',
-              name: 'Cliente Demo',
-              email: 'cliente@pharma.com',
-              password: 'client123',
-              role: 'client' as UserRole,
-              phone: '+244 956 789 123',
-              avatar: '',
-              is_active: true,
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString()
-            }
-          ];
-          
-          for (const user of sampleUsers) {
-            await add(STORES.USERS, user);
-          }
-          
-          console.log('✅ USUÁRIOS CRIADOS COM SUCESSO');
-          console.log('🔑 CREDENCIAIS DE ADMINISTRADOR:');
-          console.log('📧 Email: admin@pharma.com');
-          console.log('🔒 Senha: admin123');
-        } else {
-          console.log('✅ CREDENCIAIS DE ADMINISTRADOR:');
-          console.log('📧 Email: admin@pharma.com');
-          console.log('🔒 Senha: admin123');
-        }
-      } catch (error) {
-        console.error('❌ Erro ao inicializar usuários:', error);
-      }
-    };
+    console.log('✅ CREDENCIAIS DISPONÍVEIS:');
+    console.log('📧 ADMIN: admin@pharma.com | 🔒 SENHA: admin123');
+    console.log('📧 FARMACÊUTICO: farmaceutico@pharma.com | 🔒 SENHA: farm123');
+    console.log('📧 CLIENTE: cliente@pharma.com | 🔒 SENHA: client123');
     
-    initializeUsers().finally(() => {
-      setIsLoading(false);
-    });
+    setIsLoading(false);
   }, []);
 
   const login = async (email: string, password: string) => {
@@ -139,14 +89,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       console.log('🔄 Tentando fazer login com:', email);
       
-      const users = await getAll<User>(STORES.USERS);
-      console.log('👥 Usuários encontrados:', users.length);
-      
-      const foundUser = users.find(u => u.email === email && u.password === password);
+      const foundUser = DEMO_USERS.find(u => u.email === email && u.password === password);
       
       if (foundUser) {
         console.log('✅ Usuário encontrado:', foundUser.name, foundUser.role);
-        const { password, ...userWithoutPassword } = foundUser;
+        const { password: _, ...userWithoutPassword } = foundUser;
         setUser(userWithoutPassword as User);
         localStorage.setItem('pharma_user', JSON.stringify(userWithoutPassword));
         
@@ -155,7 +102,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           description: `Bem-vindo, ${foundUser.name}!`,
         });
       } else {
-        console.log('❌ Email ou senha inválidos');
+        console.log('❌ Email ou senha inválidos para:', email);
         toast({
           variant: "destructive",
           title: "Falha no login",
@@ -171,14 +118,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const loginWithSocial = async (userData: any) => {
+    setIsLoading(true);
+    
+    try {
+      const { password: _, ...userWithoutPassword } = userData;
+      setUser(userWithoutPassword as User);
+      localStorage.setItem('pharma_user', JSON.stringify(userWithoutPassword));
+      
+      toast({
+        title: "Login social bem-sucedido",
+        description: `Bem-vindo, ${userData.name}!`,
+      });
+      
+      console.log('✅ Login social realizado:', userData.name, userData.provider);
+    } catch (error) {
+      console.error('❌ Erro no login social:', error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const register = async (userData: Omit<User, 'id' | 'created_at' | 'updated_at'>) => {
     setIsLoading(true);
     
     try {
       // Check if email is already registered
-      const existingUsers = await getByIndex<User>(STORES.USERS, 'email', userData.email);
+      const existingUser = DEMO_USERS.find(u => u.email === userData.email);
       
-      if (existingUsers.length > 0) {
+      if (existingUser) {
         toast({
           variant: "destructive",
           title: "Falha no registro",
@@ -194,9 +163,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         updated_at: new Date().toISOString()
       };
       
-      await add(STORES.USERS, newUser);
-      
-      const { password, ...userWithoutPassword } = newUser;
+      const { password: _, ...userWithoutPassword } = newUser;
       setUser(userWithoutPassword as User);
       localStorage.setItem('pharma_user', JSON.stringify(userWithoutPassword));
       
@@ -234,7 +201,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     login,
     logout,
     isAuthenticated: !!user,
-    register
+    register,
+    loginWithSocial
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
