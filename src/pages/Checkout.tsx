@@ -115,8 +115,8 @@ const Checkout = () => {
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    setPrescriptionFile(file || null);
+    const file = e.target.files?.[0] || null;
+    setPrescriptionFile(file);
   };
 
   const handleSubmitOrder = async () => {
