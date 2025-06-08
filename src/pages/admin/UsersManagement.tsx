@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useNavigate } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useToast } from "@/hooks/use-toast";
 import { 
   Table, 
@@ -112,6 +113,7 @@ const translateRole = (role: UserRole): string => {
 const UsersManagement: React.FC = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
+  
   const [users, setUsers] = useState<User[]>(mockUsers);
   const [filteredUsers, setFilteredUsers] = useState<User[]>(mockUsers);
   const [searchTerm, setSearchTerm] = useState<string>("");
