@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -17,104 +18,151 @@ import {
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
-import { 
-  Search, 
-  MoreHorizontal, 
-  Eye, 
-  Truck,
-  CheckCircle, 
-  XCircle,
-  Calendar,
-  ArrowLeft
-} from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
+import { Search, MoreHorizontal, Eye, Edit2, ArrowLeft } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 import { Order, OrderStatus } from "@/types/models";
-import { format, parseISO } from "date-fns";
-import { ptBR } from "date-fns/locale";
-import OrderDetailModal from "@/components/admin/OrderDetailModal";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from '@/components/ui/select';
-import { getAllOrders, updateOrderStatus } from '@/services/orderService';
+import OrderDetailModal from '@/components/admin/OrderDetailModal';
 
 const OrdersManagement: React.FC = () => {
   const [orders, setOrders] = useState<Order[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
-  const [currentOrder, setCurrentOrder] = useState<Order | null>(null);
-  const [statusFilter, setStatusFilter] = useState<OrderStatus | 'all'>('all');
+  const [isLoading, setIsLoading] = useState(true);
+  const navigate = useNavigate();
   
   const { toast } = useToast();
-  const navigate = useNavigate();
 
-  // Fetch orders from database
+  // Mock data para desenvolvimento
+  const mockOrders: Order[] = [
+    {
+      id: "ORD-001",
+      user_id: "user1",
+      status: "pending",
+      payment_method: "multicaixa",
+      payment_status: "pending",
+      total: 15000,
+      items: [
+        {
+          id: "item1",
+          order_id: "ORD-001",
+          product_id: "prod1",
+          product_name: "Paracetamol 500mg",
+          product_image: "",
+          quantity: 2,
+          unit_price: 2500,
+          total: 5000
+        },
+        {
+          id: "item2",
+          order_id: "ORD-001",
+          product_id: "prod2",
+          product_name: "Amoxicilina 250mg",
+          product_image: "",
+          quantity: 1,
+          unit_price: 10000,
+          total: 10000
+        }
+      ],
+      shipping_address: "Rua dos Remedios, 123, Luanda",
+      shipping_details: {},
+      customer_name: "João Silva",
+      customer_email: "joao@email.com",
+      customer_phone: "+244 923 456 789",
+      requires_prescription: false,
+      discount: 0,
+      created_at: "2024-12-08T10:00:00Z",
+      updated_at: "2024-12-08T10:00:00Z"
+    },
+    {
+      id: "ORD-002",
+      user_id: "user2",
+      status: "confirmed",
+      payment_method: "cash_on_delivery",
+      payment_status: "pending",
+      total: 8500,
+      items: [
+        {
+          id: "item3",
+          order_id: "ORD-002",
+          product_id: "prod3",
+          product_name: "Vitamina C 1g",
+          product_image: "",
+          quantity: 1,
+          unit_price: 8500,
+          total: 8500
+        }
+      ],
+      shipping_address: "Avenida Marginal, 456, Luanda",
+      shipping_details: {},
+      customer_name: "Maria Santos",
+      customer_email: "maria@email.com",
+      customer_phone: "+244 924 567 890",
+      requires_prescription: false,
+      discount: 0,
+      created_at: "2024-12-08T11:00:00Z",
+      updated_at: "2024-12-08T11:00:00Z"
+    }
+  ];
+
   useEffect(() => {
-    const fetchOrders = async () => {
+    const loadOrders = async () => {
       try {
-        setLoading(true);
-        const fetchedOrders = await getAllOrders();
-        setOrders(fetchedOrders);
-        setLoading(false);
+        setOrders(mockOrders);
+        setIsLoading(false);
       } catch (error) {
-        console.error("Failed to fetch orders:", error);
+        console.error('Error loading orders:', error);
         toast({
-          title: "Erro",
-          description: "Não foi possível carregar os pedidos.",
           variant: "destructive",
+          title: "Erro ao carregar pedidos",
+          description: "Não foi possível carregar a lista de pedidos.",
         });
-        setLoading(false);
+        setIsLoading(false);
       }
     };
-
-    fetchOrders();
+    
+    loadOrders();
   }, [toast]);
 
   const filteredOrders = orders.filter((order) => {
-    const matchesSearch = 
-      order.id.toLowerCase().includes(searchQuery.toLowerCase()) || 
-      order.delivery?.address?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      order.items.some(item => item.product_name.toLowerCase().includes(searchQuery.toLowerCase()));
-    
-    const matchesStatus = statusFilter === 'all' || order.status === statusFilter;
-    
-    return matchesSearch && matchesStatus;
+    const searchLower = searchQuery.toLowerCase();
+    return (
+      order.id.toLowerCase().includes(searchLower) ||
+      order.customer_name.toLowerCase().includes(searchLower) ||
+      order.customer_email.toLowerCase().includes(searchLower) ||
+      order.customer_phone.toLowerCase().includes(searchLower)
+    );
   });
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
   };
 
-  const viewOrderDetails = (order: Order) => {
-    setCurrentOrder(order);
+  const openDetailModal = (order: Order) => {
+    setSelectedOrder(order);
     setIsDetailModalOpen(true);
   };
 
-  const handleUpdateOrderStatus = async (orderId: string, newStatus: OrderStatus) => {
-    try {
-      const updatedOrder = await updateOrderStatus(orderId, newStatus);
-      
-      setOrders((prevOrders) =>
-        prevOrders.map((order) =>
-          order.id === orderId ? updatedOrder : order
-        )
-      );
-
-      toast({
-        title: "Status atualizado",
-        description: `O pedido ${orderId} foi atualizado para ${translateStatus(newStatus)}.`,
-      });
-    } catch (error) {
-      console.error("Failed to update order status:", error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível atualizar o status do pedido.",
-        variant: "destructive",
-      });
+  const handleUpdateOrderStatus = async (newStatus: OrderStatus) => {
+    if (selectedOrder) {
+      try {
+        const updatedOrder = { ...selectedOrder, status: newStatus, updated_at: new Date().toISOString() };
+        setOrders((prevOrders) =>
+          prevOrders.map((order) => (order.id === selectedOrder.id ? updatedOrder : order))
+        );
+        setSelectedOrder(updatedOrder);
+        toast({
+          title: "Status atualizado",
+          description: `Pedido ${selectedOrder.id} foi atualizado para ${translateStatus(newStatus)}.`,
+        });
+      } catch (error) {
+        console.error('Error updating order status:', error);
+        toast({
+          variant: "destructive",
+          title: "Erro ao atualizar status",
+          description: "Ocorreu um erro ao atualizar o status do pedido.",
+        });
+      }
     }
   };
 
@@ -129,15 +177,6 @@ const OrdersManagement: React.FC = () => {
       currency: 'AOA',
       minimumFractionDigits: 0,
     }).format(amount);
-  };
-
-  // Format date
-  const formatDate = (dateString: string) => {
-    try {
-      return format(parseISO(dateString), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR });
-    } catch (error) {
-      return "Data inválida";
-    }
   };
 
   // Translate order status to Portuguese
@@ -176,27 +215,6 @@ const OrdersManagement: React.FC = () => {
     }
   };
 
-  // Get next available status options based on current status
-  const getNextStatusOptions = (currentStatus: OrderStatus): OrderStatus[] => {
-    switch (currentStatus) {
-      case "pending":
-        return ["confirmed", "cancelled"];
-      case "confirmed":
-        return ["processing", "cancelled"];
-      case "processing":
-        return ["ready", "cancelled"];
-      case "ready":
-        return ["shipping", "cancelled"];
-      case "shipping":
-        return ["delivered", "cancelled"];
-      case "delivered":
-      case "cancelled":
-        return [];
-      default:
-        return [];
-    }
-  };
-
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
@@ -210,141 +228,92 @@ const OrdersManagement: React.FC = () => {
       </div>
 
       <div className="bg-white shadow-sm rounded-lg p-4 mb-6">
-        <div className="flex flex-col sm:flex-row gap-4">
-          <div className="relative flex-grow">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
-            <Input
-              type="text"
-              placeholder="Buscar pedidos por ID, endereço, produtos..."
-              value={searchQuery}
-              onChange={handleSearchChange}
-              className="pl-10"
-            />
-          </div>
-          
-          <div className="w-full sm:w-48">
-            <Select value={statusFilter} onValueChange={(value: any) => setStatusFilter(value)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Filtrar por status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos os status</SelectItem>
-                <SelectItem value="pending">Pendente</SelectItem>
-                <SelectItem value="confirmed">Confirmado</SelectItem>
-                <SelectItem value="processing">Em processamento</SelectItem>
-                <SelectItem value="ready">Pronto para entrega</SelectItem>
-                <SelectItem value="shipping">Em transporte</SelectItem>
-                <SelectItem value="delivered">Entregue</SelectItem>
-                <SelectItem value="cancelled">Cancelado</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+          <Input
+            type="text"
+            placeholder="Buscar pedidos por ID, cliente, email, telefone..."
+            value={searchQuery}
+            onChange={handleSearchChange}
+            className="pl-10"
+          />
         </div>
       </div>
 
       <div className="bg-white shadow-sm rounded-lg overflow-hidden">
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>ID do Pedido</TableHead>
-                <TableHead>Data</TableHead>
-                <TableHead>Total</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Endereço</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {loading ? (
+        {isLoading ? (
+          <div className="p-8 text-center">
+            <div className="animate-spin h-8 w-8 border-4 border-pharma-primary border-t-transparent rounded-full mx-auto mb-4"></div>
+            <p className="text-gray-500">Carregando pedidos...</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8">
-                    <div className="flex justify-center items-center">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
-                    </div>
-                    <p className="mt-2 text-gray-500">Carregando pedidos...</p>
-                  </TableCell>
+                  <TableHead>ID do Pedido</TableHead>
+                  <TableHead>Cliente</TableHead>
+                  <TableHead>Data</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Total</TableHead>
+                  <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
-              ) : filteredOrders.length > 0 ? (
-                filteredOrders.map((order) => (
-                  <TableRow key={order.id}>
-                    <TableCell className="font-medium">{order.id}</TableCell>
-                    <TableCell className="whitespace-nowrap">
-                      <div className="flex items-center">
-                        <Calendar className="h-3.5 w-3.5 mr-1 text-gray-500" />
-                        {formatDate(order.created_at)}
-                      </div>
-                    </TableCell>
-                    <TableCell>{formatCurrency(order.total)}</TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className={getStatusBadgeVariant(order.status)}>
-                        {translateStatus(order.status)}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="max-w-xs truncate">
-                      {order.delivery?.address ? `${order.delivery.address}, ${order.delivery.district}, ${order.delivery.city}` : 'Sem endereço'}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm">
-                            <MoreHorizontal className="h-4 w-4" />
-                            <span className="sr-only">Abrir menu</span>
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => viewOrderDetails(order)}>
-                            <Eye className="mr-2 h-4 w-4" />
-                            <span>Ver detalhes</span>
-                          </DropdownMenuItem>
-                          
-                          {getNextStatusOptions(order.status).includes("delivered") && (
-                            <DropdownMenuItem onClick={() => handleUpdateOrderStatus(order.id, "delivered")}>
-                              <CheckCircle className="mr-2 h-4 w-4 text-green-600" />
-                              <span>Marcar como entregue</span>
+              </TableHeader>
+              <TableBody>
+                {filteredOrders.length > 0 ? (
+                  filteredOrders.map((order) => (
+                    <TableRow key={order.id} className="hover:bg-gray-50">
+                      <TableCell className="font-medium">{order.id}</TableCell>
+                      <TableCell>
+                        <div>
+                          <p className="font-medium">{order.customer_name}</p>
+                          <p className="text-sm text-gray-500">{order.customer_email}</p>
+                        </div>
+                      </TableCell>
+                      <TableCell>{new Date(order.created_at).toLocaleDateString('pt-AO')}</TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className={getStatusBadgeVariant(order.status)}>
+                          {translateStatus(order.status)}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>{formatCurrency(order.total)}</TableCell>
+                      <TableCell className="text-right">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm">
+                              <MoreHorizontal className="h-4 w-4" />
+                              <span className="sr-only">Abrir menu</span>
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => openDetailModal(order)}>
+                              <Eye className="mr-2 h-4 w-4" />
+                              <span>Ver Detalhes</span>
                             </DropdownMenuItem>
-                          )}
-                          
-                          {getNextStatusOptions(order.status).includes("shipping") && (
-                            <DropdownMenuItem onClick={() => handleUpdateOrderStatus(order.id, "shipping")}>
-                              <Truck className="mr-2 h-4 w-4 text-blue-600" />
-                              <span>Iniciar entrega</span>
-                            </DropdownMenuItem>
-                          )}
-                          
-                          {getNextStatusOptions(order.status).includes("cancelled") && (
-                            <DropdownMenuItem onClick={() => handleUpdateOrderStatus(order.id, "cancelled")}>
-                              <XCircle className="mr-2 h-4 w-4 text-red-600" />
-                              <span>Cancelar pedido</span>
-                            </DropdownMenuItem>
-                          )}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                      Nenhum pedido encontrado. Tente outros termos de busca.
                     </TableCell>
                   </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8 text-gray-500">
-                    Nenhum pedido encontrado. Tente outros termos de busca.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </div>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        )}
       </div>
 
       {/* Order Detail Modal */}
       <OrderDetailModal
         isOpen={isDetailModalOpen}
         onClose={() => setIsDetailModalOpen(false)}
-        order={currentOrder}
-        onUpdateStatus={(newStatus) => {
-          if (currentOrder) {
-            handleUpdateOrderStatus(currentOrder.id, newStatus);
-          }
-        }}
+        order={selectedOrder}
+        onUpdateStatus={handleUpdateOrderStatus}
       />
     </div>
   );

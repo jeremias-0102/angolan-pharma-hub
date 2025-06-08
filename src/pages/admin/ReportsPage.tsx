@@ -1,160 +1,101 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Button } from '@/components/ui/button';
-import { 
-  Calendar, 
-  PieChart, 
-  BarChart3, 
-  LineChart,
-  ArrowLeft
-} from 'lucide-react';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { DateRange } from 'react-day-picker';
-import { DateRangePicker } from '@/components/ui/date-range-picker';
-import SalesReportChart from '@/components/reports/SalesReportChart';
-import InventoryReportChart from '@/components/reports/InventoryReportChart';
-import PurchasesReportChart from '@/components/reports/PurchasesReportChart';
-import ReportDownloadButtons from '@/components/reports/ReportDownloadButtons';
+import { ArrowLeft, BarChart3, FileText, TrendingUp, Package } from "lucide-react";
 
-const ReportsPage = () => {
-  const [date, setDate] = useState<DateRange | undefined>({
-    from: new Date(new Date().getFullYear(), new Date().getMonth() - 1, new Date().getDate()),
-    to: new Date(),
-  });
-  const [reportType, setReportType] = useState('sales');
-
-  const formatDate = (date: Date | undefined) => {
-    return date ? format(date, 'dd/MM/yyyy', { locale: ptBR }) : 'Data não selecionada';
-  };
-
+const ReportsPage: React.FC = () => {
   const navigate = useNavigate();
 
   const handleBack = () => {
     navigate('/admin');
   };
 
+  const reportCards = [
+    {
+      title: "Relatório de Vendas",
+      description: "Visualize dados de vendas por período",
+      icon: <TrendingUp className="h-8 w-8 text-blue-600" />,
+      action: () => console.log("Gerar relatório de vendas")
+    },
+    {
+      title: "Relatório de Estoque",
+      description: "Acompanhe o status do inventário",
+      icon: <Package className="h-8 w-8 text-green-600" />,
+      action: () => console.log("Gerar relatório de estoque")
+    },
+    {
+      title: "Relatório de Produtos",
+      description: "Análise detalhada dos produtos",
+      icon: <BarChart3 className="h-8 w-8 text-purple-600" />,
+      action: () => console.log("Gerar relatório de produtos")
+    },
+    {
+      title: "Relatório Personalizado",
+      description: "Crie relatórios customizados",
+      icon: <FileText className="h-8 w-8 text-orange-600" />,
+      action: () => console.log("Criar relatório personalizado")
+    }
+  ];
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-center mb-4">
+    <div>
+      <div className="flex items-center mb-6">
         <Button variant="ghost" onClick={handleBack} className="mr-2">
           <ArrowLeft className="h-5 w-5 mr-1" />
           Voltar
         </Button>
-        <h1 className="text-2xl font-bold">Relatórios e Análises</h1>
+        <h1 className="text-2xl font-bold">Relatórios</h1>
       </div>
 
-      <Tabs defaultValue="sales" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="sales">
-            <PieChart className="mr-2 h-4 w-4" />
-            Relatório de Vendas
-          </TabsTrigger>
-          <TabsTrigger value="inventory">
-            <BarChart3 className="mr-2 h-4 w-4" />
-            Relatório de Estoque
-          </TabsTrigger>
-          <TabsTrigger value="purchases">
-            <LineChart className="mr-2 h-4 w-4" />
-            Relatório de Aquisições
-          </TabsTrigger>
-        </TabsList>
-        <TabsContent value="sales" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Relatório de Vendas</CardTitle>
-              <CardDescription>
-                Análise detalhada das vendas realizadas no período selecionado.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="grid gap-4">
-              <div className="flex items-center space-x-4">
-                <Calendar className="h-4 w-4 mr-2" />
-                <span>Período:</span>
-                <DateRangePicker date={date} onDateChange={setDate} />
-                <span>
-                  {formatDate(date?.from)} - {formatDate(date?.to)}
-                </span>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
+        {reportCards.map((report, index) => (
+          <Card key={index} className="hover:shadow-lg transition-shadow cursor-pointer" onClick={report.action}>
+            <CardHeader className="flex flex-row items-center space-y-0 pb-2">
+              <div className="flex-1">
+                <CardTitle className="text-lg">{report.title}</CardTitle>
+                <CardDescription className="mt-1">{report.description}</CardDescription>
               </div>
-              <SalesReportChart date={date} />
-              <ReportDownloadButtons 
-                title="Relatório de Vendas" 
-                data={[]} 
-                columns={[
-                  { header: 'Mês', accessor: 'name' },
-                  { header: 'Vendas (AOA)', accessor: 'vendas' },
-                  { header: 'Lucro (AOA)', accessor: 'lucro' }
-                ]} 
-              />
+              <div className="ml-4">{report.icon}</div>
+            </CardHeader>
+            <CardContent>
+              <Button variant="outline" className="w-full">
+                Gerar Relatório
+              </Button>
             </CardContent>
           </Card>
-        </TabsContent>
-        <TabsContent value="inventory" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Relatório de Estoque</CardTitle>
-              <CardDescription>
-                Visão geral do estado atual do estoque, incluindo produtos em falta e
-                níveis de estoque.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="grid gap-4">
-              <div className="flex items-center space-x-4">
-                <Calendar className="h-4 w-4 mr-2" />
-                <span>Período:</span>
-                <DateRangePicker date={date} onDateChange={setDate} />
-                <span>
-                  {formatDate(date?.from)} - {formatDate(date?.to)}
-                </span>
+        ))}
+      </div>
+
+      <div className="mt-8">
+        <Card>
+          <CardHeader>
+            <CardTitle>Resumo Rápido</CardTitle>
+            <CardDescription>Estatísticas principais do sistema</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="text-center">
+                <div className="text-2xl font-bold text-blue-600">156</div>
+                <div className="text-sm text-gray-500">Vendas Este Mês</div>
               </div>
-              <InventoryReportChart date={date} />
-              <ReportDownloadButtons 
-                title="Relatório de Estoque" 
-                data={[]} 
-                columns={[
-                  { header: 'Mês', accessor: 'name' },
-                  { header: 'Nível de Estoque', accessor: 'estoque' },
-                  { header: 'Estoque Mínimo', accessor: 'minimo' }
-                ]} 
-              />
-            </CardContent>
-          </Card>
-        </TabsContent>
-        <TabsContent value="purchases" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Relatório de Aquisições</CardTitle>
-              <CardDescription>
-                Acompanhamento das aquisições de produtos, incluindo fornecedores e
-                custos.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="grid gap-4">
-              <div className="flex items-center space-x-4">
-                <Calendar className="h-4 w-4 mr-2" />
-                <span>Período:</span>
-                <DateRangePicker date={date} onDateChange={setDate} />
-                <span>
-                  {formatDate(date?.from)} - {formatDate(date?.to)}
-                </span>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-green-600">1,234</div>
+                <div className="text-sm text-gray-500">Produtos em Estoque</div>
               </div>
-              <PurchasesReportChart date={date} />
-              <ReportDownloadButtons 
-                title="Relatório de Aquisições" 
-                data={[]} 
-                columns={[
-                  { header: 'Mês', accessor: 'name' },
-                  { header: 'Compras (AOA)', accessor: 'compras' }
-                ]} 
-              />
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-purple-600">45</div>
+                <div className="text-sm text-gray-500">Pedidos Pendentes</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-orange-600">12</div>
+                <div className="text-sm text-gray-500">Produtos em Falta</div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };

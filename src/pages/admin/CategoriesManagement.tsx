@@ -20,14 +20,8 @@ import {
 import { Search, Plus, MoreHorizontal, Edit2, Trash2, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Category } from "@/types/models";
-import CategoryFormModal from "@/components/admin/CategoryFormModal";
 import DeleteConfirmationDialog from '@/components/admin/DeleteConfirmationDialog';
-import { 
-  getAllCategories, 
-  addCategory, 
-  updateCategory, 
-  deleteCategory
-} from '@/services/categoryService';
+import CategoryFormModal from '@/components/admin/CategoryFormModal';
 
 const CategoriesManagement: React.FC = () => {
   const [categories, setCategories] = useState<Category[]>([]);
@@ -41,11 +35,35 @@ const CategoriesManagement: React.FC = () => {
   
   const { toast } = useToast();
 
+  // Mock data para desenvolvimento
+  const mockCategories: Category[] = [
+    {
+      id: "1",
+      name: "Analgésicos",
+      description: "Medicamentos para alívio da dor",
+      created_at: "2024-01-01T00:00:00Z",
+      updated_at: "2024-01-01T00:00:00Z"
+    },
+    {
+      id: "2", 
+      name: "Antibióticos",
+      description: "Medicamentos para combater infecções",
+      created_at: "2024-01-01T00:00:00Z",
+      updated_at: "2024-01-01T00:00:00Z"
+    },
+    {
+      id: "3",
+      name: "Vitaminas",
+      description: "Suplementos vitamínicos",
+      created_at: "2024-01-01T00:00:00Z",
+      updated_at: "2024-01-01T00:00:00Z"
+    }
+  ];
+
   useEffect(() => {
     const loadCategories = async () => {
       try {
-        const data = await getAllCategories();
-        setCategories(data);
+        setCategories(mockCategories);
         setIsLoading(false);
       } catch (error) {
         console.error('Error loading categories:', error);
@@ -90,17 +108,23 @@ const CategoriesManagement: React.FC = () => {
 
   const handleSaveCategory = async (category: Category) => {
     try {
-      if (category.id && categories.find(c => c.id === category.id)) {
-        const updatedCategory = await updateCategory(category);
+      if (category.id) {
+        // Update existing category
         setCategories((prevCategories) =>
-          prevCategories.map((c) => (c.id === updatedCategory.id ? updatedCategory : c))
+          prevCategories.map((c) => (c.id === category.id ? category : c))
         );
         toast({
           title: "Categoria atualizada",
           description: `${category.name} foi atualizada com sucesso.`,
         });
       } else {
-        const newCategory = await addCategory(category);
+        // Add new category
+        const newCategory = {
+          ...category,
+          id: Date.now().toString(),
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        };
         setCategories((prevCategories) => [...prevCategories, newCategory]);
         toast({
           title: "Categoria adicionada",
@@ -121,7 +145,6 @@ const CategoriesManagement: React.FC = () => {
   const handleDeleteCategory = async () => {
     if (categoryToDelete) {
       try {
-        await deleteCategory(categoryToDelete.id);
         setCategories((prevCategories) =>
           prevCategories.filter((c) => c.id !== categoryToDelete.id)
         );
@@ -197,9 +220,7 @@ const CategoriesManagement: React.FC = () => {
                     <TableRow key={category.id} className="hover:bg-gray-50">
                       <TableCell className="font-medium">{category.name}</TableCell>
                       <TableCell>{category.description || '-'}</TableCell>
-                      <TableCell>
-                        {new Date(category.created_at).toLocaleDateString('pt-BR')}
-                      </TableCell>
+                      <TableCell>{new Date(category.created_at).toLocaleDateString('pt-AO')}</TableCell>
                       <TableCell className="text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
@@ -238,6 +259,7 @@ const CategoriesManagement: React.FC = () => {
         )}
       </div>
 
+      {/* Category Form Modal */}
       <CategoryFormModal 
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
@@ -245,6 +267,7 @@ const CategoriesManagement: React.FC = () => {
         category={currentCategory}
       />
 
+      {/* Delete Confirmation Dialog */}
       <DeleteConfirmationDialog
         isOpen={isDeleteDialogOpen}
         onClose={() => setIsDeleteDialogOpen(false)}
