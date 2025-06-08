@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from '@/contexts/AuthContext';
@@ -19,18 +20,7 @@ import RecuperarSenha from '@/pages/RecuperarSenha';
 import NotFound from '@/pages/NotFound';
 
 // Admin pages
-import AdminOverview from '@/pages/admin/AdminOverview';
 import Dashboard from '@/pages/admin/Dashboard';
-import ProductsManagement from '@/pages/admin/ProductsManagement';
-import CategoriesManagement from '@/pages/admin/CategoriesManagement';
-import BatchesManagement from '@/pages/admin/BatchesManagement';
-import UsersManagement from '@/pages/admin/UsersManagement';
-import OrdersManagement from '@/pages/admin/OrdersManagement';
-import SuppliersManagement from '@/pages/admin/SuppliersManagement';
-import AcquisitionsManagement from '@/pages/admin/AcquisitionsManagement';
-import ReportsPage from '@/pages/admin/ReportsPage';
-import FinancialReportsPage from '@/pages/admin/FinancialReportsPage';
-import CompanySettings from '@/pages/admin/CompanySettings';
 
 // Client pages
 import Profile from '@/pages/client/Profile';
@@ -65,19 +55,8 @@ function App() {
                 <Route path="/login" element={<Login />} />
                 <Route path="/recuperar-senha" element={<RecuperarSenha />} />
 
-                {/* Admin routes */}
-                <Route path="/admin" element={<PrivateRoute allowedRoles={['admin']}><AdminOverview /></PrivateRoute>} />
-                <Route path="/admin/dashboard" element={<PrivateRoute allowedRoles={['admin']}><Dashboard /></PrivateRoute>} />
-                <Route path="/admin/products" element={<PrivateRoute allowedRoles={['admin']}><ProductsManagement /></PrivateRoute>} />
-                <Route path="/admin/categories" element={<PrivateRoute allowedRoles={['admin']}><CategoriesManagement /></PrivateRoute>} />
-                <Route path="/admin/batches" element={<PrivateRoute allowedRoles={['admin']}><BatchesManagement /></PrivateRoute>} />
-                <Route path="/admin/users" element={<PrivateRoute allowedRoles={['admin']}><UsersManagement /></PrivateRoute>} />
-                <Route path="/admin/orders" element={<PrivateRoute allowedRoles={['admin']}><OrdersManagement /></PrivateRoute>} />
-                <Route path="/admin/suppliers" element={<PrivateRoute allowedRoles={['admin']}><SuppliersManagement /></PrivateRoute>} />
-                <Route path="/admin/acquisitions" element={<PrivateRoute allowedRoles={['admin']}><AcquisitionsManagement /></PrivateRoute>} />
-                <Route path="/admin/reports" element={<PrivateRoute allowedRoles={['admin']}><ReportsPage /></PrivateRoute>} />
-                <Route path="/admin/financial-reports" element={<PrivateRoute allowedRoles={['admin']}><FinancialReportsPage /></PrivateRoute>} />
-                <Route path="/admin/settings" element={<PrivateRoute allowedRoles={['admin']}><CompanySettings /></PrivateRoute>} />
+                {/* Admin routes - use wildcard to handle nested routes */}
+                <Route path="/admin/*" element={<PrivateRoute allowedRoles={['admin']}><Dashboard /></PrivateRoute>} />
 
                 {/* Client routes */}
                 <Route path="/perfil" element={<PrivateRoute allowedRoles={['client']}><Profile /></PrivateRoute>} />
