@@ -65,9 +65,15 @@ const ProductsManagement: React.FC = () => {
     loadProducts();
   }, [toast]);
 
+  // Helper function to get category name safely
+  const getCategoryName = (category: string | Category | undefined) => {
+    if (!category) return '';
+    return typeof category === 'string' ? category : category.name;
+  };
+
   const filteredProducts = products.filter((product) => {
     const searchLower = searchQuery.toLowerCase();
-    const categoryName = typeof product.category === 'string' ? product.category : product.category.name;
+    const categoryName = getCategoryName(product.category);
     
     return (
       product.name.toLowerCase().includes(searchLower) ||
@@ -178,11 +184,6 @@ const ProductsManagement: React.FC = () => {
     } catch (error) {
       return "Data inválida";
     }
-  };
-
-  // Helper function to get category name
-  const getCategoryName = (category: string | Category) => {
-    return typeof category === 'string' ? category : category.name;
   };
 
   return (
