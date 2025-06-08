@@ -53,7 +53,7 @@ const loadGoogleScript = (): Promise<void> => {
 // Função para inicializar o Google OAuth
 const initializeGoogleAuth = (): Promise<void> => {
   return new Promise((resolve) => {
-    window.google.accounts.id.initialize({
+    window.google!.accounts.id.initialize({
       client_id: GOOGLE_CLIENT_ID,
       callback: () => {}, // Will be set by individual calls
       auto_select: false,
@@ -73,7 +73,7 @@ const handleGoogleLogin = (): Promise<{ name: string; email: string; avatar: str
       console.log('🔄 Iniciando login real com Google...');
 
       // Configurar callback para o token
-      window.google.accounts.id.initialize({
+      window.google!.accounts.id.initialize({
         client_id: GOOGLE_CLIENT_ID,
         callback: (response: any) => {
           try {
@@ -101,11 +101,11 @@ const handleGoogleLogin = (): Promise<{ name: string; email: string; avatar: str
       });
 
       // Mostrar o prompt de seleção de conta
-      window.google.accounts.id.prompt((notification: any) => {
+      window.google!.accounts.id.prompt((notification: any) => {
         if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
           console.log('⚠️ Prompt do Google não foi exibido ou foi ignorado');
           // Fallback: tentar o popup
-          window.google.accounts.id.renderButton(
+          window.google!.accounts.id.renderButton(
             document.createElement('div'),
             {
               theme: 'outline',

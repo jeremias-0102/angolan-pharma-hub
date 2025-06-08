@@ -1,17 +1,25 @@
 
 /// <reference types="vite/client" />
 
-// Google Maps API type definitions
+// Google API type definitions
 interface Window {
   google?: {
     maps: {
       Map: new (element: HTMLElement, options: any) => any;
       Marker: new (options: any) => any;
-    }
+    },
+    accounts: {
+      id: {
+        initialize: (config: any) => void;
+        prompt: (callback?: (notification: any) => void) => void;
+        renderButton: (element: HTMLElement, config: any) => void;
+        revoke: (email: string, callback: () => void) => void;
+      };
+    };
   }
 }
 
-// Adding namespace for the google maps types
+// Adding namespace for the google types to include both maps and accounts
 declare namespace google {
   namespace maps {
     class Map {
@@ -19,6 +27,15 @@ declare namespace google {
     }
     class Marker {
       constructor(options: any);
+    }
+  }
+  
+  namespace accounts {
+    namespace id {
+      function initialize(config: any): void;
+      function prompt(callback?: (notification: any) => void): void;
+      function renderButton(element: HTMLElement, config: any): void;
+      function revoke(email: string, callback: () => void): void;
     }
   }
 }
