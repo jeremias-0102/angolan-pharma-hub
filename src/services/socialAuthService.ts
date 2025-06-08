@@ -203,19 +203,3 @@ export const handleAuthCallback = async (
   console.log(`✅ Processando callback de ${provider}`);
   return handleSocialLogin(provider);
 };
-
-// Declarar tipos para o Google OAuth
-declare global {
-  interface Window {
-    google: {
-      accounts: {
-        id: {
-          initialize: (config: any) => void;
-          prompt: (callback?: (notification: any) => void) => void;
-          renderButton: (element: HTMLElement, config: any) => void;
-          revoke: (email: string, callback: () => void) => void;
-        };
-      };
-    };
-  }
-}
