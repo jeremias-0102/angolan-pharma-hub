@@ -14,7 +14,8 @@ import {
   BarChart2, 
   Box,
   Settings,
-  Home
+  Home,
+  Building2
 } from 'lucide-react';
 import UsersManagement from './UsersManagement';
 import ProductsManagement from './ProductsManagement';
@@ -24,6 +25,9 @@ import AcquisitionsManagement from './AcquisitionsManagement';
 import ReportsPage from './ReportsPage';
 import CompanySettings from './CompanySettings';
 import AdminOverview from './AdminOverview';
+import CategoriesManagement from './CategoriesManagement';
+import BatchesManagement from './BatchesManagement';
+import FinancialReportsPage from './FinancialReportsPage';
 import { companyInfo } from '@/data/mockData';
 
 // Admin Dashboard Layout
@@ -46,12 +50,15 @@ const AdminDashboardLayout: React.FC<{ children: React.ReactNode }> = ({ childre
   const navItems = [
     { name: 'Dashboard', icon: LayoutDashboard, path: '/admin' },
     { name: 'Produtos', icon: Package, path: '/admin/produtos' },
+    { name: 'Categorias', icon: Package, path: '/admin/categorias' },
+    { name: 'Lotes', icon: Box, path: '/admin/lotes' },
     { name: 'Pedidos', icon: ShoppingCart, path: '/admin/pedidos' },
     { name: 'Aquisições', icon: Box, path: '/admin/aquisicoes' },
     { name: 'Usuários', icon: Users, path: '/admin/usuarios' },
-    { name: 'Fornecedores', icon: Truck, path: '/admin/fornecedores' },
+    { name: 'Fornecedores', icon: Building2, path: '/admin/fornecedores' },
     { name: 'Relatórios', icon: BarChart2, path: '/admin/relatorios' },
-    { name: 'Configurações', icon: Settings, path: '/admin/configuracao' },
+    { name: 'Relatórios Financeiros', icon: BarChart2, path: '/admin/relatorios-financeiros' },
+    { name: 'Configurações', icon: Settings, path: '/admin/configuracoes' },
   ];
 
   // Get active nav item based on current path
@@ -163,12 +170,15 @@ const AdminDashboard = () => {
       <Routes>
         <Route path="/" element={<AdminOverview />} />
         <Route path="/produtos" element={<ProductsManagement />} />
+        <Route path="/categorias" element={<CategoriesManagement />} />
+        <Route path="/lotes" element={<BatchesManagement />} />
         <Route path="/pedidos" element={<OrdersManagement />} />
         <Route path="/aquisicoes" element={<AcquisitionsManagement />} />
         <Route path="/usuarios" element={<UsersManagement />} />
         <Route path="/fornecedores" element={<SuppliersManagement />} />
         <Route path="/relatorios" element={<ReportsPage />} />
-        <Route path="/configuracao" element={<CompanySettings />} />
+        <Route path="/relatorios-financeiros" element={<FinancialReportsPage />} />
+        <Route path="/configuracoes" element={<CompanySettings />} />
         {/* Redirect other paths to the dashboard */}
         <Route path="*" element={<Navigate to="/admin" replace />} />
       </Routes>

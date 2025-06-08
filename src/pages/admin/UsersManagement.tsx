@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useNavigate } from 'react';
 import { useToast } from "@/hooks/use-toast";
 import { 
   Table, 
@@ -28,7 +27,8 @@ import {
   UserPlus, 
   Search,
   ArrowUp,
-  ArrowDown
+  ArrowDown,
+  Home
 } from 'lucide-react';
 import UserFormModal from '@/components/admin/UserFormModal';
 import { User, UserRole } from '@/types/models';
@@ -111,6 +111,7 @@ const translateRole = (role: UserRole): string => {
 
 const UsersManagement: React.FC = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [users, setUsers] = useState<User[]>(mockUsers);
   const [filteredUsers, setFilteredUsers] = useState<User[]>(mockUsers);
   const [searchTerm, setSearchTerm] = useState<string>("");
@@ -238,10 +239,20 @@ const UsersManagement: React.FC = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Gestão de Utilizadores</h2>
-        <Button onClick={handleOpenCreateModal}>
-          <UserPlus className="h-4 w-4 mr-2" />
-          Novo Utilizador
-        </Button>
+        <div className="flex items-center space-x-2">
+          <Button 
+            variant="outline" 
+            onClick={() => navigate('/')}
+            className="flex items-center"
+          >
+            <Home className="mr-2 h-4 w-4" />
+            Voltar ao Site
+          </Button>
+          <Button onClick={handleOpenCreateModal}>
+            <UserPlus className="h-4 w-4 mr-2" />
+            Novo Utilizador
+          </Button>
+        </div>
       </div>
 
       <div className="flex items-center space-x-2 mb-4">
