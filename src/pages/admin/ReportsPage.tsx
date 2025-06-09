@@ -3,74 +3,13 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, BarChart3, FileText, TrendingUp, Package, Download } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { exportToPDF } from '@/utils/reportExport';
+import { ArrowLeft, BarChart3, FileText, TrendingUp, Package } from "lucide-react";
 
 const ReportsPage: React.FC = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
 
   const handleBack = () => {
     navigate('/admin');
-  };
-
-  const generateSalesReport = async () => {
-    const salesData = [
-      { data: '01/06/2024', produto: 'Paracetamol 500mg', quantidade: 15, valor: 'AOA 5.250,00' },
-      { data: '01/06/2024', produto: 'Amoxicilina 500mg', quantidade: 8, valor: 'AOA 5.200,00' },
-      { data: '02/06/2024', produto: 'Ibuprofeno 400mg', quantidade: 12, valor: 'AOA 5.040,00' },
-    ];
-
-    const columns = [
-      { header: 'Data', accessor: 'data' },
-      { header: 'Produto', accessor: 'produto' },
-      { header: 'Quantidade', accessor: 'quantidade' },
-      { header: 'Valor Total', accessor: 'valor' }
-    ];
-
-    exportToPDF('Relatório de Vendas', salesData, columns);
-  };
-
-  const generateInventoryReport = async () => {
-    const inventoryData = [
-      { produto: 'Paracetamol 500mg', estoque: 150, valorUnitario: 'AOA 350,00', valorTotal: 'AOA 52.500,00' },
-      { produto: 'Amoxicilina 500mg', estoque: 80, valorUnitario: 'AOA 650,00', valorTotal: 'AOA 52.000,00' },
-      { produto: 'Ibuprofeno 400mg', estoque: 120, valorUnitario: 'AOA 420,00', valorTotal: 'AOA 50.400,00' },
-    ];
-
-    const columns = [
-      { header: 'Produto', accessor: 'produto' },
-      { header: 'Estoque', accessor: 'estoque' },
-      { header: 'Valor Unitário', accessor: 'valorUnitario' },
-      { header: 'Valor Total', accessor: 'valorTotal' }
-    ];
-
-    exportToPDF('Relatório de Estoque', inventoryData, columns);
-  };
-
-  const generateProductsReport = async () => {
-    const productsData = [
-      { codigo: 'MED-001', nome: 'Paracetamol 500mg', categoria: 'Analgésicos', fabricante: 'Pharma Inc.' },
-      { codigo: 'MED-002', nome: 'Amoxicilina 500mg', categoria: 'Antibióticos', fabricante: 'MedLab Angola' },
-      { codigo: 'MED-003', nome: 'Ibuprofeno 400mg', categoria: 'Anti-inflamatórios', fabricante: 'Pharma Angola' },
-    ];
-
-    const columns = [
-      { header: 'Código', accessor: 'codigo' },
-      { header: 'Nome', accessor: 'nome' },
-      { header: 'Categoria', accessor: 'categoria' },
-      { header: 'Fabricante', accessor: 'fabricante' }
-    ];
-
-    exportToPDF('Relatório de Produtos', productsData, columns);
-  };
-
-  const generateCustomReport = () => {
-    toast({
-      title: "Relatório Personalizado",
-      description: "Funcionalidade em desenvolvimento. Em breve você poderá criar relatórios personalizados.",
-    });
   };
 
   const reportCards = [
@@ -78,25 +17,25 @@ const ReportsPage: React.FC = () => {
       title: "Relatório de Vendas",
       description: "Visualize dados de vendas por período",
       icon: <TrendingUp className="h-8 w-8 text-blue-600" />,
-      action: generateSalesReport
+      action: () => console.log("Gerar relatório de vendas")
     },
     {
       title: "Relatório de Estoque",
       description: "Acompanhe o status do inventário",
       icon: <Package className="h-8 w-8 text-green-600" />,
-      action: generateInventoryReport
+      action: () => console.log("Gerar relatório de estoque")
     },
     {
       title: "Relatório de Produtos",
       description: "Análise detalhada dos produtos",
       icon: <BarChart3 className="h-8 w-8 text-purple-600" />,
-      action: generateProductsReport
+      action: () => console.log("Gerar relatório de produtos")
     },
     {
       title: "Relatório Personalizado",
       description: "Crie relatórios customizados",
       icon: <FileText className="h-8 w-8 text-orange-600" />,
-      action: generateCustomReport
+      action: () => console.log("Criar relatório personalizado")
     }
   ];
 
@@ -112,7 +51,7 @@ const ReportsPage: React.FC = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
         {reportCards.map((report, index) => (
-          <Card key={index} className="hover:shadow-lg transition-shadow cursor-pointer">
+          <Card key={index} className="hover:shadow-lg transition-shadow cursor-pointer" onClick={report.action}>
             <CardHeader className="flex flex-row items-center space-y-0 pb-2">
               <div className="flex-1">
                 <CardTitle className="text-lg">{report.title}</CardTitle>
@@ -121,13 +60,8 @@ const ReportsPage: React.FC = () => {
               <div className="ml-4">{report.icon}</div>
             </CardHeader>
             <CardContent>
-              <Button 
-                variant="outline" 
-                className="w-full flex items-center"
-                onClick={report.action}
-              >
-                <Download className="mr-2 h-4 w-4" />
-                Gerar PDF
+              <Button variant="outline" className="w-full">
+                Gerar Relatório
               </Button>
             </CardContent>
           </Card>
