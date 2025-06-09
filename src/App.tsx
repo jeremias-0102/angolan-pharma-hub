@@ -1,18 +1,17 @@
+
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { CartProvider } from './contexts/CartContext';
 import { NotificationsProvider } from './contexts/NotificationsContext';
 import { Toaster } from './components/ui/toaster';
-import PrivateRoute from './components/PrivateRoute';
-import LoginPage from './pages/LoginPage';
-import RegisterPage from './pages/RegisterPage';
-import HomePage from './pages/HomePage';
-import ProductsPage from './pages/ProductsPage';
-import ProductDetailsPage from './pages/ProductDetailsPage';
-import CartPage from './pages/CartPage';
-import CheckoutPage from './pages/CheckoutPage';
-import OrderConfirmationPage from './pages/OrderConfirmationPage';
+import { PrivateRoute } from './components/PrivateRoute';
+import Login from './pages/Login';
+import Home from './pages/Home';
+import Products from './pages/Products';
+import ProductDetail from './pages/ProductDetail';
+import Cart from './pages/Cart';
+import Checkout from './pages/Checkout';
 import Dashboard from './pages/admin/Dashboard';
 import ProductsManagement from './pages/admin/ProductsManagement';
 import CategoriesManagement from './pages/admin/CategoriesManagement';
@@ -22,7 +21,7 @@ import OrdersManagement from './pages/admin/OrdersManagement';
 import ReportsPage from './pages/admin/ReportsPage';
 import FinancialReportsPage from './pages/admin/FinancialReportsPage';
 import CompanySettings from './pages/admin/CompanySettings';
-import NotFoundPage from './pages/NotFoundPage';
+import NotFound from './pages/NotFound';
 
 // Import new pages
 import MyProfile from './pages/client/MyProfile';
@@ -37,32 +36,31 @@ function App() {
             <div className="min-h-screen bg-background">
               <Routes>
                 {/* Public routes */}
-                <Route path="/login" element={<LoginPage />} />
-                <Route path="/register" element={<RegisterPage />} />
-                <Route path="/" element={<HomePage />} />
-                <Route path="/produtos" element={<ProductsPage />} />
-                <Route path="/produto/:id" element={<ProductDetailsPage />} />
-                <Route path="/carrinho" element={<CartPage />} />
-                <Route path="/checkout" element={<PrivateRoute><CheckoutPage /></PrivateRoute>} />
-                <Route path="/confirmacao-pedido" element={<PrivateRoute><OrderConfirmationPage /></PrivateRoute>} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/register" element={<Login />} />
+                <Route path="/" element={<Home />} />
+                <Route path="/produtos" element={<Products />} />
+                <Route path="/produto/:id" element={<ProductDetail />} />
+                <Route path="/carrinho" element={<Cart />} />
+                <Route path="/checkout" element={<PrivateRoute><Checkout /></PrivateRoute>} />
                 
                 {/* Client routes */}
                 <Route path="/meu-perfil" element={<PrivateRoute><MyProfile /></PrivateRoute>} />
                 
                 {/* Admin routes */}
-                <Route path="/admin" element={<PrivateRoute requiredRole="admin"><Dashboard /></PrivateRoute>} />
-                <Route path="/admin/produtos" element={<PrivateRoute requiredRole="admin"><ProductsManagement /></PrivateRoute>} />
-                <Route path="/admin/categorias" element={<PrivateRoute requiredRole="admin"><CategoriesManagement /></PrivateRoute>} />
-                <Route path="/admin/fornecedores" element={<PrivateRoute requiredRole="admin"><SuppliersManagement /></PrivateRoute>} />
-                <Route path="/admin/usuarios" element={<PrivateRoute requiredRole="admin"><UsersManagement /></PrivateRoute>} />
-                <Route path="/admin/pedidos" element={<PrivateRoute requiredRole="admin"><OrdersManagement /></PrivateRoute>} />
-                <Route path="/admin/relatorios" element={<PrivateRoute requiredRole="admin"><ReportsPage /></PrivateRoute>} />
-                <Route path="/admin/relatorios-financeiros" element={<PrivateRoute requiredRole="admin"><FinancialReportsPage /></PrivateRoute>} />
-                <Route path="/admin/configuracoes" element={<PrivateRoute requiredRole="admin"><CompanySettings /></PrivateRoute>} />
-                <Route path="/admin/backup" element={<PrivateRoute requiredRole="admin"><BackupRestore /></PrivateRoute>} />
+                <Route path="/admin" element={<PrivateRoute allowedRoles={["admin"]}><Dashboard /></PrivateRoute>} />
+                <Route path="/admin/produtos" element={<PrivateRoute allowedRoles={["admin"]}><ProductsManagement /></PrivateRoute>} />
+                <Route path="/admin/categorias" element={<PrivateRoute allowedRoles={["admin"]}><CategoriesManagement /></PrivateRoute>} />
+                <Route path="/admin/fornecedores" element={<PrivateRoute allowedRoles={["admin"]}><SuppliersManagement /></PrivateRoute>} />
+                <Route path="/admin/usuarios" element={<PrivateRoute allowedRoles={["admin"]}><UsersManagement /></PrivateRoute>} />
+                <Route path="/admin/pedidos" element={<PrivateRoute allowedRoles={["admin"]}><OrdersManagement /></PrivateRoute>} />
+                <Route path="/admin/relatorios" element={<PrivateRoute allowedRoles={["admin"]}><ReportsPage /></PrivateRoute>} />
+                <Route path="/admin/relatorios-financeiros" element={<PrivateRoute allowedRoles={["admin"]}><FinancialReportsPage /></PrivateRoute>} />
+                <Route path="/admin/configuracoes" element={<PrivateRoute allowedRoles={["admin"]}><CompanySettings /></PrivateRoute>} />
+                <Route path="/admin/backup" element={<PrivateRoute allowedRoles={["admin"]}><BackupRestore /></PrivateRoute>} />
 
                 {/* Not Found */}
-                <Route path="*" element={<NotFoundPage />} />
+                <Route path="*" element={<NotFound />} />
               </Routes>
               <Toaster />
             </div>
