@@ -22,8 +22,6 @@ import ReportsPage from './pages/admin/ReportsPage';
 import FinancialReportsPage from './pages/admin/FinancialReportsPage';
 import CompanySettings from './pages/admin/CompanySettings';
 import NotFound from './pages/NotFound';
-
-// Import new pages
 import MyProfile from './pages/client/MyProfile';
 import BackupRestore from './pages/admin/BackupRestore';
 
