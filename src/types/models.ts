@@ -1,6 +1,10 @@
 
 export type UserRole = 'admin' | 'pharmacist' | 'delivery_person' | 'client' | 'supervisor';
 
+export type OrderStatus = 'pending' | 'confirmed' | 'processing' | 'ready' | 'shipping' | 'delivered' | 'cancelled';
+
+export type PurchaseOrderStatus = 'pending' | 'ordered' | 'received' | 'cancelled';
+
 export interface User {
   id: string;
   name: string;
@@ -18,6 +22,7 @@ export interface Category {
   id: string;
   name: string;
   description: string;
+  parent_id?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -25,10 +30,12 @@ export interface Category {
 export interface Supplier {
   id: string;
   name: string;
-  contact_person: string;
+  tax_id: string;
+  contact_name: string;
   email: string;
   phone: string;
   address: string;
+  is_active: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -40,13 +47,21 @@ export interface Product {
   description: string;
   price_cost: number;
   price_sale: number;
+  price_compare?: number;
   category_id: string;
+  category?: string;
   supplier_id: string;
   manufacturer: string;
   requiresPrescription: boolean;
   image?: string;
   stock: number;
   batches?: Batch[];
+  details?: string;
+  active_ingredient?: string;
+  form?: string;
+  dosage?: string;
+  usage_instructions?: string;
+  general_info?: string;
   created_at: string;
   updated_at: string;
 }
@@ -63,38 +78,43 @@ export interface Batch {
   updated_at: string;
 }
 
-export interface Order {
-  id: string;
-  user_id: string;
-  items: OrderItem[];
-  total_amount: number;
-  status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
-  shipping_address: string;
-  payment_method: string;
-  created_at: string;
-  updated_at: string;
-}
-
 export interface OrderItem {
   id: string;
   order_id: string;
   product_id: string;
   product_name: string;
+  product_image?: string;
   quantity: number;
   unit_price: number;
-  total_price: number;
+  total: number;
 }
 
-export interface PurchaseOrder {
+export interface Order {
   id: string;
-  supplier_id: string;
-  supplier_name: string;
-  items: PurchaseOrderItem[];
-  total_amount: number;
-  status: 'pending' | 'ordered' | 'received' | 'cancelled';
-  order_date: string;
-  expected_delivery: string;
+  user_id: string;
+  items: OrderItem[];
+  total: number;
+  discount: number;
+  status: OrderStatus;
+  shipping_address: string;
+  shipping_details?: any;
+  payment_method: string;
+  payment_status: string;
+  customer_name: string;
+  customer_email: string;
+  customer_phone: string;
+  requires_prescription: boolean;
   notes?: string;
+  delivery?: {
+    status: 'pending' | 'assigned' | 'in_progress' | 'delivered' | 'failed';
+    address: string;
+    district: string;
+    city: string;
+    postal_code?: string;
+    estimated_delivery?: string;
+    actual_delivery?: string;
+    notes?: string;
+  };
   created_at: string;
   updated_at: string;
 }
@@ -108,6 +128,28 @@ export interface PurchaseOrderItem {
   quantity_received?: number;
   unit_cost: number;
   total_cost: number;
+  unit_price?: number;
+  total?: number;
+}
+
+export interface PurchaseOrder {
+  id: string;
+  supplier_id: string;
+  supplier_name: string;
+  items: PurchaseOrderItem[];
+  total: number;
+  status: PurchaseOrderStatus;
+  order_date: string;
+  expected_delivery: string;
+  notes?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ReceivableItem extends PurchaseOrderItem {
+  currentReceiving?: number;
+  batchNumber?: string;
+  expiryDate?: Date;
 }
 
 export interface Notification {
@@ -145,5 +187,63 @@ export interface CompanySettings {
   registration_number?: string;
   currency: string;
   timezone: string;
+  updated_at: string;
+}
+
+export interface CartProduct {
+  id: string;
+  name: string;
+  price: number;
+  quantity: number;
+  image?: string;
+  requiresPrescription: boolean;
+}
+
+export interface Prescription {
+  id: string;
+  order_id: string;
+  file_url: string;
+  verified: boolean;
+  created_at: string;
+}
+
+export interface FinancialTransaction {
+  id: string;
+  type: 'sale' | 'purchase' | 'expense' | 'income';
+  amount: number;
+  description: string;
+  created_at: string;
+}
+
+export interface SystemSettings {
+  id: string;
+  key: string;
+  value: string;
+  updated_at: string;
+}
+
+export interface MulticaixaPayment {
+  id: string;
+  order_id: string;
+  amount: number;
+  status: 'pending' | 'completed' | 'failed';
+  transaction_id?: string;
+  created_at: string;
+}
+
+export interface CommunicationLog {
+  id: string;
+  type: 'email' | 'sms' | 'call';
+  recipient: string;
+  message: string;
+  status: 'sent' | 'delivered' | 'failed';
+  created_at: string;
+}
+
+export interface AIConversation {
+  id: string;
+  user_id: string;
+  messages: any[];
+  created_at: string;
   updated_at: string;
 }

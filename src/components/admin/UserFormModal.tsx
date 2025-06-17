@@ -26,7 +26,7 @@ const formSchema = z.object({
   password: z.string().min(6, { message: "A senha deve ter pelo menos 6 caracteres" })
     .optional()
     .or(z.literal('')),
-  role: z.enum(["admin", "pharmacist", "delivery", "client", "supervisor"], {
+  role: z.enum(["admin", "pharmacist", "delivery_person", "client", "supervisor"], {
     message: "Selecione um cargo válido"
   }),
   phone: z.string().optional(),
@@ -172,7 +172,7 @@ const UserFormModal: React.FC<UserFormModalProps> = ({ isOpen, onClose, onSave, 
                       <SelectItem value="supervisor">Supervisor</SelectItem>
                       <SelectItem value="admin">Administrador</SelectItem>
                       <SelectItem value="pharmacist">Farmacêutico</SelectItem>
-                      <SelectItem value="delivery">Entregador</SelectItem>
+                      <SelectItem value="delivery_person">Entregador</SelectItem>
                       <SelectItem value="client">Cliente</SelectItem>
                     </SelectContent>
                   </Select>

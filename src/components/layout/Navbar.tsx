@@ -1,218 +1,246 @@
 
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { ShoppingCart, User, Menu, X, Home, Search as SearchIcon, ChevronDown, LogOut } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCart } from '@/contexts/CartContext';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
-import NotificationBar from './NotificationBar';
-import { useIsMobile } from '@/hooks/use-mobile';
-import { getCompanySettings } from '@/services/settingsService';
-import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { ShoppingCart, User, LogOut, Menu, X, Package, Home, Phone, Info, Bell } from 'lucide-react';
+import { companyInfo } from '@/data/mockData';
+import { useNotifications } from '@/contexts/NotificationsContext';
 
 const Navbar: React.FC = () => {
-  const { user, logout, isAuthenticated, canAccessCart, canAccessAdminPanel } = useAuth();
-  const { totalItems } = useCart();
-  const location = useLocation();
+  const { user, logout, canAccessAdminPanel } = useAuth();
+  const { cartItems } = useCart();
+  const { notifications, unreadCount } = useNotifications();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const navigate = useNavigate();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [companyName, setCompanyName] = useState('BEGJNP Pharma');
+  const location = useLocation();
 
+  // Close mobile menu on route change
   useEffect(() => {
-    const fetchSettings = async () => {
-      try {
-        const settings = await getCompanySettings();
-        if (settings?.name) {
-          setCompanyName(settings.name);
-        }
-      } catch (error) {
-        console.error('Error fetching company settings:', error);
-      }
-    };
-    
-    fetchSettings();
-  }, []);
-
-  // Redirecionar administradores para o painel administrativo se tentarem acessar a loja
-  useEffect(() => {
-    if (user && ['admin', 'supervisor'].includes(user.role) && location.pathname === '/') {
-      navigate('/admin');
-    }
-  }, [user, location.pathname, navigate]);
-
-  const getDashboardLink = () => {
-    if (!user) return '/login';
-    
-    switch (user.role) {
-      case 'supervisor': return '/admin';
-      case 'admin': return '/admin';
-      case 'pharmacist': return '/pharmacist';
-      case 'delivery': return '/delivery';
-      case 'client': return '/profile';
-      default: return '/';
-    }
-  };
-
-  const navItems = [
-    { name: 'Home', path: '/' },
-    { name: 'Produtos', path: '/produtos' },
-    { name: 'Sobre', path: '/sobre' },
-    { name: 'Contato', path: '/contato' },
-  ];
-
-  const toggleMobileMenu = () => {
-    setMobileMenuOpen(!mobileMenuOpen);
-  };
+    setIsMenuOpen(false);
+  }, [location]);
 
   const handleLogout = () => {
     logout();
     navigate('/');
   };
 
-  // Se o usuário é admin ou supervisor, redirecionar para o painel administrativo
-  if (user && ['admin', 'supervisor'].includes(user.role) && !location.pathname.startsWith('/admin')) {
-    return null; // Não renderizar a navbar durante o redirecionamento
-  }
+  const handleLogoClick = () => {
+    if (user && canAccessAdminPanel()) {
+      navigate('/admin');
+    } else {
+      navigate('/');
+    }
+  };
+
+  const handleCartClick = () => {
+    // Verificar se o usuário tem permissão para acessar o carrinho
+    if (user && (user.role === 'admin' || user.role === 'supervisor')) {
+      // Redirecionar administradores para o painel admin
+      navigate('/admin');
+      return;
+    }
+    navigate('/carrinho');
+  };
+
+  const handleProductsClick = () => {
+    // Verificar se o usuário tem permissão para ver produtos
+    if (user && (user.role === 'admin' || user.role === 'supervisor')) {
+      // Redirecionar administradores para o painel admin
+      navigate('/admin');
+      return;
+    }
+    navigate('/produtos');
+  };
+
+  const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+
+  // Verificar se é uma página administrativa
+  const isAdminPage = location.pathname.startsWith('/admin') || 
+                     location.pathname.startsWith('/farmaceutico') || 
+                     location.pathname.startsWith('/entregador');
+
+  // Se o usuário é admin/supervisor e está tentando acessar páginas públicas, redirecionar
+  useEffect(() => {
+    if (user && (user.role === 'admin' || user.role === 'supervisor') && 
+        !isAdminPage && location.pathname !== '/login') {
+      navigate('/admin');
+    }
+  }, [user, location.pathname, navigate, isAdminPage]);
+
+  // Verificar se deve mostrar o carrinho (apenas para clientes e usuários não logados)
+  const shouldShowCart = !user || user.role === 'client';
+
+  // Verificar se deve mostrar produtos (apenas para clientes e usuários não logados)
+  const shouldShowProducts = !user || user.role === 'client';
 
   return (
-    <header className="bg-white shadow-sm sticky top-0 z-40">
-      <div className="flex items-center justify-between px-4 md:px-6 py-2 container mx-auto">
-        {/* Logo */}
-        <div className="flex items-center">
-          <Link to="/" className="flex items-center">
-            <h1 className="text-xl font-bold text-blue-600">BEGJNP<span className="text-green-600">Pharma</span></h1>
-          </Link>
+    <nav className="bg-white shadow-md sticky top-0 z-40">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center h-16">
+          {/* Logo */}
+          <div className="flex-shrink-0">
+            <button 
+              onClick={handleLogoClick}
+              className="flex items-center space-x-2 text-xl font-bold text-blue-600 hover:text-blue-800 transition-colors"
+            >
+              <span>BEGJNP<span className="text-green-600">Pharma</span></span>
+            </button>
+          </div>
+
+          {/* Desktop Navigation */}
+          <div className="hidden md:block">
+            <div className="ml-10 flex items-baseline space-x-8">
+              {!isAdminPage && (
+                <>
+                  <Link 
+                    to="/" 
+                    className="text-gray-700 hover:text-blue-600 px-3 py-2 text-sm font-medium flex items-center transition-colors"
+                  >
+                    <Home className="mr-1 h-4 w-4" />
+                    Início
+                  </Link>
+                  {shouldShowProducts && (
+                    <button 
+                      onClick={handleProductsClick}
+                      className="text-gray-700 hover:text-blue-600 px-3 py-2 text-sm font-medium flex items-center transition-colors"
+                    >
+                      <Package className="mr-1 h-4 w-4" />
+                      Produtos
+                    </button>
+                  )}
+                  <Link 
+                    to="/sobre" 
+                    className="text-gray-700 hover:text-blue-600 px-3 py-2 text-sm font-medium flex items-center transition-colors"
+                  >
+                    <Info className="mr-1 h-4 w-4" />
+                    Sobre
+                  </Link>
+                  <Link 
+                    to="/contato" 
+                    className="text-gray-700 hover:text-blue-600 px-3 py-2 text-sm font-medium flex items-center transition-colors"
+                  >
+                    <Phone className="mr-1 h-4 w-4" />
+                    Contato
+                  </Link>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Right side - Cart, Notifications, User */}
+          <div className="flex items-center space-x-4">
+            {/* Cart - apenas para clientes */}
+            {shouldShowCart && !isAdminPage && (
+              <button 
+                onClick={handleCartClick}
+                className="relative p-2 text-gray-700 hover:text-blue-600 transition-colors"
+              >
+                <ShoppingCart className="h-6 w-6" />
+                {totalItems > 0 && (
+                  <Badge className="absolute -top-2 -right-2 bg-red-500 text-white text-xs min-w-[20px] h-5 flex items-center justify-center rounded-full">
+                    {totalItems}
+                  </Badge>
+                )}
+              </button>
+            )}
+
+            {/* Notifications */}
+            {user && (
+              <div className="relative">
+                <button className="relative p-2 text-gray-700 hover:text-blue-600 transition-colors">
+                  <Bell className="h-6 w-6" />
+                  {unreadCount > 0 && (
+                    <Badge className="absolute -top-2 -right-2 bg-red-500 text-white text-xs min-w-[20px] h-5 flex items-center justify-center rounded-full">
+                      {unreadCount}
+                    </Badge>
+                  )}
+                </button>
+              </div>
+            )}
+
+            {/* User Menu */}
+            {user ? (
+              <div className="flex items-center space-x-2">
+                <span className="text-sm text-gray-700 hidden sm:block">
+                  Olá, {user.name}
+                </span>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={handleLogout}
+                  className="flex items-center space-x-1"
+                >
+                  <LogOut className="h-4 w-4" />
+                  <span className="hidden sm:inline">Sair</span>
+                </Button>
+              </div>
+            ) : (
+              <Link to="/login">
+                <Button size="sm" className="flex items-center space-x-1">
+                  <User className="h-4 w-4" />
+                  <span>Entrar</span>
+                </Button>
+              </Link>
+            )}
+
+            {/* Mobile menu button */}
+            <div className="md:hidden">
+              <button
+                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                className="p-2 text-gray-700 hover:text-blue-600"
+              >
+                {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+              </button>
+            </div>
+          </div>
         </div>
 
-        {/* Desktop Navigation - Ocultar para admin/supervisor */}
-        {(!user || !['admin', 'supervisor'].includes(user.role)) && (
-          <div className="hidden md:flex items-center space-x-4">
-            <Link to="/" className="text-gray-700 hover:text-pharma-primary px-3 py-2 rounded-md text-sm font-medium">Home</Link>
-            <Link to="/produtos" className="text-gray-700 hover:text-pharma-primary px-3 py-2 rounded-md text-sm font-medium">Produtos</Link>
-            <Link to="/sobre" className="text-gray-700 hover:text-pharma-primary px-3 py-2 rounded-md text-sm font-medium">Sobre</Link>
-            <Link to="/contato" className="text-gray-700 hover:text-pharma-primary px-3 py-2 rounded-md text-sm font-medium">Contato</Link>
+        {/* Mobile Navigation */}
+        {isMenuOpen && (
+          <div className="md:hidden border-t border-gray-200">
+            <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-white">
+              {!isAdminPage && (
+                <>
+                  <Link 
+                    to="/" 
+                    className="text-gray-700 hover:text-blue-600 block px-3 py-2 text-base font-medium flex items-center"
+                  >
+                    <Home className="mr-2 h-4 w-4" />
+                    Início
+                  </Link>
+                  {shouldShowProducts && (
+                    <button 
+                      onClick={handleProductsClick}
+                      className="text-gray-700 hover:text-blue-600 block px-3 py-2 text-base font-medium flex items-center w-full text-left"
+                    >
+                      <Package className="mr-2 h-4 w-4" />
+                      Produtos
+                    </button>
+                  )}
+                  <Link 
+                    to="/sobre" 
+                    className="text-gray-700 hover:text-blue-600 block px-3 py-2 text-base font-medium flex items-center"
+                  >
+                    <Info className="mr-2 h-4 w-4" />
+                    Sobre
+                  </Link>
+                  <Link 
+                    to="/contato" 
+                    className="text-gray-700 hover:text-blue-600 block px-3 py-2 text-base font-medium flex items-center"
+                  >
+                    <Phone className="mr-2 h-4 w-4" />
+                    Contato
+                  </Link>
+                </>
+              )}
+            </div>
           </div>
         )}
-
-        {/* Actions Area */}
-        <div className="flex items-center space-x-3">
-          {/* Notificações */}
-          <NotificationBar />
-          
-          {/* Cart - Apenas para usuários que podem acessar o carrinho */}
-          {canAccessCart() && (
-            <Link to="/carrinho">
-              <Button variant="ghost" className="relative p-2">
-                <ShoppingCart size={20} />
-                {totalItems > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-pharma-secondary text-white text-xs w-5 h-5 flex items-center justify-center rounded-full">
-                    {totalItems}
-                  </span>
-                )}
-              </Button>
-            </Link>
-          )}
-
-          {/* User menu */}
-          {isAuthenticated ? (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="p-2">
-                  <User size={20} />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuLabel>
-                  <div className="flex flex-col">
-                    <span>{user?.name}</span>
-                    <span className="text-xs text-gray-500">{user?.email}</span>
-                    <span className="text-xs font-medium text-pharma-primary capitalize mt-1">
-                      {user?.role === 'supervisor' ? 'Supervisor' : 
-                       user?.role === 'admin' ? 'Administrador' : user?.role}
-                    </span>
-                  </div>
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                {canAccessAdminPanel() && (
-                  <DropdownMenuItem asChild>
-                    <Link to={getDashboardLink()} className="w-full cursor-pointer">
-                      Painel Administrativo
-                    </Link>
-                  </DropdownMenuItem>
-                )}
-                {!['admin', 'supervisor'].includes(user?.role || '') && (
-                  <>
-                    <DropdownMenuItem asChild>
-                      <Link to="/profile" className="w-full cursor-pointer">
-                        Meu Perfil
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link to="/pedidos" className="w-full cursor-pointer">
-                        Meus Pedidos
-                      </Link>
-                    </DropdownMenuItem>
-                  </>
-                )}
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleLogout} className="text-red-500 cursor-pointer">
-                  <LogOut className="mr-2 h-4 w-4" />
-                  <span>Sair</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          ) : (
-            <Button asChild variant="default" size="sm" className="bg-pharma-primary hover:bg-pharma-primary/90">
-              <Link to="/login">Entrar</Link>
-            </Button>
-          )}
-
-          {/* Mobile menu button - Apenas para usuários não admin/supervisor */}
-          {(!user || !['admin', 'supervisor'].includes(user.role)) && (
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="md:hidden p-2" 
-              onClick={toggleMobileMenu}
-            >
-              {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
-            </Button>
-          )}
-        </div>
       </div>
-
-      {/* Mobile Navigation - Apenas para usuários não admin/supervisor */}
-      {mobileMenuOpen && (!user || !['admin', 'supervisor'].includes(user.role)) && (
-        <div className="md:hidden bg-white border-t">
-          <div className="container mx-auto px-4 py-2 space-y-1">
-            {navItems.map((item) => (
-              <Link 
-                key={item.name} 
-                to={item.path}
-                className={cn(
-                  "block px-3 py-2 rounded-md text-base font-medium",
-                  location.pathname === item.path 
-                    ? "bg-pharma-light text-pharma-primary" 
-                    : "text-gray-600 hover:bg-gray-50 hover:text-pharma-primary"
-                )}
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                {item.name}
-              </Link>
-            ))}
-          </div>
-        </div>
-      )}
-    </header>
+    </nav>
   );
 };
 
