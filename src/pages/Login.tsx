@@ -1,5 +1,6 @@
+
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -34,8 +35,10 @@ const registerSchema = z.object({
   message: "As senhas não coincidem",
   path: ["confirmPassword"]
 });
+
 type LoginValues = z.infer<typeof loginSchema>;
 type RegisterValues = z.infer<typeof registerSchema>;
+
 const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -49,7 +52,11 @@ const Login = () => {
     toast
   } = useToast();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState("login");
+  const [searchParams] = useSearchParams();
+  const tabFromUrl = searchParams.get('tab');
+
+  // Set initial tab based on URL parameter
+  const [activeTab, setActiveTab] = useState(tabFromUrl === 'register' ? 'register' : 'login');
 
   // Initialize demo users on component mount
   useEffect(() => {
@@ -62,6 +69,13 @@ const Login = () => {
     };
     initDemo();
   }, []);
+
+  // Update tab if URL parameter changes
+  useEffect(() => {
+    if (tabFromUrl === 'register') {
+      setActiveTab('register');
+    }
+  }, [tabFromUrl]);
 
   // Login form
   const loginForm = useForm<LoginValues>({
@@ -83,6 +97,7 @@ const Login = () => {
       phone: ''
     }
   });
+
   const handleLogin = async (values: LoginValues) => {
     setIsLoading(true);
     try {
@@ -94,6 +109,7 @@ const Login = () => {
       setIsLoading(false);
     }
   };
+
   const handleRegister = async (values: RegisterValues) => {
     setIsLoading(true);
     const {
@@ -155,12 +171,10 @@ const Login = () => {
       setIsLoading(false);
     }
   };
+
   return <MainLayout>
       <div className="container mx-auto px-4 py-12">
         <div className="max-w-md mx-auto">
-          {/* Demo credentials info */}
-          
-
           <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="login">Login</TabsTrigger>
@@ -367,4 +381,5 @@ const Login = () => {
       </div>
     </MainLayout>;
 };
+
 export default Login;

@@ -9,12 +9,21 @@ import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, Mail, Lock } from 'lucide-react';
 import MainLayout from '@/components/layout/MainLayout';
 
+// Lista dos emails cadastrados no sistema (mesma do AuthContext)
+const REGISTERED_EMAILS = [
+  'supervisor@pharma.com',
+  'admin@pharma.com', 
+  'farmaceutico@pharma.com',
+  'cliente@pharma.com'
+];
+
 const RecuperarSenha = () => {
   const [email, setEmail] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [step, setStep] = useState<'request' | 'reset'>('request');
+  const [step, setStep] = useState<'request' | 'reset' | 'invalid-email'>('request');
+  const [emailError, setEmailError] = useState('');
   const navigate = useNavigate();
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
@@ -30,14 +39,25 @@ const RecuperarSenha = () => {
   const handleRequestReset = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setEmailError('');
 
     try {
-      // Simular envio de email (em produção seria uma chamada real ao backend)
+      // Verificar se o email existe no sistema
+      const emailExists = REGISTERED_EMAILS.includes(email.toLowerCase());
+      
+      if (!emailExists) {
+        setEmailError('Email inválido. Este email não está cadastrado no sistema.');
+        setStep('invalid-email');
+        setIsLoading(false);
+        return;
+      }
+
+      // Simular envio de email para emails válidos
       await new Promise(resolve => setTimeout(resolve, 2000));
       
       toast({
-        title: "Email enviado!",
-        description: "Se o email existir no nosso sistema, vai receber um link para redefinir a senha.",
+        title: "Link de recuperação enviado!",
+        description: "Verifique seu email para o link de redefinição de senha.",
       });
       
       // Em desenvolvimento, vamos simular o processo
@@ -112,6 +132,16 @@ const RecuperarSenha = () => {
     }
   };
 
+  const handleTryAgain = () => {
+    setStep('request');
+    setEmailError('');
+    setEmail('');
+  };
+
+  const handleCreateAccount = () => {
+    navigate('/login?tab=register');
+  };
+
   return (
     <MainLayout>
       <div className="container mx-auto px-4 py-12">
@@ -128,10 +158,10 @@ const RecuperarSenha = () => {
           <Card>
             <CardHeader>
               <CardTitle>
-                {step === 'request' ? 'Recuperar Senha' : 'Redefinir Senha'}
+                {step === 'request' || step === 'invalid-email' ? 'Recuperar Senha' : 'Redefinir Senha'}
               </CardTitle>
               <CardDescription>
-                {step === 'request' 
+                {step === 'request' || step === 'invalid-email'
                   ? 'Digite o seu email para receber um link de recuperação'
                   : 'Digite a sua nova senha'
                 }
@@ -139,7 +169,7 @@ const RecuperarSenha = () => {
             </CardHeader>
             
             <CardContent>
-              {step === 'request' ? (
+              {(step === 'request' || step === 'invalid-email') ? (
                 <form onSubmit={handleRequestReset} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="email">Email</Label>
@@ -150,11 +180,20 @@ const RecuperarSenha = () => {
                         type="email"
                         placeholder="o.seu@email.com"
                         value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        className="pl-10"
+                        onChange={(e) => {
+                          setEmail(e.target.value);
+                          setEmailError('');
+                          if (step === 'invalid-email') {
+                            setStep('request');
+                          }
+                        }}
+                        className={`pl-10 ${emailError ? 'border-red-500' : ''}`}
                         required
                       />
                     </div>
+                    {emailError && (
+                      <p className="text-sm text-red-500">{emailError}</p>
+                    )}
                   </div>
 
                   <Button 
@@ -162,8 +201,34 @@ const RecuperarSenha = () => {
                     className="w-full bg-pharma-primary hover:bg-pharma-primary/90"
                     disabled={isLoading}
                   >
-                    {isLoading ? 'Enviando...' : 'Enviar Link de Recuperação'}
+                    {isLoading ? 'Verificando...' : 'Enviar Link de Recuperação'}
                   </Button>
+
+                  {step === 'invalid-email' && (
+                    <div className="space-y-3 pt-4 border-t">
+                      <p className="text-sm text-gray-600 text-center">
+                        Não tem uma conta? Crie uma agora:
+                      </p>
+                      <div className="space-y-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={handleCreateAccount}
+                          className="w-full"
+                        >
+                          Criar Conta
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          onClick={handleTryAgain}
+                          className="w-full text-pharma-primary"
+                        >
+                          Tentar Outro Email
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                 </form>
               ) : (
                 <form onSubmit={handlePasswordReset} className="space-y-4">
