@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MainLayout from '@/components/layout/MainLayout';
@@ -91,7 +90,7 @@ const Contact = () => {
         if (!mapRef.current || !window.google || !window.google.maps || !mounted) return;
         
         // Create a new map instance
-        const mapOptions: google.maps.MapOptions = {
+        const mapOptions = {
           center: { lat: -8.8383333, lng: 13.2344444 }, // Coordenadas de Luanda
           zoom: 15,
         };
@@ -123,7 +122,7 @@ const Contact = () => {
       mounted = false;
       
       // Clean up marker
-      if (markerRef.current) {
+      if (markerRef.current && markerRef.current.setMap) {
         markerRef.current.setMap(null);
         markerRef.current = null;
       }

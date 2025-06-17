@@ -7,6 +7,7 @@ interface Window {
     maps: {
       Map: new (element: HTMLElement, options: any) => any;
       Marker: new (options: any) => any;
+      MapOptions?: any;
     },
     accounts: {
       id: {
@@ -27,6 +28,11 @@ declare namespace google {
     }
     class Marker {
       constructor(options: any);
+      setMap(map: Map | null): void;
+    }
+    interface MapOptions {
+      center: { lat: number; lng: number };
+      zoom: number;
     }
   }
   
