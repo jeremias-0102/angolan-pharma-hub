@@ -68,11 +68,13 @@ export const generateSalesReport = async (startDate: string, endDate: string): P
     
     // This would be more complex with real order data
     const report: SalesReport = {
+      id: uuidv4(),
       period: `${startDate} to ${endDate}`,
       total_sales: totalSales,
       total_orders: totalOrders,
       top_products: [], // Would need to aggregate from order items
-      payment_methods: [] // Would need order payment method data
+      payment_methods: [], // Would need order payment method data
+      created_at: new Date().toISOString()
     };
     
     return report;
