@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   AreaChart, 
   Area, 
@@ -12,69 +12,104 @@ import {
 } from 'recharts';
 import { Button } from '@/components/ui/button';
 import { Download } from 'lucide-react';
-import { exportToPDF, exportToExcel } from '@/utils/reportExport';
+import { exportReportToPDF, exportReportToExcel, generateInventoryReport } from '@/services/reportsService';
 import { DateRange } from 'react-day-picker';
-
-const data = [
-  { name: 'Jan', estoque: 120, minimo: 25 },
-  { name: 'Fev', estoque: 105, minimo: 25 },
-  { name: 'Mar', estoque: 140, minimo: 25 },
-  { name: 'Abr', estoque: 90, minimo: 25 },
-  { name: 'Mai', estoque: 75, minimo: 25 },
-  { name: 'Jun', estoque: 110, minimo: 25 },
-];
 
 interface InventoryReportChartProps {
   date?: DateRange;
 }
 
 const InventoryReportChart: React.FC<InventoryReportChartProps> = ({ date }) => {
-  const handleDownloadPDF = () => {
-    const columns = [
-      { header: 'Mês', accessor: 'name' },
-      { header: 'Nível de Estoque', accessor: 'estoque' },
-      { header: 'Estoque Mínimo', accessor: 'minimo' }
-    ];
-    
-    exportToPDF('Relatório de Estoque', data, columns);
+  const [reportData, setReportData] = useState<any[]>([]);
+  const [summary, setSummary] = useState<any>({});
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadReportData();
+  }, []);
+
+  const loadReportData = async () => {
+    try {
+      setLoading(true);
+      const report = await generateInventoryReport();
+      
+      // Agrupar produtos por categoria para o gráfico
+      const categoryData = report.data.reduce((acc: any, product: any) => {
+        const category = product.categoria || 'Sem Categoria';
+        
+        if (!acc[category]) {
+          acc[category] = { name: category, estoque: 0, minimo: 25 };
+        }
+        
+        acc[category].estoque += product.estoque;
+        
+        return acc;
+      }, {});
+      
+      setReportData(Object.values(categoryData));
+      setSummary(report.summary);
+    } catch (error) {
+      console.error('Erro ao carregar dados do estoque:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleDownloadExcel = () => {
-    exportToExcel('Relatório de Estoque', data, [
-      { header: 'Mês', accessor: 'name' },
-      { header: 'Nível de Estoque', accessor: 'estoque' },
-      { header: 'Estoque Mínimo', accessor: 'minimo' }
-    ]);
+  const handleDownloadPDF = async () => {
+    try {
+      await exportReportToPDF('inventory');
+    } catch (error) {
+      console.error('Erro ao exportar PDF:', error);
+    }
   };
+
+  const handleDownloadExcel = async () => {
+    try {
+      await exportReportToExcel('inventory');
+    } catch (error) {
+      console.error('Erro ao exportar Excel:', error);
+    }
+  };
+
+  if (loading) {
+    return <div className="flex justify-center p-8">Carregando dados...</div>;
+  }
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-end space-x-2">
-        <Button 
-          variant="outline" 
-          size="sm" 
-          className="flex items-center"
-          onClick={handleDownloadExcel}
-        >
-          <Download className="mr-2 h-4 w-4" />
-          Excel
-        </Button>
-        <Button 
-          variant="outline" 
-          size="sm" 
-          className="flex items-center"
-          onClick={handleDownloadPDF}
-        >
-          <Download className="mr-2 h-4 w-4" />
-          PDF
-        </Button>
+      <div className="flex justify-between items-center">
+        <div className="flex space-x-4 text-sm text-gray-600">
+          <span>Total de Produtos: {summary.totalProducts || 0}</span>
+          <span>Estoque Baixo: {summary.lowStockProducts || 0}</span>
+          <span>Valor Total: AOA {Math.round(summary.totalInventoryValue || 0).toLocaleString()}</span>
+        </div>
+        <div className="flex space-x-2">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="flex items-center"
+            onClick={handleDownloadExcel}
+          >
+            <Download className="mr-2 h-4 w-4" />
+            Excel
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="flex items-center"
+            onClick={handleDownloadPDF}
+          >
+            <Download className="mr-2 h-4 w-4" />
+            PDF
+          </Button>
+        </div>
       </div>
 
       <div id="inventory-report" className="bg-white p-4 rounded-lg">
-        <h3 className="text-lg font-medium mb-4">Relatório de Estoque 2025</h3>
+        <h3 className="text-lg font-medium mb-4">Relatório de Estoque - Dados Reais</h3>
         <ResponsiveContainer width="100%" height={300}>
           <AreaChart
-            data={data}
+            data={reportData}
             margin={{
               top: 10,
               right: 30,

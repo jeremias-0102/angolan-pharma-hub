@@ -1,12 +1,20 @@
 
 import jsPDF from 'jspdf';
 import * as XLSX from 'xlsx';
-import { useToast } from '@/components/ui/use-toast';
 
 interface Column {
   header: string;
   accessor: string;
 }
+
+// Função para mostrar toast sem usar hooks
+const showToast = (title: string, description: string, variant: 'default' | 'destructive' = 'default') => {
+  // Criar um evento personalizado para notificar sobre o toast
+  const event = new CustomEvent('show-toast', {
+    detail: { title, description, variant }
+  });
+  window.dispatchEvent(event);
+};
 
 export const exportToPDF = (title: string, data: any[], columns: Column[]) => {
   try {
@@ -41,7 +49,9 @@ export const exportToPDF = (title: string, data: any[], columns: Column[]) => {
     data.forEach((row, i) => {
       columns.forEach((column, j) => {
         const cellValue = row[column.accessor]?.toString() || '';
-        doc.text(cellValue, startX + (j * cellWidth) + 2, y);
+        // Truncate long text to fit in cell
+        const truncatedValue = cellValue.length > 20 ? cellValue.substring(0, 17) + '...' : cellValue;
+        doc.text(truncatedValue, startX + (j * cellWidth) + 2, y);
       });
       y += cellPadding;
       
@@ -55,24 +65,11 @@ export const exportToPDF = (title: string, data: any[], columns: Column[]) => {
     // Save the PDF
     doc.save(`${title.toLowerCase().replace(/\s+/g, '-')}-${new Date().toISOString().slice(0, 10)}.pdf`);
     
-    // Toast message
-    const { toast } = useToast();
-    toast({
-      title: 'Relatório exportado!',
-      description: 'O relatório foi exportado em formato PDF com sucesso.',
-    });
-
+    showToast('Relatório exportado!', 'O relatório foi exportado em formato PDF com sucesso.');
     return true;
   } catch (error) {
     console.error('Erro ao gerar PDF:', error);
-    
-    const { toast } = useToast();
-    toast({
-      title: 'Erro ao exportar',
-      description: 'Houve um problema ao gerar o arquivo PDF.',
-      variant: 'destructive',
-    });
-    
+    showToast('Erro ao exportar', 'Houve um problema ao gerar o arquivo PDF.', 'destructive');
     return false;
   }
 };
@@ -98,24 +95,11 @@ export const exportToExcel = (title: string, data: any[], columns: Column[]) => 
     // Generate Excel file
     XLSX.writeFile(wb, `${title.toLowerCase().replace(/\s+/g, '-')}-${new Date().toISOString().slice(0, 10)}.xlsx`);
     
-    // Toast message
-    const { toast } = useToast();
-    toast({
-      title: 'Relatório exportado!',
-      description: 'O relatório foi exportado em formato Excel com sucesso.',
-    });
-    
+    showToast('Relatório exportado!', 'O relatório foi exportado em formato Excel com sucesso.');
     return true;
   } catch (error) {
     console.error('Erro ao gerar Excel:', error);
-    
-    const { toast } = useToast();
-    toast({
-      title: 'Erro ao exportar',
-      description: 'Houve um problema ao gerar o arquivo Excel.',
-      variant: 'destructive',
-    });
-    
+    showToast('Erro ao exportar', 'Houve um problema ao gerar o arquivo Excel.', 'destructive');
     return false;
   }
 };
