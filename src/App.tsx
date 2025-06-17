@@ -39,8 +39,8 @@ import EnhancedChatWidget from '@/components/chat/EnhancedChatWidget';
 function App() {
   return (
     <AuthProvider>
-      <CartProvider>
-        <NotificationsProvider>
+      <NotificationsProvider>
+        <CartProvider>
           <Router>
             <div className="min-h-screen bg-background">
               <Routes>
@@ -78,8 +78,8 @@ function App() {
               <Toaster />
             </div>
           </Router>
-        </NotificationsProvider>
-      </CartProvider>
+        </CartProvider>
+      </NotificationsProvider>
     </AuthProvider>
   );
 }
