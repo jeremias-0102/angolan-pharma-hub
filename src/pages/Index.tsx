@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
@@ -93,7 +92,7 @@ const Index = () => {
         return '/admin';
       case 'pharmacist': 
         return '/farmaceutico';
-      case 'delivery_person': 
+      case 'delivery': 
         return '/entregador';
       case 'client':
         return '/perfil';
@@ -326,7 +325,7 @@ const Index = () => {
                   </div>
                 )}
 
-                {user.role === 'delivery_person' && (
+                {user.role === 'delivery' && (
                   <div className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow border border-gray-100">
                     <div className="h-12 w-12 bg-pharma-primary/10 rounded-lg flex items-center justify-center mb-4">
                       <Truck className="h-6 w-6 text-pharma-primary" />
