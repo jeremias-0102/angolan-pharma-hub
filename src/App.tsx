@@ -55,10 +55,10 @@ function App() {
                 <Route path="/login" element={<Login />} />
                 <Route path="/recuperar-senha" element={<RecuperarSenha />} />
 
-                {/* Admin routes - use wildcard to handle nested routes */}
-                <Route path="/admin/*" element={<PrivateRoute allowedRoles={['admin']}><Dashboard /></PrivateRoute>} />
+                {/* Admin routes - supervisor e admin */}
+                <Route path="/admin/*" element={<PrivateRoute allowedRoles={['admin', 'supervisor']}><Dashboard /></PrivateRoute>} />
 
-                {/* Client routes */}
+                {/* Client routes - apenas clientes */}
                 <Route path="/perfil" element={<PrivateRoute allowedRoles={['client']}><Profile /></PrivateRoute>} />
                 <Route path="/pedidos" element={<PrivateRoute allowedRoles={['client']}><OrderHistory /></PrivateRoute>} />
 

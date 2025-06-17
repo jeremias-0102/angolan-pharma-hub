@@ -20,7 +20,7 @@ import { getCompanySettings } from '@/services/settingsService';
 import { cn } from '@/lib/utils';
 
 const Navbar: React.FC = () => {
-  const { user, logout, isAuthenticated } = useAuth();
+  const { user, logout, isAuthenticated, canAccessCart, canAccessAdminPanel } = useAuth();
   const { totalItems } = useCart();
   const location = useLocation();
   const navigate = useNavigate();
@@ -42,10 +42,18 @@ const Navbar: React.FC = () => {
     fetchSettings();
   }, []);
 
+  // Redirecionar administradores para o painel administrativo se tentarem acessar a loja
+  useEffect(() => {
+    if (user && ['admin', 'supervisor'].includes(user.role) && location.pathname === '/') {
+      navigate('/admin');
+    }
+  }, [user, location.pathname, navigate]);
+
   const getDashboardLink = () => {
     if (!user) return '/login';
     
     switch (user.role) {
+      case 'supervisor': return '/admin';
       case 'admin': return '/admin';
       case 'pharmacist': return '/pharmacist';
       case 'delivery': return '/delivery';
@@ -70,6 +78,11 @@ const Navbar: React.FC = () => {
     navigate('/');
   };
 
+  // Se o usuário é admin ou supervisor, redirecionar para o painel administrativo
+  if (user && ['admin', 'supervisor'].includes(user.role) && !location.pathname.startsWith('/admin')) {
+    return null; // Não renderizar a navbar durante o redirecionamento
+  }
+
   return (
     <header className="bg-white shadow-sm sticky top-0 z-40">
       <div className="flex items-center justify-between px-4 md:px-6 py-2 container mx-auto">
@@ -80,30 +93,34 @@ const Navbar: React.FC = () => {
           </Link>
         </div>
 
-        {/* Desktop Navigation */}
-        <div className="hidden md:flex items-center space-x-4">
-          <Link to="/" className="text-gray-700 hover:text-pharma-primary px-3 py-2 rounded-md text-sm font-medium">Home</Link>
-          <Link to="/produtos" className="text-gray-700 hover:text-pharma-primary px-3 py-2 rounded-md text-sm font-medium">Produtos</Link>
-          <Link to="/sobre" className="text-gray-700 hover:text-pharma-primary px-3 py-2 rounded-md text-sm font-medium">Sobre</Link>
-          <Link to="/contato" className="text-gray-700 hover:text-pharma-primary px-3 py-2 rounded-md text-sm font-medium">Contato</Link>
-        </div>
+        {/* Desktop Navigation - Ocultar para admin/supervisor */}
+        {(!user || !['admin', 'supervisor'].includes(user.role)) && (
+          <div className="hidden md:flex items-center space-x-4">
+            <Link to="/" className="text-gray-700 hover:text-pharma-primary px-3 py-2 rounded-md text-sm font-medium">Home</Link>
+            <Link to="/produtos" className="text-gray-700 hover:text-pharma-primary px-3 py-2 rounded-md text-sm font-medium">Produtos</Link>
+            <Link to="/sobre" className="text-gray-700 hover:text-pharma-primary px-3 py-2 rounded-md text-sm font-medium">Sobre</Link>
+            <Link to="/contato" className="text-gray-700 hover:text-pharma-primary px-3 py-2 rounded-md text-sm font-medium">Contato</Link>
+          </div>
+        )}
 
         {/* Actions Area */}
         <div className="flex items-center space-x-3">
-          {/* Notificações - Novo componente */}
+          {/* Notificações */}
           <NotificationBar />
           
-          {/* Cart */}
-          <Link to="/carrinho">
-            <Button variant="ghost" className="relative p-2">
-              <ShoppingCart size={20} />
-              {totalItems > 0 && (
-                <span className="absolute -top-1 -right-1 bg-pharma-secondary text-white text-xs w-5 h-5 flex items-center justify-center rounded-full">
-                  {totalItems}
-                </span>
-              )}
-            </Button>
-          </Link>
+          {/* Cart - Apenas para usuários que podem acessar o carrinho */}
+          {canAccessCart() && (
+            <Link to="/carrinho">
+              <Button variant="ghost" className="relative p-2">
+                <ShoppingCart size={20} />
+                {totalItems > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-pharma-secondary text-white text-xs w-5 h-5 flex items-center justify-center rounded-full">
+                    {totalItems}
+                  </span>
+                )}
+              </Button>
+            </Link>
+          )}
 
           {/* User menu */}
           {isAuthenticated ? (
@@ -119,26 +136,33 @@ const Navbar: React.FC = () => {
                     <span>{user?.name}</span>
                     <span className="text-xs text-gray-500">{user?.email}</span>
                     <span className="text-xs font-medium text-pharma-primary capitalize mt-1">
-                      {user?.role}
+                      {user?.role === 'supervisor' ? 'Supervisor' : 
+                       user?.role === 'admin' ? 'Administrador' : user?.role}
                     </span>
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link to={getDashboardLink()} className="w-full cursor-pointer">
-                    Dashboard
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to="/profile" className="w-full cursor-pointer">
-                    Meu Perfil
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to="/pedidos" className="w-full cursor-pointer">
-                    Meus Pedidos
-                  </Link>
-                </DropdownMenuItem>
+                {canAccessAdminPanel() && (
+                  <DropdownMenuItem asChild>
+                    <Link to={getDashboardLink()} className="w-full cursor-pointer">
+                      Painel Administrativo
+                    </Link>
+                  </DropdownMenuItem>
+                )}
+                {!['admin', 'supervisor'].includes(user?.role || '') && (
+                  <>
+                    <DropdownMenuItem asChild>
+                      <Link to="/profile" className="w-full cursor-pointer">
+                        Meu Perfil
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link to="/pedidos" className="w-full cursor-pointer">
+                        Meus Pedidos
+                      </Link>
+                    </DropdownMenuItem>
+                  </>
+                )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleLogout} className="text-red-500 cursor-pointer">
                   <LogOut className="mr-2 h-4 w-4" />
@@ -152,20 +176,22 @@ const Navbar: React.FC = () => {
             </Button>
           )}
 
-          {/* Mobile menu button */}
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="md:hidden p-2" 
-            onClick={toggleMobileMenu}
-          >
-            {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
-          </Button>
+          {/* Mobile menu button - Apenas para usuários não admin/supervisor */}
+          {(!user || !['admin', 'supervisor'].includes(user.role)) && (
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="md:hidden p-2" 
+              onClick={toggleMobileMenu}
+            >
+              {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+            </Button>
+          )}
         </div>
       </div>
 
-      {/* Mobile Navigation */}
-      {mobileMenuOpen && (
+      {/* Mobile Navigation - Apenas para usuários não admin/supervisor */}
+      {mobileMenuOpen && (!user || !['admin', 'supervisor'].includes(user.role)) && (
         <div className="md:hidden bg-white border-t">
           <div className="container mx-auto px-4 py-2 space-y-1">
             {navItems.map((item) => (

@@ -15,7 +15,8 @@ import {
   Box,
   Settings,
   Home,
-  Building2
+  Building2,
+  Clock
 } from 'lucide-react';
 import UsersManagement from './UsersManagement';
 import ProductsManagement from './ProductsManagement';
@@ -32,18 +33,18 @@ import { companyInfo } from '@/data/mockData';
 
 // Admin Dashboard Layout
 const AdminDashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user, logout } = useAuth();
+  const { user, logout, canAccessAdminPanel, canDeleteRecords } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Redirect if not admin
+  // Redirect if not admin or supervisor
   React.useEffect(() => {
-    if (user?.role !== 'admin') {
+    if (!canAccessAdminPanel()) {
       navigate('/login');
     }
-  }, [user, navigate]);
+  }, [user, navigate, canAccessAdminPanel]);
 
-  if (user?.role !== 'admin') {
+  if (!canAccessAdminPanel()) {
     return <div>Redirecionando...</div>;
   }
 
@@ -54,12 +55,17 @@ const AdminDashboardLayout: React.FC<{ children: React.ReactNode }> = ({ childre
     { name: 'Lotes', icon: Box, path: '/admin/lotes' },
     { name: 'Pedidos', icon: ShoppingCart, path: '/admin/pedidos' },
     { name: 'Aquisições', icon: Box, path: '/admin/aquisicoes' },
-    { name: 'Usuários', icon: Users, path: '/admin/usuarios' },
     { name: 'Fornecedores', icon: Building2, path: '/admin/fornecedores' },
     { name: 'Relatórios', icon: BarChart2, path: '/admin/relatorios' },
     { name: 'Relatórios Financeiros', icon: BarChart2, path: '/admin/relatorios-financeiros' },
+    { name: 'Fecho de Turno', icon: Clock, path: '/admin/fecho-turno' },
     { name: 'Configurações', icon: Settings, path: '/admin/configuracoes' },
   ];
+
+  // Adicionar gestão de usuários APENAS para supervisor
+  if (user?.role === 'supervisor') {
+    navItems.splice(-2, 0, { name: 'Usuários', icon: Users, path: '/admin/usuarios' });
+  }
 
   // Get active nav item based on current path
   const getActiveNavItem = () => {
@@ -71,12 +77,12 @@ const AdminDashboardLayout: React.FC<{ children: React.ReactNode }> = ({ childre
       {/* Sidebar */}
       <div className="bg-white w-64 h-full shadow-md fixed left-0 top-0 z-30">
         <div className="p-4 border-b">
-          <Link to="/">
-            <span className="text-xl font-bold text-blue-600">BEGJNP<span className="text-green-600">Pharma</span></span>
-          </Link>
+          <span className="text-xl font-bold text-blue-600">BEGJNP<span className="text-green-600">Pharma</span></span>
         </div>
         <div className="p-4">
-          <p className="text-sm font-medium text-gray-500">Admin</p>
+          <p className="text-sm font-medium text-gray-500">
+            {user?.role === 'supervisor' ? 'Supervisor' : 'Administrador'}
+          </p>
           <p className="text-sm font-bold text-gray-900">{user?.name}</p>
         </div>
         <nav className="mt-2">
@@ -91,13 +97,6 @@ const AdminDashboardLayout: React.FC<{ children: React.ReactNode }> = ({ childre
           ))}
         </nav>
         <div className="absolute bottom-4 w-64 p-4 space-y-2">
-          <Button 
-            className="w-full flex items-center justify-center bg-pharma-primary hover:bg-pharma-primary/90" 
-            onClick={() => navigate('/')}
-          >
-            <Home className="mr-2 h-4 w-4" />
-            Ir para Loja
-          </Button>
           <Button 
             className="w-full" 
             variant="outline" 
@@ -122,14 +121,9 @@ const AdminDashboardLayout: React.FC<{ children: React.ReactNode }> = ({ childre
           </div>
           <div className="flex items-center space-x-4">
             <span className="text-sm text-gray-500">{companyInfo.phone}</span>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={() => navigate('/')}
-            >
-              <Home className="mr-1 h-4 w-4" />
-              Ver Loja
-            </Button>
+            <span className="text-sm text-pharma-primary font-medium">
+              {user?.role === 'supervisor' ? 'Supervisor' : 'Administrador'}: {user?.name}
+            </span>
           </div>
         </header>
         
@@ -163,8 +157,22 @@ const NavItem: React.FC<NavItemProps> = ({ icon: Icon, path, name, isActive }) =
   );
 };
 
+// Componente para Fecho de Turno
+const FechoTurno: React.FC = () => {
+  return (
+    <div className="container mx-auto p-4">
+      <h1 className="text-2xl font-bold mb-6">Fecho de Turno</h1>
+      <div className="bg-white p-6 rounded-lg shadow">
+        <p className="text-gray-600">Funcionalidade de fecho de turno em desenvolvimento...</p>
+      </div>
+    </div>
+  );
+};
+
 // Main Dashboard Component
 const AdminDashboard = () => {
+  const { user } = useAuth();
+
   return (
     <AdminDashboardLayout>
       <Routes>
@@ -174,11 +182,15 @@ const AdminDashboard = () => {
         <Route path="/lotes" element={<BatchesManagement />} />
         <Route path="/pedidos" element={<OrdersManagement />} />
         <Route path="/aquisicoes" element={<AcquisitionsManagement />} />
-        <Route path="/usuarios" element={<UsersManagement />} />
         <Route path="/fornecedores" element={<SuppliersManagement />} />
         <Route path="/relatorios" element={<ReportsPage />} />
         <Route path="/relatorios-financeiros" element={<FinancialReportsPage />} />
+        <Route path="/fecho-turno" element={<FechoTurno />} />
         <Route path="/configuracoes" element={<CompanySettings />} />
+        {/* Rota de usuários APENAS para supervisor */}
+        {user?.role === 'supervisor' && (
+          <Route path="/usuarios" element={<UsersManagement />} />
+        )}
         {/* Redirect other paths to the dashboard */}
         <Route path="*" element={<Navigate to="/admin" replace />} />
       </Routes>

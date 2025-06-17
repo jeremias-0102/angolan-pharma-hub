@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, UserRole } from '@/types/models';
 import { v4 as uuidv4 } from 'uuid';
@@ -12,19 +11,35 @@ interface AuthContextType {
   isAuthenticated: boolean;
   register: (userData: Omit<User, 'id' | 'created_at' | 'updated_at'>) => Promise<void>;
   loginWithSocial: (userData: any) => Promise<void>;
+  canAccessCart: () => boolean;
+  canMakePurchases: () => boolean;
+  canDeleteRecords: () => boolean;
+  canAccessAdminPanel: () => boolean;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Usuários demo salvos em memória para evitar problemas de versão do banco
+// Usuários demo atualizados com os novos privilégios
 const DEMO_USERS = [
+  {
+    id: 'super-001',
+    name: 'Supervisor Pharma',
+    email: 'supervisor@pharma.com',
+    password: 'super123',
+    role: 'supervisor' as UserRole,
+    phone: '+244 923 456 789',
+    avatar: '',
+    is_active: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  },
   {
     id: 'admin-001',
     name: 'Administrador Pharma',
     email: 'admin@pharma.com',
     password: 'admin123',
     role: 'admin' as UserRole,
-    phone: '+244 923 456 789',
+    phone: '+244 923 456 790',
     avatar: '',
     is_active: true,
     created_at: new Date().toISOString(),
@@ -61,6 +76,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
+  // Funções para verificar privilégios
+  const canAccessCart = () => {
+    if (!user) return true;
+    // Admin e supervisor não podem acessar carrinho
+    return !['admin', 'supervisor'].includes(user.role);
+  };
+
+  const canMakePurchases = () => {
+    if (!user) return true;
+    // Admin e supervisor não podem fazer compras
+    return !['admin', 'supervisor'].includes(user.role);
+  };
+
+  const canDeleteRecords = () => {
+    if (!user) return false;
+    // Apenas supervisor pode deletar registros
+    return user.role === 'supervisor';
+  };
+
+  const canAccessAdminPanel = () => {
+    if (!user) return false;
+    // Admin e supervisor podem acessar painel administrativo
+    return ['admin', 'supervisor'].includes(user.role);
+  };
+
   useEffect(() => {
     // Check for saved user in local storage
     const savedUserJson = localStorage.getItem('pharma_user');
@@ -76,6 +116,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
     
     console.log('✅ CREDENCIAIS DISPONÍVEIS:');
+    console.log('📧 SUPERVISOR: supervisor@pharma.com | 🔒 SENHA: super123');
     console.log('📧 ADMIN: admin@pharma.com | 🔒 SENHA: admin123');
     console.log('📧 FARMACÊUTICO: farmaceutico@pharma.com | 🔒 SENHA: farm123');
     console.log('📧 CLIENTE: cliente@pharma.com | 🔒 SENHA: client123');
@@ -106,7 +147,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         toast({
           variant: "destructive",
           title: "Falha no login",
-          description: "Email ou senha inválidos. Tente: admin@pharma.com / admin123",
+          description: "Email ou senha inválidos.",
         });
         throw new Error('Email ou senha inválidos');
       }
@@ -202,7 +243,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     logout,
     isAuthenticated: !!user,
     register,
-    loginWithSocial
+    loginWithSocial,
+    canAccessCart,
+    canMakePurchases,
+    canDeleteRecords,
+    canAccessAdminPanel
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
