@@ -38,6 +38,7 @@ export interface Supplier {
   address: string;
   website?: string;
   is_active: boolean;
+  notes?: string;
   created_at: string;
   updated_at: string;
 }

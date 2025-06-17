@@ -35,6 +35,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const handleAddToCart = () => {
     const productToAdd = {
       ...product,
+      requiresPrescription: product.needsPrescription,
       quantity: 1,
     };
     addItem(productToAdd, 1);

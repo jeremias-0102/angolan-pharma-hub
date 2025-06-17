@@ -20,6 +20,7 @@ export const useCart = () => {
       price_sale: product.price_sale || 0,
       image: product.image,
       stock: product.stock || 0,
+      requiresPrescription: product.requiresPrescription,
       needsPrescription: product.requiresPrescription,
       quantity
     };

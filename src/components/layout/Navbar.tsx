@@ -11,7 +11,7 @@ import { useNotifications } from '@/contexts/NotificationsContext';
 
 const Navbar: React.FC = () => {
   const { user, logout, canAccessAdminPanel } = useAuth();
-  const { cartItems } = useCart();
+  const { items: cartItems } = useCart();
   const { notifications, unreadCount } = useNotifications();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const navigate = useNavigate();

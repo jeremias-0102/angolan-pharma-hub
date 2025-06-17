@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -30,7 +29,7 @@ const AcquisitionsManagement: React.FC = () => {
       id: "PO-001",
       supplier_id: "1",
       supplier_name: "Farmácia Central Ltda",
-      status: "draft",
+      status: "pending",
       order_date: "2024-12-08",
       expected_delivery: "2024-12-15",
       total: 125000,
@@ -43,7 +42,7 @@ const AcquisitionsManagement: React.FC = () => {
       id: "PO-002",
       supplier_id: "2",
       supplier_name: "MediSupply Angola",
-      status: "submitted",
+      status: "ordered",
       order_date: "2024-12-07",
       expected_delivery: "2024-12-14",
       total: 85000,
@@ -101,13 +100,10 @@ const AcquisitionsManagement: React.FC = () => {
   // Translate status to Portuguese
   const translateStatus = (status: PurchaseOrderStatus): string => {
     const statusMap: Record<PurchaseOrderStatus, string> = {
-      draft: "Rascunho",
-      submitted: "Enviado",
+      pending: "Pendente",
+      ordered: "Pedido",
       received: "Recebido",
-      cancelled: "Cancelado",
-      sent: "Enviado",
-      partial: "Parcial",
-      complete: "Completo"
+      cancelled: "Cancelado"
     };
     return statusMap[status] || status;
   };
@@ -115,9 +111,9 @@ const AcquisitionsManagement: React.FC = () => {
   // Get badge variant based on status
   const getStatusBadgeVariant = (status: PurchaseOrderStatus) => {
     switch (status) {
-      case "draft":
+      case "pending":
         return "bg-gray-100 text-gray-800 border-gray-200";
-      case "submitted":
+      case "ordered":
         return "bg-blue-100 text-blue-800 border-blue-200";
       case "received":
         return "bg-green-100 text-green-800 border-green-200";

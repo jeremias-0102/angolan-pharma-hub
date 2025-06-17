@@ -30,7 +30,7 @@ const purchaseOrderSchema = z.object({
   order_date: z.date(),
   expected_delivery: z.date(),
   notes: z.string().optional(),
-  status: z.enum(['draft', 'submitted', 'received', 'cancelled', 'sent', 'partial', 'complete'] as const),
+  status: z.enum(['pending', 'ordered', 'received', 'cancelled'] as const),
 });
 
 type PurchaseOrderFormValues = z.infer<typeof purchaseOrderSchema>;
@@ -52,7 +52,7 @@ const PurchaseOrderFormModal: React.FC<PurchaseOrderFormModalProps> = ({
       order_date: purchaseOrder?.order_date ? parseISO(purchaseOrder.order_date) : new Date(),
       expected_delivery: purchaseOrder?.expected_delivery ? parseISO(purchaseOrder.expected_delivery) : new Date(),
       notes: purchaseOrder?.notes || '',
-      status: purchaseOrder?.status || 'draft',
+      status: purchaseOrder?.status || 'pending',
     },
   });
 
@@ -76,7 +76,7 @@ const PurchaseOrderFormModal: React.FC<PurchaseOrderFormModalProps> = ({
       status: values.status,
       order_date: format(values.order_date, 'yyyy-MM-dd\'T\'HH:mm:ss.SSS\'Z\''),
       expected_delivery: format(values.expected_delivery, 'yyyy-MM-dd\'T\'HH:mm:ss.SSS\'Z\''),
-      total: items.reduce((acc, item) => acc + item.total, 0),
+      total: items.reduce((acc, item) => acc + item.total_cost, 0),
       notes: values.notes,
       created_at: purchaseOrder?.created_at || new Date().toISOString(),
       updated_at: new Date().toISOString(),
@@ -97,8 +97,8 @@ const PurchaseOrderFormModal: React.FC<PurchaseOrderFormModalProps> = ({
         product_name: '',
         quantity_ordered: 1,
         quantity_received: 0,
-        unit_price: 0,
-        total: 0,
+        unit_cost: 0,
+        total_cost: 0,
       },
     ]);
   };
@@ -122,11 +122,11 @@ const PurchaseOrderFormModal: React.FC<PurchaseOrderFormModalProps> = ({
             case 'quantity_ordered':
               updatedItem.quantity_ordered = Number(value);
               break;
-            case 'unit_price':
-              updatedItem.unit_price = Number(value);
+            case 'unit_cost':
+              updatedItem.unit_cost = Number(value);
               break;
           }
-          updatedItem.total = updatedItem.quantity_ordered * updatedItem.unit_price;
+          updatedItem.total_cost = updatedItem.quantity_ordered * updatedItem.unit_cost;
           return updatedItem;
         }
         return item;
@@ -199,13 +199,10 @@ const PurchaseOrderFormModal: React.FC<PurchaseOrderFormModalProps> = ({
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="draft">Rascunho</SelectItem>
-                          <SelectItem value="submitted">Enviado</SelectItem>
+                          <SelectItem value="pending">Pendente</SelectItem>
+                          <SelectItem value="ordered">Pedido</SelectItem>
                           <SelectItem value="received">Recebido</SelectItem>
                           <SelectItem value="cancelled">Cancelado</SelectItem>
-                          <SelectItem value="sent">Enviado</SelectItem>
-                          <SelectItem value="partial">Parcial</SelectItem>
-                          <SelectItem value="complete">Completo</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -288,13 +285,13 @@ const PurchaseOrderFormModal: React.FC<PurchaseOrderFormModalProps> = ({
                     <Input
                       type="number"
                       placeholder="Preço Unitário"
-                      value={item.unit_price}
-                      onChange={(e) => handleItemChange(item.id, 'unit_price', e.target.value)}
+                      value={item.unit_cost}
+                      onChange={(e) => handleItemChange(item.id, 'unit_cost', e.target.value)}
                     />
                     <Input
                       type="text"
                       placeholder="Total"
-                      value={item.total.toFixed(2)}
+                      value={item.total_cost.toFixed(2)}
                       readOnly
                       className="bg-gray-100"
                     />
