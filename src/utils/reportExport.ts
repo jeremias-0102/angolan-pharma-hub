@@ -62,8 +62,20 @@ export const exportToPDF = (title: string, data: any[], columns: Column[]) => {
       }
     });
     
-    // Save the PDF
-    doc.save(`${title.toLowerCase().replace(/\s+/g, '-')}-${new Date().toISOString().slice(0, 10)}.pdf`);
+    // Save the PDF - força o download
+    const fileName = `${title.toLowerCase().replace(/\s+/g, '-')}-${new Date().toISOString().slice(0, 10)}.pdf`;
+    doc.save(fileName);
+    
+    // Criar link de download alternativo se necessário
+    const pdfBlob = doc.output('blob');
+    const url = URL.createObjectURL(pdfBlob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
     
     showToast('Relatório exportado!', 'O relatório foi exportado em formato PDF com sucesso.');
     return true;
@@ -92,14 +104,88 @@ export const exportToExcel = (title: string, data: any[], columns: Column[]) => 
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Relatório');
     
-    // Generate Excel file
-    XLSX.writeFile(wb, `${title.toLowerCase().replace(/\s+/g, '-')}-${new Date().toISOString().slice(0, 10)}.xlsx`);
+    // Generate Excel file - força o download
+    const fileName = `${title.toLowerCase().replace(/\s+/g, '-')}-${new Date().toISOString().slice(0, 10)}.xlsx`;
+    XLSX.writeFile(wb, fileName);
     
     showToast('Relatório exportado!', 'O relatório foi exportado em formato Excel com sucesso.');
     return true;
   } catch (error) {
     console.error('Erro ao gerar Excel:', error);
     showToast('Erro ao exportar', 'Houve um problema ao gerar o arquivo Excel.', 'destructive');
+    return false;
+  }
+};
+
+// Função para gerar fatura de cliente em PDF
+export const generateClientInvoicePDF = (order: any) => {
+  try {
+    const doc = new jsPDF();
+    
+    // Header da fatura
+    doc.setFontSize(20);
+    doc.text('FATURA', 14, 20);
+    
+    doc.setFontSize(12);
+    doc.text(`Fatura Nº: ${order.id}`, 14, 35);
+    doc.text(`Data: ${new Date(order.created_at).toLocaleDateString('pt-AO')}`, 14, 45);
+    
+    // Dados do cliente
+    doc.setFontSize(14);
+    doc.text('DADOS DO CLIENTE:', 14, 65);
+    doc.setFontSize(10);
+    doc.text(`Nome: ${order.customer_name}`, 14, 75);
+    doc.text(`Email: ${order.customer_email}`, 14, 85);
+    doc.text(`Telefone: ${order.customer_phone}`, 14, 95);
+    doc.text(`Endereço: ${order.shipping_address}`, 14, 105);
+    
+    // Tabela de itens
+    let y = 125;
+    doc.setFontSize(12);
+    doc.text('ITENS DA FATURA:', 14, y);
+    y += 15;
+    
+    // Cabeçalho da tabela
+    doc.setFontSize(10);
+    doc.text('Produto', 14, y);
+    doc.text('Qtd', 100, y);
+    doc.text('Preço Unit.', 130, y);
+    doc.text('Total', 170, y);
+    y += 10;
+    
+    // Linha separadora
+    doc.line(14, y, 200, y);
+    y += 10;
+    
+    // Itens
+    order.items.forEach((item: any) => {
+      doc.text(item.product_name.substring(0, 30), 14, y);
+      doc.text(item.quantity.toString(), 100, y);
+      doc.text(`${item.unit_price.toLocaleString()} Kz`, 130, y);
+      doc.text(`${item.total.toLocaleString()} Kz`, 170, y);
+      y += 10;
+    });
+    
+    // Total
+    y += 10;
+    doc.line(14, y, 200, y);
+    y += 15;
+    doc.setFontSize(12);
+    doc.text(`TOTAL: ${order.total.toLocaleString()} Kz`, 14, y);
+    
+    // Método de pagamento
+    y += 20;
+    doc.text(`Método de Pagamento: ${order.payment_method}`, 14, y);
+    
+    // Save
+    const fileName = `fatura-${order.id}-${new Date().toISOString().slice(0, 10)}.pdf`;
+    doc.save(fileName);
+    
+    showToast('Fatura gerada!', 'A fatura foi gerada e baixada com sucesso.');
+    return true;
+  } catch (error) {
+    console.error('Erro ao gerar fatura:', error);
+    showToast('Erro ao gerar fatura', 'Houve um problema ao gerar a fatura PDF.', 'destructive');
     return false;
   }
 };

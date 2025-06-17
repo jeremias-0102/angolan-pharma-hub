@@ -4,18 +4,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { useCart } from '@/hooks/use-cart';
+import { useCart } from '@/contexts/CartContext';
 import { Separator } from "@/components/ui/separator";
 import { generateUUID } from '@/lib/utils';
-import { toast } from "@/components/ui/use-toast"
-import { useUser } from '@/hooks/use-user';
-import { getBase64 } from '@/lib/image-utils';
-import { api } from '@/lib/api';
+import { toast } from "@/hooks/use-toast"
+import { useAuth } from '@/contexts/AuthContext';
 import { OrderStatus } from '@/types/models';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
+import { addOrder } from '@/services/orderService';
 import { 
   CreditCard, 
   MapPin, 
@@ -29,11 +28,6 @@ import {
   Plus,
   Minus
 } from 'lucide-react';
-
-interface ApiResponse {
-  status: number;
-  data?: any;
-}
 
 const PROVINCES = [
   'Luanda', 'Benguela', 'Huíla', 'Bié', 'Cabinda', 'Cuando Cubango',
@@ -50,8 +44,8 @@ const PAYMENT_METHODS = [
 
 const Checkout = () => {
   const navigate = useNavigate();
-  const { items, clearCart, calculateTotal, updateQuantity, removeFromCart } = useCart();
-  const user = useUser();
+  const { items, clearCart, updateQuantity, removeFromCart } = useCart();
+  const { user } = useAuth();
 
   // Estados do formulário
   const [formData, setFormData] = useState({
@@ -70,6 +64,14 @@ const Checkout = () => {
   const [hasPrescriptionItems, setHasPrescriptionItems] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
+
+  // Calcular total
+  const calculateTotal = () => {
+    return items.reduce((total, item) => {
+      const price = item.product.price_sale || item.product.price || 0;
+      return total + (price * item.quantity);
+    }, 0);
+  };
 
   // Verificar se há itens que precisam de receita
   useEffect(() => {
@@ -140,12 +142,13 @@ const Checkout = () => {
         total: calculateTotal(),
         items: items.map(item => ({
           id: generateUUID(),
+          order_id: '', // Will be set by the service
           product_id: item.product.id,
           product_name: item.product.name,
           product_image: item.product.image || '',
           quantity: item.quantity,
-          unit_price: item.product.price_sale || item.product.price,
-          total: (item.product.price_sale || item.product.price) * item.quantity
+          unit_price: item.product.price_sale || item.product.price || 0,
+          total: (item.product.price_sale || item.product.price || 0) * item.quantity
         })),
         shipping_address: `${formData.address}, ${formData.city}, ${formData.province}, ${formData.zipCode}`,
         shipping_details: {
@@ -158,22 +161,21 @@ const Checkout = () => {
         customer_email: formData.email,
         customer_phone: formData.phone,
         requires_prescription: hasPrescriptionItems,
-        prescription_image: prescriptionFile ? await getBase64(prescriptionFile) : undefined,
         discount: 0,
         notes: formData.notes
       };
 
-      const response = await api.post<ApiResponse>('/orders', orderData);
+      const newOrder = await addOrder(orderData);
 
-      if (response && response.status === 201) {
+      if (newOrder) {
         toast({
           title: "🎉 Encomenda confirmada!",
           description: "A tua encomenda foi submetida com sucesso. Vais receber uma confirmação por email.",
         });
         clearCart();
-        navigate('/encomendas');
+        navigate('/');
       } else {
-        throw new Error('Erro na resposta do servidor');
+        throw new Error('Erro ao criar encomenda');
       }
     } catch (error) {
       console.error("Error submitting order:", error);
@@ -244,7 +246,7 @@ const Checkout = () => {
                     <Plus className="h-4 w-4" />
                   </Button>
                   <div className="ml-4 text-right">
-                    <p className="font-semibold">{((item.product.price_sale || item.product.price) * item.quantity).toLocaleString()} Kz</p>
+                    <p className="font-semibold">{((item.product.price_sale || item.product.price || 0) * item.quantity).toLocaleString()} Kz</p>
                     <Button
                       variant="ghost"
                       size="sm"
