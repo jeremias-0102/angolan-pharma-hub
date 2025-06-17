@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import MainLayout from '@/components/layout/MainLayout';
 import ProductCard from '@/components/products/ProductCard';
@@ -50,9 +49,9 @@ const Products = () => {
       .map(product => {
         const category = product.category;
         if (!category) return null;
-        return typeof category === 'string' ? category : category?.name;
+        return typeof category === 'string' ? category : (category as any)?.name;
       })
-      .filter(Boolean) // Remove null/undefined values
+      .filter((cat): cat is string => Boolean(cat)) // Type guard to ensure string values
     )
   );
   
@@ -66,7 +65,7 @@ const Products = () => {
     const category = product.category;
     if (!category) return false;
     
-    const categoryName = typeof category === 'string' ? category : category?.name;
+    const categoryName = typeof category === 'string' ? category : (category as any)?.name;
     const matchesCategory = categoryName === activeTab;
     
     return matchesSearch && matchesCategory;

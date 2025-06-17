@@ -1,5 +1,4 @@
-
-export type UserRole = 'admin' | 'pharmacist' | 'delivery_person' | 'client' | 'supervisor';
+export type UserRole = 'admin' | 'pharmacist' | 'delivery' | 'client' | 'supervisor';
 
 export type OrderStatus = 'pending' | 'confirmed' | 'processing' | 'ready' | 'shipping' | 'delivered' | 'cancelled';
 
@@ -284,6 +283,17 @@ export interface SalesReport {
   period: string;
   total_sales: number;
   total_orders: number;
+  top_products: Array<{
+    product_id: string;
+    product_name: string;
+    quantity_sold: number;
+    revenue: number;
+  }>;
+  payment_methods: Array<{
+    method: string;
+    count: number;
+    total_amount: number;
+  }>;
   created_at: string;
 }
 

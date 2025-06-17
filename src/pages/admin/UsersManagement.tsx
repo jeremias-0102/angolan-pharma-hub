@@ -104,7 +104,8 @@ const translateRole = (role: UserRole): string => {
     admin: "Administrador",
     pharmacist: "Farmacêutico",
     delivery: "Entregador",
-    client: "Cliente"
+    client: "Cliente",
+    supervisor: "Supervisor"
   };
   
   return translations[role] || role;
