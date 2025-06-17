@@ -1,9 +1,14 @@
 
-import { EventTarget } from 'event-target-shim';
+import React from 'react';
 
-// Singleton para eventos em tempo real
-class RealtimeService extends EventTarget {
+// Singleton para eventos em tempo real usando EventTarget nativo
+class RealtimeService {
   private static instance: RealtimeService;
+  private eventTarget: EventTarget;
+
+  constructor() {
+    this.eventTarget = new EventTarget();
+  }
 
   static getInstance(): RealtimeService {
     if (!RealtimeService.instance) {
@@ -14,17 +19,17 @@ class RealtimeService extends EventTarget {
 
   // Emitir evento quando dados são atualizados
   emit(eventType: string, data: any) {
-    this.dispatchEvent(new CustomEvent(eventType, { detail: data }));
+    this.eventTarget.dispatchEvent(new CustomEvent(eventType, { detail: data }));
   }
 
   // Escutar mudanças
   on(eventType: string, callback: (event: CustomEvent) => void) {
-    this.addEventListener(eventType, callback as EventListener);
+    this.eventTarget.addEventListener(eventType, callback as EventListener);
   }
 
   // Parar de escutar
   off(eventType: string, callback: (event: CustomEvent) => void) {
-    this.removeEventListener(eventType, callback as EventListener);
+    this.eventTarget.removeEventListener(eventType, callback as EventListener);
   }
 }
 

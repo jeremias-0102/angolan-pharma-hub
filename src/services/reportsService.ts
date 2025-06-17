@@ -27,8 +27,8 @@ export const generateSalesReport = async (startDate?: string, endDate?: string) 
       });
     }
     
-    // Calcular totais
-    const totalSales = filteredOrders.reduce((sum, order) => sum + order.total_amount, 0);
+    // Calcular totais usando 'total' em vez de 'total_amount'
+    const totalSales = filteredOrders.reduce((sum, order) => sum + order.total, 0);
     const totalOrders = filteredOrders.length;
     const avgOrderValue = totalOrders > 0 ? totalSales / totalOrders : 0;
     
@@ -36,7 +36,7 @@ export const generateSalesReport = async (startDate?: string, endDate?: string) 
     const reportData = filteredOrders.map(order => ({
       id: order.id,
       data: new Date(order.created_at).toLocaleDateString('pt-AO'),
-      valor: `AOA ${order.total_amount.toLocaleString()}`,
+      valor: `AOA ${order.total.toLocaleString()}`,
       status: order.status,
       cliente: order.customer_name || 'N/A'
     }));
