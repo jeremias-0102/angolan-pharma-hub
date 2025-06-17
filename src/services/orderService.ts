@@ -1,6 +1,6 @@
-
-import { Order, OrderStatus, Delivery, generateUUID } from '@/types/models';
+import { Order, OrderStatus, Delivery } from '@/types/models';
 import { add, update, get, remove, getAll, STORES } from '@/lib/database';
+import { generateUUID } from '@/lib/utils';
 import { v4 as uuidv4 } from 'uuid';
 
 // Get all orders

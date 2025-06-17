@@ -16,6 +16,7 @@ export interface User {
   created_at: string;
   updated_at: string;
   password?: string;
+  address?: string;
 }
 
 export interface Category {
@@ -35,6 +36,7 @@ export interface Supplier {
   email: string;
   phone: string;
   address: string;
+  website?: string;
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -197,6 +199,10 @@ export interface CartProduct {
   quantity: number;
   image?: string;
   requiresPrescription: boolean;
+  description?: string;
+  price_sale?: number;
+  needsPrescription?: boolean;
+  stock?: number;
 }
 
 export interface Prescription {
@@ -205,6 +211,11 @@ export interface Prescription {
   file_url: string;
   verified: boolean;
   created_at: string;
+  upload_date?: string;
+  validated?: boolean;
+  validated_by?: string;
+  validation_date?: string;
+  updated_at?: string;
 }
 
 export interface FinancialTransaction {
@@ -213,6 +224,9 @@ export interface FinancialTransaction {
   amount: number;
   description: string;
   created_at: string;
+  date?: string;
+  updated_at?: string;
+  category?: string;
 }
 
 export interface SystemSettings {
@@ -246,4 +260,37 @@ export interface AIConversation {
   messages: any[];
   created_at: string;
   updated_at: string;
+}
+
+export interface Delivery {
+  id: string;
+  order_id: string;
+  status: 'pending' | 'assigned' | 'in_progress' | 'delivered' | 'failed';
+  address: string;
+  district: string;
+  city: string;
+  postal_code?: string;
+  delivery_date?: string;
+  estimated_delivery?: string;
+  actual_delivery?: string;
+  notes?: string;
+  fee?: number;
+  assigned_to?: string;
+}
+
+export interface SalesReport {
+  id: string;
+  period: string;
+  total_sales: number;
+  total_orders: number;
+  created_at: string;
+}
+
+export interface InventoryReport {
+  id: string;
+  product_id: string;
+  product_name: string;
+  current_stock: number;
+  minimum_stock: number;
+  created_at: string;
 }
