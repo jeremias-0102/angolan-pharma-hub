@@ -44,7 +44,7 @@ const PAYMENT_METHODS = [
 
 const Checkout = () => {
   const navigate = useNavigate();
-  const { items, clearCart, updateQuantity, removeFromCart } = useCart();
+  const { items, clearCart, updateQuantity, removeItem } = useCart();
   const { user } = useAuth();
 
   // Estados do formulário
@@ -250,7 +250,7 @@ const Checkout = () => {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => removeFromCart(item.product.id)}
+                      onClick={() => removeItem(item.product.id)}
                       className="text-red-600 hover:text-red-700"
                     >
                       Remover
