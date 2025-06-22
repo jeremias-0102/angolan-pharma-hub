@@ -58,6 +58,18 @@ const DEMO_USERS = [
     updated_at: new Date().toISOString()
   },
   {
+    id: 'delivery-001',
+    name: 'Entregador Demo',
+    email: 'entregador@pharma.com',
+    password: 'delivery123',
+    role: 'delivery' as UserRole,
+    phone: '+244 913 456 789',
+    avatar: '',
+    is_active: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
+  },
+  {
     id: 'client-001',
     name: 'Cliente Demo',
     email: 'cliente@pharma.com',
@@ -119,6 +131,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     console.log('📧 SUPERVISOR: supervisor@pharma.com | 🔒 SENHA: super123');
     console.log('📧 ADMIN: admin@pharma.com | 🔒 SENHA: admin123');
     console.log('📧 FARMACÊUTICO: farmaceutico@pharma.com | 🔒 SENHA: farm123');
+    console.log('📧 ENTREGADOR: entregador@pharma.com | 🔒 SENHA: delivery123');
     console.log('📧 CLIENTE: cliente@pharma.com | 🔒 SENHA: client123');
     
     setIsLoading(false);
