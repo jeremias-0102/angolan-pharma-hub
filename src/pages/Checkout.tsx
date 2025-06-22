@@ -28,6 +28,10 @@ import {
   Plus,
   Minus
 } from 'lucide-react';
+import { sendInvoiceViaWhatsApp, sendInvoicePDFViaWhatsApp } from '@/utils/whatsappService';
+import { sendInvoiceViaEmail, sendInvoicePDFViaEmail } from '@/services/emailService';
+import { generateClientInvoicePDF } from '@/utils/reportExport';
+import InvoiceDeliveryOptions from '@/components/checkout/InvoiceDeliveryOptions';
 
 const PROVINCES = [
   'Luanda', 'Benguela', 'Huíla', 'Bié', 'Cabinda', 'Cuando Cubango',
@@ -47,11 +51,11 @@ const Checkout = () => {
   const { items, clearCart, updateQuantity, removeItem } = useCart();
   const { user } = useAuth();
 
-  // Estados do formulário
+  // Estados do formulário - preencher automaticamente com dados do usuário
   const [formData, setFormData] = useState({
     name: user?.name || '',
     email: user?.email || '',
-    phone: '',
+    phone: user?.phone || '',
     address: '',
     city: '',
     province: '',
@@ -64,6 +68,7 @@ const Checkout = () => {
   const [hasPrescriptionItems, setHasPrescriptionItems] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
+  const [invoiceDeliveryOption, setInvoiceDeliveryOption] = useState('download');
 
   // Calcular total
   const calculateTotal = () => {
@@ -92,7 +97,7 @@ const Checkout = () => {
       case 2:
         return !!(formData.name && formData.email && formData.phone && formData.address && formData.city && formData.province);
       case 3:
-        return !!paymentMethod && (!hasPrescriptionItems || !!prescriptionFile);
+        return !!paymentMethod && (!hasPrescriptionItems || !!prescriptionFile) && !!invoiceDeliveryOption;
       default:
         return true;
     }
@@ -142,7 +147,7 @@ const Checkout = () => {
         total: calculateTotal(),
         items: items.map(item => ({
           id: generateUUID(),
-          order_id: '', // Will be set by the service
+          order_id: '',
           product_id: item.product.id,
           product_name: item.product.name,
           product_image: item.product.image || '',
@@ -168,9 +173,12 @@ const Checkout = () => {
       const newOrder = await addOrder(orderData);
 
       if (newOrder) {
+        // Gerar e enviar fatura baseado na opção escolhida
+        await handleInvoiceDelivery(newOrder);
+        
         toast({
           title: "🎉 Encomenda confirmada!",
-          description: "A tua encomenda foi submetida com sucesso. Vais receber uma confirmação por email.",
+          description: "A tua encomenda foi submetida com sucesso e a fatura foi enviada.",
         });
         clearCart();
         navigate('/');
@@ -186,6 +194,45 @@ const Checkout = () => {
       });
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleInvoiceDelivery = async (order: any) => {
+    try {
+      // Gerar PDF
+      const pdfGenerated = generateClientInvoicePDF(order);
+      
+      if (!pdfGenerated) {
+        throw new Error('Erro ao gerar PDF da fatura');
+      }
+
+      // Enviar baseado na opção escolhida
+      switch (invoiceDeliveryOption) {
+        case 'email':
+          await sendInvoiceViaEmail(formData.email, order);
+          break;
+        case 'whatsapp':
+          sendInvoiceViaWhatsApp(formData.phone, order);
+          break;
+        case 'both':
+          await sendInvoiceViaEmail(formData.email, order);
+          sendInvoiceViaWhatsApp(formData.phone, order);
+          break;
+        case 'download':
+        default:
+          toast({
+            title: "📄 Fatura gerada!",
+            description: "A fatura foi baixada automaticamente.",
+          });
+          break;
+      }
+    } catch (error) {
+      console.error('Erro ao processar fatura:', error);
+      toast({
+        title: "⚠️ Encomenda criada",
+        description: "Encomenda criada com sucesso, mas houve erro ao enviar a fatura.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -401,7 +448,7 @@ const Checkout = () => {
     </Card>
   );
 
-  // Render do pagamento (Etapa 3)
+  // Render do pagamento (Etapa 3) - atualizado
   const renderPaymentStep = () => (
     <div className="space-y-6">
       <Card>
@@ -465,6 +512,13 @@ const Checkout = () => {
         </Card>
       )}
 
+      <InvoiceDeliveryOptions
+        selectedOption={invoiceDeliveryOption}
+        onOptionChange={setInvoiceDeliveryOption}
+        customerEmail={formData.email}
+        customerPhone={formData.phone}
+      />
+
       <Card>
         <CardHeader>
           <CardTitle>Resumo Final</CardTitle>
@@ -503,7 +557,7 @@ const Checkout = () => {
               <span className="ml-2 text-sm">
                 {step === 1 && 'Carrinho'}
                 {step === 2 && 'Dados'}
-                {step === 3 && 'Pagamento'}
+                {step === 3 && 'Pagamento & Fatura'}
               </span>
             </div>
           ))}

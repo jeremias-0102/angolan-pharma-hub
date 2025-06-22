@@ -1,4 +1,3 @@
-
 import { useToast } from "@/hooks/use-toast";
 
 type OrderItem = {
@@ -110,4 +109,58 @@ const buildReceiptMessage = (order: OrderDetails): string => {
   message += `Obrigado por comprar conosco!\n`;
   
   return message;
+};
+
+export const sendInvoiceViaWhatsApp = (customerPhone: string, order: any) => {
+  const message = `
+🧾 *FATURA - Farmácia Angola*
+
+📋 *Número da Fatura:* ${order.id}
+📅 *Data:* ${new Date(order.created_at).toLocaleDateString('pt-AO')}
+
+👤 *Cliente:* ${order.customer_name}
+📞 *Telefone:* ${order.customer_phone}
+📧 *Email:* ${order.customer_email}
+📍 *Endereço:* ${order.shipping_address}
+
+📦 *Itens da Fatura:*
+${order.items.map((item: any) => `• ${item.product_name} - ${item.quantity}x - ${item.total.toLocaleString()} Kz`).join('\n')}
+
+💰 *Total:* ${order.total.toLocaleString()} Kz
+💳 *Método de Pagamento:* ${order.payment_method}
+
+✅ Obrigado pela sua compra!
+  `.trim();
+
+  const encodedMessage = encodeURIComponent(message);
+  const whatsappUrl = `https://wa.me/${customerPhone.replace(/\D/g, '')}?text=${encodedMessage}`;
+  
+  // Abrir WhatsApp em nova aba
+  window.open(whatsappUrl, '_blank');
+  
+  return true;
+};
+
+export const sendInvoicePDFViaWhatsApp = (customerPhone: string, order: any, pdfBlob: Blob) => {
+  // Para envio real de PDF via WhatsApp, seria necessário um backend
+  // Por agora, enviamos uma mensagem informando sobre a fatura
+  const message = `
+🧾 *FATURA GERADA - Farmácia Angola*
+
+Olá ${order.customer_name}! 
+
+Sua fatura foi gerada com sucesso.
+📋 Fatura Nº: ${order.id}
+💰 Total: ${order.total.toLocaleString()} Kz
+
+A fatura em PDF foi baixada automaticamente no seu dispositivo.
+
+✅ Obrigado pela sua compra!
+  `.trim();
+
+  const encodedMessage = encodeURIComponent(message);
+  const whatsappUrl = `https://wa.me/${customerPhone.replace(/\D/g, '')}?text=${encodedMessage}`;
+  
+  window.open(whatsappUrl, '_blank');
+  return true;
 };
