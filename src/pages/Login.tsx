@@ -98,11 +98,37 @@ const Login = () => {
     }
   });
 
+  // Função para redirecionar baseado no papel do usuário
+  const redirectUserBasedOnRole = (userRole: string) => {
+    switch (userRole) {
+      case 'admin':
+      case 'supervisor':
+        navigate('/admin');
+        break;
+      case 'pharmacist':
+        navigate('/pharmacist');
+        break;
+      case 'delivery':
+        navigate('/delivery');
+        break;
+      case 'client':
+      default:
+        navigate('/');
+        break;
+    }
+  };
+
   const handleLogin = async (values: LoginValues) => {
     setIsLoading(true);
     try {
-      await login(values.email, values.password);
-      navigate('/');
+      const user = await login(values.email, values.password);
+      // Redireciona baseado no papel do usuário
+      if (user) {
+        redirectUserBasedOnRole(user.role);
+      } else {
+        // Fallback para home se não conseguir determinar o papel
+        navigate('/');
+      }
     } catch (error) {
       // Error is already handled in the login function
     } finally {
@@ -159,7 +185,8 @@ const Login = () => {
 
       // Usa o método loginWithSocial do contexto
       await loginWithSocial(user);
-      navigate('/');
+      // Redireciona baseado no papel do usuário
+      redirectUserBasedOnRole(user.role);
     } catch (error) {
       console.error('Erro no login social:', error);
       toast({

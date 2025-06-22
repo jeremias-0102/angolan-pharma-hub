@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, UserRole } from '@/types/models';
 import { v4 as uuidv4 } from 'uuid';
@@ -6,7 +7,7 @@ import { useToast } from '@/components/ui/use-toast';
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<User>;
   logout: () => void;
   isAuthenticated: boolean;
   register: (userData: Omit<User, 'id' | 'created_at' | 'updated_at'>) => Promise<void>;
