@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ShoppingCart, Search, User, LogOut, Settings, ShoppingBag, Pill, Truck, Menu, X } from 'lucide-react';
@@ -17,7 +18,7 @@ import { useCart } from '@/contexts/CartContext';
 
 const Navbar: React.FC = () => {
   const { user, logout } = useAuth();
-  const { cart } = useCart();
+  const { items } = useCart();
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSearchBarVisible, setIsSearchBarVisible] = useState(false);
@@ -102,9 +103,9 @@ const Navbar: React.FC = () => {
           {user?.role !== 'admin' && user?.role !== 'supervisor' && (
             <Link to="/cart" className="relative">
               <ShoppingCart className="h-6 w-6 text-gray-500 hover:text-gray-700" />
-              {cart.length > 0 && (
+              {items.length > 0 && (
                 <span className="absolute -top-2 -right-2 bg-red-600 text-white rounded-full text-xs px-1.5 py-0.5">
-                  {cart.length}
+                  {items.length}
                 </span>
               )}
             </Link>
