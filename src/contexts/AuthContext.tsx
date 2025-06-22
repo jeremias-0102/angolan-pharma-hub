@@ -1,4 +1,5 @@
 
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, UserRole } from '@/types/models';
 import { v4 as uuidv4 } from 'uuid';
@@ -138,7 +139,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(false);
   }, []);
 
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string): Promise<User> => {
     setIsLoading(true);
     
     try {
@@ -149,13 +150,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (foundUser) {
         console.log('✅ Usuário encontrado:', foundUser.name, foundUser.role);
         const { password: _, ...userWithoutPassword } = foundUser;
-        setUser(userWithoutPassword as User);
+        const userData = userWithoutPassword as User;
+        setUser(userData);
         localStorage.setItem('pharma_user', JSON.stringify(userWithoutPassword));
         
         toast({
           title: "Login bem-sucedido",
           description: `Bem-vindo, ${foundUser.name}!`,
         });
+        
+        return userData;
       } else {
         console.log('❌ Email ou senha inválidos para:', email);
         toast({
@@ -274,3 +278,4 @@ export const useAuth = () => {
   }
   return context;
 };
+
