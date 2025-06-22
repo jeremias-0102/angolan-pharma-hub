@@ -67,13 +67,11 @@ const DeliveryPanel = () => {
       created_at: '2025-01-15T10:00:00Z',
       updated_at: '2025-01-15T14:30:00Z',
       delivery: {
-        order_id: 'ORD-2025-001',
         status: 'in_progress',
         address: 'Rua dos Remédios, 123, Bairro Miramar, Luanda',
         district: 'Miramar',
         city: 'Luanda',
         postal_code: '1000',
-        delivery_date: '2025-01-15',
         estimated_delivery: '2025-01-15T16:00:00Z',
         notes: 'Entregar no portão principal'
       }
@@ -106,13 +104,11 @@ const DeliveryPanel = () => {
       created_at: '2025-01-15T11:00:00Z',
       updated_at: '2025-01-15T11:00:00Z',
       delivery: {
-        order_id: 'ORD-2025-002',
         status: 'assigned',
         address: 'Avenida Marginal, 456, Bairro Ingombota, Luanda',
         district: 'Ingombota',
         city: 'Luanda',
         postal_code: '1001',
-        delivery_date: '2025-01-15',
         estimated_delivery: '2025-01-15T17:00:00Z',
         notes: 'Apartamento 2B'
       }
